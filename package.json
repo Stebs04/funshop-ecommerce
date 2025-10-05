@@ -1,0 +1,14 @@
+{
+  "name": "funshop",
+  "version": "1.0.0",
+  "description": "codice sorgente del mio sito e-commerce di oggetti da collezione venduti da utenti",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  }
+}
