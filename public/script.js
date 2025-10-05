@@ -110,19 +110,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const data = await response.json();
 
-            if (data.loggedIn) {
+            if (data.isAuthenticated) {
     // L'utente è loggato: crea e gestisce il popup del profilo
     profilePreview = document.createElement('div');
     profilePreview.id = 'profile-preview'; // Applica gli stili dal CSS tramite ID
 
+     const sellLink = data.user.tipo_account;
+     if(sellLink == 'venditore')
     // Popola con i link
-    profilePreview.innerHTML = `
+   { profilePreview.innerHTML = `
         <a href="utente.html" class="profile-link">Il mio account</a>
         <a href="/impostazioni.html" class="profile-link">Impostazioni</a>
         <a href="/nuovo-prodotto.html" class="profile-link">Aggiungi un nuovo prodotto</a>
         <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
         <a href="/logout" class="profile-link">Esci da questo account</a>
+    `;}
+    else
+        {
+            profilePreview.innerHTML = `
+        <a href="utente.html" class="profile-link">Il mio account</a>
+        <a href="/impostazioni.html" class="profile-link">Impostazioni</a>
+        <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
+        <a href="/logout" class="profile-link">Esci da questo account</a>
     `;
+        }
     
     document.body.appendChild(profilePreview);
 
@@ -178,5 +189,123 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Chiama la funzione per configurare la logica del profilo
     updateUserProfileLogic();
+
+     const loadProducts = async () => {
+        const container = document.getElementById('product-container');
+        if (!container) {
+            console.error('Elemento con id "product-container" non trovato.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/products');
+            if (!response.ok) {
+                throw new Error(`Errore HTTP! stato: ${response.status}`);
+            }
+            const products = await response.json();
+
+            container.innerHTML = ''; // Pulisce il contenitore da eventuali placeholder
+
+            products.forEach(product => {
+                // Determina quale prezzo mostrare (prezzo fisso o prezzo d'asta)
+                const displayPrice = product.prezzo > 0 ? product.prezzo : product.prezzo_asta;
+                
+                // Crea l'elemento wrapper per la colonna della griglia
+                const col = document.createElement('div');
+                col.className = 'col';
+
+                // Popola l'HTML della card con i dati del prodotto
+                col.innerHTML = `
+                    <div class="card h-100 shadow-sm product-card">
+                        <img src="${product.percorso_immagine}" class="card-img-top" alt="${product.nome}" style="height: 200px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">
+                                <a href="prodotto.html?id=${product.id}" class="text-decoration-none text-dark stretched-link">
+                                    ${product.nome}
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted small">${product.parola_chiave}</p>
+                            <p class="card-text text-primary small">Venduto da <strong>${product.nome_venditore}</strong></p>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <span class="fw-bold fs-5">€ ${displayPrice.toFixed(2)}</span>
+                                <a href="#" class="btn btn-sm btn-primary" style="position: relative; z-index: 2;" title="Aggiungi al carrello">
+                                    <i class="bi bi-cart-plus-fill fs-5"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 text-center">
+                            <small class="text-success fw-bold">${product.condizione}</small>
+                        </div>
+                    </div>
+                `;
+                // Aggiunge la card completa al contenitore
+                container.appendChild(col);
+            });
+
+        } catch (error) {
+            console.error('Impossibile caricare i prodotti:', error);
+            container.innerHTML = '<p class="text-center text-danger">Non è stato possibile caricare i prodotti. Riprova più tardi.</p>';
+        }
+    };
+
+
+
+    const updateNavbarForSeller = async () => {
+        try {
+            const response = await fetch('/api/auth/status');
+            if (!response.ok) return; // Non fare nulla se la richiesta fallisce
+
+            const data = await response.json();
+            if (data.isAuthenticated && data.user.tipo_account === 'venditore') {
+                const becomeSellerLink = document.getElementById('become-seller-link');
+                if (becomeSellerLink) {
+                    becomeSellerLink.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Errore nel controllare lo stato del venditore:', error);
+        }
+    };
+
+
+    const updateUserPageVisibility = async () => {
+        // Esegui questa logica solo se ci troviamo in utente.html
+        if (window.location.pathname.endsWith('/utente.html')) {
+            try {
+                const response = await fetch('/api/auth/status');
+                if (!response.ok) {
+                    throw new Error(`Errore HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Se l'utente è autenticato ma non è un venditore
+                if (data.isAuthenticated && data.user.tipo_account !== 'venditore') {
+                    // Selettori per gli elementi da nascondere. Adattali se necessario.
+                    const myProductsElement = document.querySelector('a[href="i-miei-prodotti.html"]');
+                    const statsElement = document.querySelector('a[href="statistiche.html"]');
+
+                    if (myProductsElement) {
+                        // Nasconde l'intero elemento della lista (il genitore <li>)
+                        myProductsElement.parentElement.style.display = 'none';
+                    }
+                    if (statsElement) {
+                        statsElement.parentElement.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error("Impossibile aggiornare la visibilità della pagina utente:", error);
+            }
+        }
+    };
+
+    // Chiama la nuova funzione per gestire la visibilità degli elementi in utente.html
+    updateUserPageVisibility();
+
+
+    // Aggiorna la navbar in base allo stato dell'utente
+    updateNavbarForSeller();
+
+    // Chiama la funzione per caricare i prodotti quando la pagina è pronta
+    loadProducts();
 });
 

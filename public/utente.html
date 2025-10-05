@@ -55,8 +55,9 @@
               </div>
             </div>
         </header>
+
     <main class="container my-5">
-   <div class="row">
+       <div class="row">
     <div class="col-md-3">
         <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
         
@@ -71,6 +72,14 @@
             <button class="nav-link text-start" id="v-pills-indirizzi-tab" data-bs-toggle="pill" data-bs-target="#v-pills-indirizzi" type="button" role="tab" aria-controls="v-pills-indirizzi" aria-selected="false">
                 <i class="bi bi-geo-alt me-2"></i>I Miei Indirizzi
             </button>
+
+            <button class="nav-link text-start" id="v-pills-prodotti-tab" data-bs-toggle="pill" data-bs-target="#v-pills-prodotti" type="button" role="tab" aria-controls="v-pills-prodotti" aria-selected="false">
+                <i class="bi bi-tags me-2"></i>I Miei Prodotti
+            </button>
+
+            <button class="nav-link text-start" id="v-pills-statistiche-tab" data-bs-toggle="pill" data-bs-target="#v-pills-statistiche" type="button" role="tab" aria-controls="v-pills-statistiche" aria-selected="false">
+                <i class="bi bi-graph-up me-2"></i>Statistiche
+            </button>
         </div>
     </div>
 
@@ -78,15 +87,30 @@
 
         <div class="tab-pane fade show active" id="v-pills-dati" role="tabpanel" aria-labelledby="v-pills-dati-tab">
             <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Bentornato, Mario Rossi!</h3>
-                    <p class="card-subtitle mb-2 text-muted">Qui puoi gestire le tue informazioni.</p>
-                    <hr>
-                    <p><strong>Nome:</strong> Mario Rossi</p>
-                    <p><strong>Email:</strong> mario.rossi@email.com</p>
-                    <p><strong>Tipo Account:</strong> Cliente</p>
-                    <button class="btn btn-outline-primary">Modifica Dati</button>
+            <div class="card-header">
+                <h4>I miei Dati</h4>
+            </div>
+            <div class="card-body">
+                <form action="/api/user/update" method="POST">
+                <div class="mb-3">
+                    <label for="userName" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="userName" name="nome">
                 </div>
+                <div class="mb-3">
+                    <label for="userSurname" class="form-label">Cognome</label>
+                    <input type="text" class="form-control" id="userSurname" name="cognome">
+                </div>
+                <div class="mb-3">
+                    <label for="userEmail" class="form-label">Indirizzo Email</label>
+                    <input type="email" class="form-control" id="userEmail" name="email">
+                </div>
+                  <div class="mb-3">
+                    <label for="userDataNascita" class="form-label">Data di nascita</label>
+                    <input type="date" class="form-control" id="userDataNascita" name="data_nascita">
+                </div>
+                <button type="submit" class="btn btn-primary">Salva modifiche</button>
+                </form>
+            </div>
             </div>
         </div>
         
@@ -167,11 +191,89 @@
             </div>
         </div>
 
-    </div>
-</div>
-</main>
+        <div class="tab-pane fade" id="v-pills-prodotti" role="tabpanel" aria-labelledby="v-pills-prodotti-tab">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>I Miei Prodotti in Vendita</h4>
+                    <a href="#" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Aggiungi Prodotto
+                    </a>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Prodotto</th>
+                                <th scope="col">Prezzo</th>
+                                <th scope="col">Quantità</th>
+                                <th scope="col">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Funko Pop! Goku</td>
+                                <td>€ 15.00</td>
+                                <td>12</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-secondary">Modifica</a>
+                                    <a href="#" class="btn btn-sm btn-outline-danger">Elimina</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Mazzo Pokémon "Scarlatto e Violetto"</td>
+                                <td>€ 25.00</td>
+                                <td>5</td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-outline-secondary">Modifica</a>
+                                    <a href="#" class="btn btn-sm btn-outline-danger">Elimina</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-<footer class="mt-auto bg-body-tertiary py-4">
+        <div class="tab-pane fade" id="v-pills-statistiche" role="tabpanel" aria-labelledby="v-pills-statistiche-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Statistiche Vendite</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="card bg-light py-3">
+                                <h5 class="card-title">Guadagni Totali</h5>
+                                <p class="card-text fs-3">€ 1,234.56</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light py-3">
+                                <h5 class="card-title">Prodotti Venduti</h5>
+                                <p class="card-text fs-3">87</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light py-3">
+                                <h5 class="card-title">Valutazione Media</h5>
+                                <p class="card-text fs-3">4.8 <i class="bi bi-star-fill text-warning"></i></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h6>Andamento Vendite (Ultimi 30 giorni)</h6>
+                        <div class="bg-secondary-subtle p-5 rounded text-center text-muted">
+                            [Area Grafico]
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+</div>
+    </main>
+   <footer class="mt-auto bg-body-tertiary py-4">
         <div class="container">
           <ul class="nav justify-content-center pb-3 mb-3">
             <li class="nav-item"><a href="information.html#chi-siamo" class="nav-link px-2 text-muted header-nav-link">Chi Siamo</a></li>
@@ -190,5 +292,90 @@
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/user/details');
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('userName').value = user.nome || '';
+                    // Assicurati che l'ID per il cognome sia corretto
+                    document.getElementById('userSurname').value = user.cognome || '';
+                    document.getElementById('userEmail').value = user.email || '';
+                    
+                    // Formatta la data correttamente per l'input type="date"
+                    if (user.data_nascita) {
+                        // La data dal DB potrebbe essere in formato diverso, es. con l'ora.
+                        // Prendiamo solo la parte YYYY-MM-DD.
+                        document.getElementById('userDataNascita').value = user.data_nascita.split('T')[0];
+                    }
+                } else {
+                    console.error('Errore nel recupero dei dati utente:', response.statusText);
+                    // Potresti voler mostrare un messaggio all'utente qui
+                }
+            } catch (error) {
+                console.error('Errore di rete o durante il fetch:', error);
+            }
+
+            // --- NUOVA FUNZIONE PER CARICARE LO STORICO ORDINI ---
+            try {
+                const ordersResponse = await fetch('/api/user/orders');
+                if (ordersResponse.ok) {
+                    const orders = await ordersResponse.json();
+                    const ordersTableBody = document.querySelector('#v-pills-ordini tbody');
+                    
+                    // Pulisce la tabella prima di aggiungere nuove righe
+                    ordersTableBody.innerHTML = ''; 
+
+                    if (orders.length === 0) {
+                        ordersTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Non hai ancora effettuato ordini.</td></tr>';
+                    } else {
+                        orders.forEach(order => {
+                            const row = document.createElement('tr');
+                            
+                            // Formatta la data in un formato più leggibile (GG/MM/AAAA)
+                            const orderDate = new Date(order.data_ordine).toLocaleDateString('it-IT');
+                            
+                            // Badge colorato per lo stato
+                            let statusBadge;
+                            switch (order.stato.toLowerCase()) {
+                                case 'spedito':
+                                    statusBadge = `<span class="badge bg-primary">${order.stato}</span>`;
+                                    break;
+                                case 'consegnato':
+                                    statusBadge = `<span class="badge bg-success">${order.stato}</span>`;
+                                    break;
+                                case 'in elaborazione':
+                                    statusBadge = `<span class="badge bg-warning text-dark">${order.stato}</span>`;
+                                    break;
+                                default:
+                                    statusBadge = `<span class="badge bg-secondary">${order.stato}</span>`;
+                            }
+
+                            row.innerHTML = `
+                                <td>#${order.id}</td>
+                                <td>${orderDate}</td>
+                                <td>€ ${order.totale.toFixed(2)}</td>
+                                <td>${statusBadge}</td>
+                            `;
+                            ordersTableBody.appendChild(row);
+                        });
+                    }
+                } else {
+                    console.error('Errore nel recupero dello storico ordini:', ordersResponse.statusText);
+                    document.querySelector('#v-pills-ordini tbody').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Impossibile caricare lo storico ordini.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Errore di rete per lo storico ordini:', error);
+            }
+            // --- FINE FUNZIONE STORICO ORDINI ---
+        });
+    </script>
 </body>
 </html>
