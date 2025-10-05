@@ -1,0 +1,162 @@
+/* Aggiungi questo in style.css se vuoi controllare la dimensione del logo */
+header img {
+    height: 70px; /* Imposta l'altezza che preferisci */
+    width: auto;  /* La larghezza si adatterà in automatico */
+}
+
+/* --------------------------------------------------- */
+/* Stili Personalizzati per Collezionista Moderno      */
+/* --------------------------------------------------- */
+
+body {
+    /* Un font più moderno e leggibile rispetto a quello di default */
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Card Prodotto */
+.product-card img {
+    /* Mantiene le immagini dei prodotti proporzionate e centrate */
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    padding: 1rem; /* Aggiunge un po' d'aria intorno all'immagine */
+}
+
+.product-card {
+    /* Transizioni per l'effetto al passaggio del mouse */
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-5px); /* Solleva leggermente la card */
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; /* Ombra più pronunciata */
+}
+
+/* Sezione Brand */
+.brand-logo img {
+    /* Rende i loghi più discreti, colorandoli al passaggio del mouse */
+    max-height: 50px;
+    filter: grayscale(100%);
+    opacity: 0.7;
+    transition: all .3s ease;
+}
+
+.brand-logo img:hover {
+    filter: grayscale(0%);
+    opacity: 1;
+}
+
+/* Miglioramenti al Carousel */
+.carousel-caption {
+    /* Aggiunge uno sfondo semi-trasparente per migliorare la leggibilità del testo */
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: .5rem;
+    padding: 1.5rem;
+}
+
+/*
+ * File: style.css
+ * Descrizione: Stile moderno e minimale per FunShop 2025.
+*/
+
+/* * 1. DEFINIZIONE DEI COLORI E FONT GLOBALI
+ * Palette aggiornata con colori più sofisticati e un font variabile moderno.
+*/
+:root {
+    --bs-primary: #1A202C; /* Un grigio-blu scuro e sofisticato */
+    --bs-primary-rgb: 26, 32, 44;
+    --bs-secondary: #718096; /* Grigio medio per testo secondario */
+    --accent-color: #99f6e4; /* Un verde acqua/menta vibrante come accento */
+    --bs-link-hover-color: #000000; /* Nero pieno per l'hover dei link, per massima leggibilità */
+    --bs-body-font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* * 2. STILI GENERALI DEL BODY
+*/
+body {
+    background-color: #F7FAFC; /* Sfondo bianco sporco, pulito e arioso */
+    color: #2D3748; /* Colore del testo principale, più morbido del nero puro */
+}
+
+/* * 3. STILI PER L'HEADER E IL LOGO
+*/
+/* Stile per il logo nell'header */
+.logo {
+    height: 60px; /* Imposta l'altezza desiderata */
+    width: 60px;  /* Imposta la larghezza uguale all'altezza */
+    border-radius: 50%; /* Questo crea l'effetto rotondo */
+    object-fit: cover; /* Assicura che l'immagine riempia il cerchio senza deformarsi */
+}
+
+/* Header con sfondo scuro e ombra sottile */
+header.sticky-top {
+    background-color: #4F46E5 !important; /* Un viola-blu vibrante */
+    border-bottom: none !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* * Adattiamo il colore dei link nell'header per contrastare con lo sfondo scuro
+*/
+header.sticky-top .nav-link, 
+header.sticky-top .dropdown-toggle {
+    color: rgba(255, 255, 255, 0.7) !important; /* Testo bianco semi-trasparente */
+    transition: color 0.2s ease-in-out;
+    font-weight: 500;
+}
+
+/* Effetto al passaggio del mouse sui link della navbar */
+header.sticky-top .nav-link:hover, 
+header.sticky-top .dropdown-toggle:hover {
+    color: #FFFFFF !important; /* Testo bianco pieno */
+}
+
+/* Colore per il link della pagina attiva */
+header.sticky-top .nav-link.link-secondary {
+    color: var(--accent-color) !important; /* Usa il colore d'accento per la pagina attiva */
+    font-weight: 700;
+}
+
+/* * 4. STILI PER LE CARD DEI PRODOTTI
+ * Un effetto hover più sottile e moderno.
+*/
+.product-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 0.75rem; /* Angoli più arrotondati */
+    background-color: #FFFFFF;
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out, border-color .2s ease-in-out;
+}
+
+.product-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(45, 55, 72, .1) !important;
+    border-color: transparent;
+}
+
+.product-card img {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+}
+
+/* * 5. STILI PER I PULSANTI PERSONALIZZATI (con colore d'accento)
+*/
+.btn-accent {
+    background-color: var(--accent-color);
+    color: var(--bs-primary);
+    font-weight: 700;
+    border: none;
+    border-radius: 0.5rem;
+    transition: background-color .2s ease;
+}
+
+.btn-accent:hover {
+    background-color: #67e8d1; /* Versione leggermente più scura dell'accento */
+    color: #000;
+}
+
+/* * 6. STILI PER IL FOOTER
+*/
+footer {
+    background-color: #FFFFFF;
+    border-top: 1px solid #EDF2F7;
+}
