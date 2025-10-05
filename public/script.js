@@ -95,77 +95,88 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Elemento con id "cart-button" non trovato.');
     }
 
+
+    // Funzione per aggiornare la logica del profilo in base allo stato di autenticazione
+    const updateUserProfileLogic = async () => {
+        if (!profileButton) {
+            console.error('Elemento con id "profile-button" non trovato.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/status');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.loggedIn) {
+    // L'utente è loggato: crea e gestisce il popup del profilo
+    profilePreview = document.createElement('div');
+    profilePreview.id = 'profile-preview'; // Applica gli stili dal CSS tramite ID
+
+    // Popola con i link
+    profilePreview.innerHTML = `
+        <a href="utente.html" class="profile-link">Il mio account</a>
+        <a href="/impostazioni.html" class="profile-link">Impostazioni</a>
+        <a href="/nuovo-prodotto.html" class="profile-link">Aggiungi un nuovo prodotto</a>
+        <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
+        <a href="/logout" class="profile-link">Esci da questo account</a>
+    `;
     
+    document.body.appendChild(profilePreview);
 
-    // --- LOGICA PROFILO ---
-    if (profileButton) {
-        const isUserLoggedIn = () => true; // Cambia in `false` per testare
+    // La logica per mostrare/nascondere rimane IDENTICA
+    const showProfilePreview = () => {
+        clearTimeout(hideProfileTimeout);
+        clearTimeout(hideCartTimeout);
+        hideCartPreview();
 
-        if (!isUserLoggedIn()) {
+        const buttonRect = profileButton.getBoundingClientRect();
+        const previewRect = profilePreview.getBoundingClientRect();
+        profilePreview.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
+        let leftPosition = buttonRect.right + window.scrollX - previewRect.width;
+        if (leftPosition < 10) leftPosition = 10;
+        profilePreview.style.left = `${leftPosition}px`;
+        profilePreview.style.opacity = '1';
+        profilePreview.style.visibility = 'visible';
+        profilePreview.style.transform = 'translateY(0)';
+    };
+
+    const startProfileHideTimer = () => {
+        hideProfileTimeout = setTimeout(hideProfilePreview, HIDE_DELAY);
+    };
+
+    profileButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (profilePreview.style.visibility === 'hidden') {
+            showProfilePreview();
+        }
+    });
+
+    [profileButton, profilePreview].forEach(element => {
+        element.addEventListener('mouseenter', showProfilePreview);
+        element.addEventListener('mouseleave', startProfileHideTimer);
+    });
+
+            } else {
+                // L'utente non è loggato: il pulsante del profilo reindirizza alla registrazione
+                profileButton.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    window.location.href = 'registrazione.html';
+                });
+            }
+        } catch (error) {
+            console.error('Errore nel recuperare lo stato di autenticazione:', error);
+            // Fallback: il pulsante del profilo reindirizza alla registrazione in caso di errore
             profileButton.addEventListener('click', (event) => {
                 event.preventDefault();
                 window.location.href = 'registrazione.html';
             });
-            return;
         }
+    };
 
-        profilePreview = document.createElement('div');
-        profilePreview.id = 'profile-preview';
-        profilePreview.innerHTML = `
-            <a href="utente.html" class="profile-link">Il mio account</a>
-            <a href="/impostazioni.html" class="profile-link">Impostazioni</a>
-            <a href="/nuovo-prodotto.html" class="profile-link">Aggiungi un nuovo prodotto</a>
-            <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
-            <a href="/logout" class="profile-link">Esci da questo account</a>
-        `;
-        Object.assign(profilePreview.style, {
-            position: 'absolute', minWidth: '200px', backgroundColor: 'white',
-            border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            padding: '5px 0', fontFamily: 'sans-serif', zIndex: '9999',
-            opacity: '0', visibility: 'hidden', transform: 'translateY(10px)',
-            transition: 'opacity 0.2s, transform 0.2s, visibility 0.2s'
-        });
-        profilePreview.querySelectorAll('.profile-link').forEach(link => {
-            Object.assign(link.style, {
-                display: 'block', padding: '8px 15px', color: '#333',
-                textDecoration: 'none', fontSize: '14px', transition: 'background-color 0.2s'
-            });
-            link.addEventListener('mouseenter', () => link.style.backgroundColor = '#f5f5f5');
-            link.addEventListener('mouseleave', () => link.style.backgroundColor = 'transparent');
-        });
-        document.body.appendChild(profilePreview);
-
-        const showProfilePreview = () => {
-            clearTimeout(hideProfileTimeout);
-            clearTimeout(hideCartTimeout);
-            hideCartPreview(); // Nasconde l'altro popup
-
-            const buttonRect = profileButton.getBoundingClientRect();
-            const previewRect = profilePreview.getBoundingClientRect();
-            profilePreview.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
-            let leftPosition = buttonRect.right + window.scrollX - previewRect.width;
-            if (leftPosition < 10) leftPosition = 10;
-            profilePreview.style.left = `${leftPosition}px`;
-            profilePreview.style.opacity = '1';
-            profilePreview.style.visibility = 'visible';
-            profilePreview.style.transform = 'translateY(0)';
-        };
-
-        const startProfileHideTimer = () => {
-            hideProfileTimeout = setTimeout(hideProfilePreview, HIDE_DELAY);
-        };
-
-        profileButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            if (profilePreview.style.visibility === 'hidden') showProfilePreview();
-        });
-
-        [profileButton, profilePreview].forEach(element => {
-            element.addEventListener('mouseenter', showProfilePreview);
-            element.addEventListener('mouseleave', startProfileHideTimer);
-        });
-    } else {
-        console.error('Elemento con id "profile-button" non trovato.');
-    }
+    // Chiama la funzione per configurare la logica del profilo
+    updateUserProfileLogic();
 });
 

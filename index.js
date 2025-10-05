@@ -11,20 +11,25 @@ const path = require('path');
 const app = express();
 const port = 5500;
 
-// --- 3. CONFIGURAZIONE DEI MIDDLEWARE ---
+// --- 3. CONFIGURAZIONE DEI MIDDLEWARE (ORDINE CORRETTO) ---
 
-// Servi i file statici (HTML, CSS, JS del client) dalla cartella 'public'
+// 1. PRIMO: Servi i file statici (HTML, CSS, JS del client) dalla cartella 'public'
+// In questo modo, le richieste per i file non vengono processate dalle sessioni.
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Permetti a Express di leggere i dati inviati dai form
+// 2. POI: Permetti a Express di leggere i dati inviati dai form
 app.use(express.urlencoded({ extended: true }));
 
-// Configurazione di express-session per la gestione delle sessioni
+// 3. DOPO: Configura le sessioni. Questo deve venire PRIMA di passport.
 app.use(session({
     secret: 'una-chiave-segreta-molto-importante-e-difficile-da-indovinare', // CAMBIA QUESTA CHIAVE!
     resave: false,
     saveUninitialized: false
 }));
+
+// 4. INFINE: Inizializza Passport.js per l'autenticazione
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Inizializzazione di Passport.js per l'autenticazione
 app.use(passport.initialize());
@@ -120,7 +125,7 @@ app.post('/registrazione', async (req, res) => {
 
 // Rotta per il LOGIN (usa Passport per l'autenticazione)
 app.post('/login', passport.authenticate('local', {
-    successRedirect: '/index_login.html',   // Se il login ha successo, vai alla pagina profilo
+    successRedirect: '/index.html',   // Se il login ha successo, vai alla pagina profilo
     failureRedirect: '/login.html'     // Se fallisce, torna alla pagina di login
 }));
 
@@ -132,6 +137,27 @@ app.get('/logout', (req, res, next) => {
     });
 });
 
+
+// AGGIUNGI QUESTA NUOVA ROTTA NEL TUO index.js
+app.get('/api/auth/status', (req, res) => {
+    if (req.isAuthenticated()) {
+        // Se l'utente è autenticato, invia i suoi dati
+        res.json({
+            loggedIn: true,
+            user: {
+                id: req.user.id,
+                username: req.user.username,
+                nome: req.user.nome
+                // Aggiungi altri campi se necessario, ma NON la password_hash!
+            }
+        });
+    } else {
+        // Se l'utente non è autenticato
+        res.json({
+            loggedIn: false
+        });
+    }
+});
 
 // --- 7. AVVIO DEL SERVER ---
 app.listen(port, () => {
