@@ -95,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Elemento con id "cart-button" non trovato.');
     }
 
+    
+
     // --- LOGICA PROFILO ---
     if (profileButton) {
         const isUserLoggedIn = () => true; // Cambia in `false` per testare

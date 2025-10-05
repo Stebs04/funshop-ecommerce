@@ -99,6 +99,118 @@
             </form>
     
             <div class="text-end">
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const profileButton = document.getElementById('profile-button');
+                        let profilePreview;
+                        let hideProfileTimeout;
+                        const HIDE_DELAY = 200; // ms
+
+                        // Funzioni per gestire la visibilità dei popup
+                        const hideProfilePreview = () => {
+                            if (profilePreview) {
+                                profilePreview.style.opacity = '0';
+                                profilePreview.style.visibility = 'hidden';
+                                profilePreview.style.transform = 'translateY(10px)';
+                            }
+                        };
+
+                        // Mock di funzioni/variabili per evitare errori se non definite altrove
+                        let hideCartTimeout;
+                        const hideCartPreview = () => {
+                            // Se hai un popup per il carrello, qui andrà la logica per nasconderlo
+                        };
+
+
+                        if (profileButton) {
+                            const isUserLoggedIn = () => true; // Cambia in `false` per testare lo stato non loggato
+
+                            if (!isUserLoggedIn()) {
+                                profileButton.addEventListener('click', (event) => {
+                                    event.preventDefault();
+                                    window.location.href = 'registrazione.html';
+                                });
+                                return;
+                            }
+
+                            // Crea il popup del profilo solo se non esiste già
+                            if (!document.getElementById('profile-preview')) {
+                                profilePreview = document.createElement('div');
+                                profilePreview.id = 'profile-preview';
+                                profilePreview.innerHTML = `
+                                    <a href="utente.html" class="profile-link">Il mio account</a>
+                                    <a href="impostazioni.html" class="profile-link">Impostazioni</a>
+                                    <a href="nuovo-prodotto.html" class="profile-link">Aggiungi un nuovo prodotto</a>
+                                    <div style="border-top: 1px solid #eee; margin: 5px 0;"></div>
+                                    <a href="#" id="logout-link" class="profile-link">Esci da questo account</a>
+                                `;
+                                Object.assign(profilePreview.style, {
+                                    position: 'absolute', minWidth: '200px', backgroundColor: 'white',
+                                    border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                    padding: '5px 0', fontFamily: 'sans-serif', zIndex: '9999',
+                                    opacity: '0', visibility: 'hidden', transform: 'translateY(10px)',
+                                    transition: 'opacity 0.2s, transform 0.2s, visibility 0.2s'
+                                });
+                                profilePreview.querySelectorAll('.profile-link').forEach(link => {
+                                    Object.assign(link.style, {
+                                        display: 'block', padding: '8px 15px', color: '#333',
+                                        textDecoration: 'none', fontSize: '14px', transition: 'background-color 0.2s'
+                                    });
+                                    link.addEventListener('mouseenter', () => link.style.backgroundColor = '#f5f5f5');
+                                    link.addEventListener('mouseleave', () => link.style.backgroundColor = 'transparent');
+                                });
+                                document.body.appendChild(profilePreview);
+
+                                // Aggiungi qui la logica per il logout
+                                document.getElementById('logout-link').addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    // Aggiungi la tua logica di logout (es. pulire sessione, reindirizzare)
+                                    console.log("Utente disconnesso.");
+                                    window.location.href = 'index.html';
+                                });
+                            } else {
+                                profilePreview = document.getElementById('profile-preview');
+                            }
+
+
+                            const showProfilePreview = () => {
+                                clearTimeout(hideProfileTimeout);
+                                clearTimeout(hideCartTimeout); // Cancella il timer dell'altro popup
+                                hideCartPreview(); // Nasconde l'altro popup
+
+                                const buttonRect = profileButton.getBoundingClientRect();
+                                const previewRect = profilePreview.getBoundingClientRect();
+                                profilePreview.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
+                                let leftPosition = buttonRect.right + window.scrollX - previewRect.width;
+                                if (leftPosition < 10) leftPosition = 10;
+                                profilePreview.style.left = `${leftPosition}px`;
+                                profilePreview.style.opacity = '1';
+                                profilePreview.style.visibility = 'visible';
+                                profilePreview.style.transform = 'translateY(0)';
+                            };
+
+                            const startProfileHideTimer = () => {
+                                hideProfileTimeout = setTimeout(hideProfilePreview, HIDE_DELAY);
+                            };
+
+                            profileButton.addEventListener('click', (event) => {
+                                event.preventDefault();
+                                if (profilePreview.style.visibility === 'hidden') {
+                                    showProfilePreview();
+                                } else {
+                                    hideProfilePreview();
+                                }
+                            });
+
+                            [profileButton, profilePreview].forEach(element => {
+                                element.addEventListener('mouseenter', showProfilePreview);
+                                element.addEventListener('mouseleave', startProfileHideTimer);
+                            });
+                        } else {
+                            console.error('Elemento con id "profile-button" non trovato.');
+                        }
+                    });
+                </script>
                 <a id="profile-button" href="utente.html" class="btn btn-primary me-2" title="Il mio Account"><i class="bi bi-person fs-5"></i></a>
                 <a id="cart-button" href="#" class="btn btn-primary position-relative" title="cart-button">
                     <i class="bi bi-cart fs-5"></i>
