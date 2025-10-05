@@ -89,89 +89,89 @@
     <main class="container my-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-body p-4 p-md-5">
-                        <h2 class="text-center mb-4">Aggiungi un nuovo prodotto</h2>
-                        <form id="new-product-form">
-                            <!-- Titolo Prodotto -->
-                            <div class="mb-3">
-                                <label for="productTitle" class="form-label">Titolo del prodotto</label>
-                                <input type="text" class="form-control" id="productTitle" placeholder="Es. Action Figure Son Goku SSJ" required>
-                            </div>
-
-                            <!-- Descrizione -->
-                            <div class="mb-3">
-                                <label for="productDescription" class="form-label">Descrizione</label>
-                                <textarea class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
-                            </div>
-
-                            <!-- Condizione -->
-                            <div class="mb-3">
-                                <label for="productCondition" class="form-label">Condizione</label>
-                                <select class="form-select" id="productCondition" required>
-                                    <option selected disabled value="">Scegli la condizione...</option>
-                                    <option value="nuovo">Nuovo</option>
-                                    <option value="ottimo-stato">Ottimo stato</option>
-                                    <option value="tanto-usato">Tanto usato</option>
-                                </select>
-                            </div>
-
-                            <!-- Parole Chiave -->
-                            <div class="mb-3">
-                                <label for="productKeywords" class="form-label">Parole chiave</label>
-                                <input type="text" class="form-control" id="productKeywords" placeholder="Es. dragon ball, goku, action figure, bandai (separate da virgola)">
-                                <div class="form-text">Le parole chiave aiutano gli altri a trovare il tuo prodotto.</div>
-                            </div>
-
-                            <!-- Immagini -->
-                            <div class="mb-4">
-                                <label for="productImages" class="form-label">Immagini del prodotto</label>
-                                <input class="form-control" type="file" id="productImages" multiple accept="image/*">
-                            </div>
-
-                            <!-- Tipo di Vendita -->
-                            <div class="mb-3">
-                                <label class="form-label">Modalità di vendita</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="sellingType" id="buyNow" value="buyNow" checked>
-                                    <label class="form-check-label" for="buyNow">
-                                        Vendi subito (prezzo fisso)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="sellingType" id="auction" value="auction">
-                                    <label class="form-check-label" for="auction">
-                                        Metti all'asta
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Prezzo -->
-                            <div id="price-section" class="mb-3">
-                                <label for="productPrice" class="form-label">Prezzo</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">€</span>
-                                    <input type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0" required>
-                                </div>
-                            </div>
-
-                            <!-- Prezzo di Partenza Asta (nascosto di default) -->
-                            <div id="auction-price-section" class="mb-3 d-none">
-                                <label for="auctionStartPrice" class="form-label">Prezzo di partenza asta</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">€</span>
-                                    <input type="number" class="form-control" id="auctionStartPrice" placeholder="9.99" step="0.01" min="0">
-                                </div>
-                            </div>
-
-                            <!-- Pulsanti -->
-                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                                <button type="button" class="btn btn-outline-secondary">Annulla</button>
-                                <button type="submit" class="btn btn-primary">Metti in vendita</button>
-                            </div>
-                        </form>
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                <h2 class="text-center mb-4">Aggiungi un nuovo prodotto</h2>
+                <form id="new-product-form" action="/nuovo-prodotto" method="POST" enctype="multipart/form-data">
+                    <!-- Titolo Prodotto -->
+                    <div class="mb-3">
+                    <label for="productTitle" class="form-label">Titolo del prodotto</label>
+                    <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action Figure Son Goku SSJ" required>
                     </div>
+
+                    <!-- Descrizione -->
+                    <div class="mb-3">
+                    <label for="productDescription" class="form-label">Descrizione</label>
+                    <textarea name="descrizione" class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
+                    </div>
+
+                    <!-- Condizione -->
+                    <div class="mb-3">
+                    <label for="productCondition" class="form-label">Condizione</label>
+                    <select name="condizione" class="form-select" id="productCondition" required>
+                        <option selected disabled value="">Scegli la condizione...</option>
+                        <option value="nuovo">Nuovo</option>
+                        <option value="ottimo-stato">Ottimo stato</option>
+                        <option value="tanto-usato">Tanto usato</option>
+                    </select>
+                    </div>
+
+                    <!-- Parole Chiave -->
+                    <div class="mb-3">
+                    <label for="productKeywords" class="form-label">Parole chiave</label>
+                    <input name="parola_chiave" type="text" class="form-control" id="productKeywords" placeholder="Es. dragon ball, goku, action figure, bandai (separate da virgola)">
+                    <div class="form-text">Le parole chiave aiutano gli altri a trovare il tuo prodotto.</div>
+                    </div>
+
+                    <!-- Immagini -->
+                    <div class="mb-4">
+                    <label for="productImages" class="form-label">Immagini del prodotto</label>
+                    <input name="percorso_immagine" class="form-control" type="file" id="productImages" multiple accept="image/*">
+                    </div>
+
+                    <!-- Tipo di Vendita -->
+                    <div class="mb-3">
+                    <label class="form-label">Modalità di vendita</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sellingType" id="buyNow" value="buyNow" checked>
+                        <label class="form-check-label" for="buyNow">
+                        Vendi subito (prezzo fisso)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sellingType" id="auction" value="auction">
+                        <label class="form-check-label" for="auction">
+                        Metti all'asta
+                        </label>
+                    </div>
+                    </div>
+
+                    <!-- Prezzo -->
+                    <div id="price-section" class="mb-3">
+                    <label for="productPrice" class="form-label">Prezzo</label>
+                    <div class="input-group">
+                        <span class="input-group-text">€</span>
+                        <input name="prezzo" type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0">
+                    </div>
+                    </div>
+
+                    <!-- Prezzo di Partenza Asta (nascosto di default) -->
+                    <div id="auction-price-section" class="mb-3 d-none">
+                    <label for="auctionStartPrice" class="form-label">Prezzo di partenza asta</label>
+                    <div class="input-group">
+                        <span class="input-group-text">€</span>
+                        <input name="prezzo_asta" type="number" class="form-control" id="auctionStartPrice" placeholder="9.99" step="0.01" min="0">
+                    </div>
+                    </div>
+
+                    <!-- Pulsanti -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="button" class="btn btn-outline-secondary">Annulla</button>
+                    <button type="submit" class="btn btn-primary">Metti in vendita</button>
+                    </div>
+                </form>
                 </div>
+            </div>
             </div>
         </div>
     </main>
