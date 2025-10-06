@@ -515,6 +515,45 @@ CREATE TABLE IF NOT EXISTS storico_ordini (
     }
 });
 
+// NUOVA ROTTA: Fornisce i prodotti dell'utente per la pagina del profilo
+app.get('/api/user/products', ensureAuthenticated, (req, res) => {
+    const userId = req.user.id;
+    const sql = `SELECT id, nome, prezzo, prezzo_asta FROM prodotti WHERE user_id = ? ORDER BY data_inserimento DESC`;
+
+    db.all(sql, [userId], (err, rows) => {
+        if (err) {
+            console.error("Errore durante il recupero dei prodotti dell'utente:", err.message);
+            return res.status(500).json({ error: "Errore interno del server." });
+        }
+        res.json(rows);
+    });
+});
+
+// NUOVA ROTTA: Elimina un prodotto
+app.delete('/api/products/:id', ensureAuthenticated, (req, res) => {
+    const productId = req.params.id;
+    const userId = req.user.id;
+
+    // La query elimina il prodotto solo se l'ID del prodotto e l'ID dell'utente corrispondono
+    const sql = `DELETE FROM prodotti WHERE id = ? AND user_id = ?`;
+
+    db.run(sql, [productId, userId], function(err) {
+        if (err) {
+            console.error("Errore durante l'eliminazione del prodotto:", err.message);
+            return res.status(500).json({ error: "Errore interno del server." });
+        }
+
+        // this.changes restituisce il numero di righe modificate.
+        // Se è 0, significa che nessun prodotto è stato trovato con quell'ID per quell'utente.
+        if (this.changes === 0) {
+            return res.status(403).json({ error: "Prodotto non trovato o non autorizzato a eliminare." });
+        }
+
+        console.log(`Prodotto con ID ${productId} eliminato dall'utente ${userId}.`);
+        res.status(200).json({ message: "Prodotto eliminato con successo." });
+    });
+});
+
 // --- 7. AVVIO DEL SERVER ---
 app.listen(port, () => {
     console.log(`Server FunShop in ascolto su http://localhost:${port}`);
