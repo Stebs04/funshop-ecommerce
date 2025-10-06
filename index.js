@@ -1,14 +1,12 @@
 // --- 1. IMPORTAZIONI DELLE LIBRERIE ---
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
 const session = require('express-session');
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const multer = require('multer'); // Aggiungi multer
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
+const passport = require('.middleware/passport'); 
 
 // --- 2. CONFIGURAZIONE INIZIALE DI EXPRESS ---
 const app = express();
@@ -30,36 +28,32 @@ app.use(session({
     saveUninitialized: false
 }));
 
+const session = require('express-session');
+const flash = require('connect-flash'); // <-- Importa flash
+
 // 4. INFINE: Inizializza Passport.js per l'autenticazione
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-const db = new sqlite3.Database('database/datastorage.db', (err) => {
+const db = new sqlite3.Database('datastorage.db', (err) => {
     if (err) {
         console.error("Errore durante la connessione al database:", err.message);
     } else {
         console.log('Connesso al database SQLite.');
-    }
-});
-
-// Query per creare la tabella degli utenti se non esiste già
-const createUserTableSql = `
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  nome TEXT,
-  cognome TEXT,
-  email TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  tipo_account TEXT DEFAULT 'cliente' 
-);`;
-
-db.run(createUserTableSql, (err) => {
-    if (err) {
-        console.error("Errore durante la creazione della tabella:", err.message);
-    } else {
-        console.log("Tabella 'users' pronta.");
+        // Leggi ed esegui lo schema SQL all'avvio
+        fs.readFile('schema.sql', 'utf8', (err, sql) => {
+            if (err) {
+                console.error("Errore durante la lettura del file schema.sql:", err);
+                return;
+            }
+            db.exec(sql, (err) => {
+                if (err) {
+                    console.error("Errore durante l'esecuzione dello schema SQL:", err.message);
+                } else {
+                    console.log("Schema del database inizializzato con successo.");
+                }
+            });
+        });
     }
 });
 
@@ -184,28 +178,6 @@ app.get('/api/auth/status', (req, res) => {
 
 
 // Query per creare la tabella dei prodotti se non esiste già
-const createProdottiTableSql = `
-CREATE TABLE IF NOT EXISTS prodotti (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL,
-    descrizione TEXT,
-    condizione TEXT, -- Es. 'nuovo', 'usato come nuovo', 'usato'
-    parola_chiave TEXT NOT NULL,
-    percorso_immagine TEXT, -- Percorso del file dell'immagine salvata in locale
-    prezzo REAL,
-    prezzo_asta REAL,
-    data_inserimento DATETIME DEFAULT CURRENT_TIMESTAMP,
-    user_id INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id)
-);`;
-
-db.run(createProdottiTableSql, (err) => {
-        if (err) {
-                console.error("Errore durante la creazione della tabella prodotti:", err.message);
-        } else {
-                console.log("Tabella 'prodotti' pronta.");
-        }
-});
 
 const deleteuser = `DROP TABLE users`;
 const deleteproduct = `DROP TABLE prodotti`
@@ -305,25 +277,6 @@ app.get('/api/products', (req, res) => {
 
 
 // Query per creare la tabella dei venditori se non esiste già
-const createVenditoriTableSql = `
-CREATE TABLE IF NOT EXISTS venditori (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome_negozio TEXT NOT NULL,
-    partita_iva TEXT NOT NULL UNIQUE,
-    email_contatto TEXT NOT NULL,
-    iban TEXT NOT NULL,
-    descrizione TEXT,
-    user_id INTEGER NOT NULL UNIQUE,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);`;
-
-db.run(createVenditoriTableSql, (err) => {
-        if (err) {
-                console.error("Errore durante la creazione della tabella venditori:", err.message);
-        } else {
-                console.log("Tabella 'venditori' pronta.");
-        }
-});
 
 
 // NUOVA ROTTA: Gestisce la registrazione come venditore
@@ -377,30 +330,6 @@ app.post('/venditore', ensureAuthenticated, (req, res) => {
 });
 
 // Query per creare la tabella delle informazioni account se non esiste già
-const createAccountInfosTableSql = `
-CREATE TABLE IF NOT EXISTS accountinfos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL UNIQUE,
-    indirizzo TEXT,      -- Indirizzo di spedizione principale
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-);`;
-
-db.run(createAccountInfosTableSql, (err) => {
-    if (err) {
-        console.error("Errore durante la creazione della tabella accountinfos:", err.message);
-    } else {
-        console.log("Tabella 'accountinfos' pronta.");
-    }
-});
-
-// Aggiungi una colonna per la data di nascita se non esiste
-db.run("ALTER TABLE accountinfos ADD COLUMN data_nascita DATE;", (err) => {
-    if (err && !err.message.includes('duplicate column name')) {
-        console.error("Errore durante l'aggiunta della colonna data_nascita:", err.message);
-    } else {
-        console.log("Colonna 'data_nascita' pronta in 'accountinfos'.");
-    }
-});
 
 // NUOVA ROTTA: Aggiorna i dati dell'utente
 app.post('/api/user/update', ensureAuthenticated, (req, res) => {
@@ -497,23 +426,6 @@ app.get('/api/user/details', ensureAuthenticated, (req, res) => {
 });
 
 // Query per creare la tabella storico_ordini se non esiste già
-db.run(`
-CREATE TABLE IF NOT EXISTS storico_ordini (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    data_ordine DATETIME DEFAULT CURRENT_TIMESTAMP,
-    totale REAL NOT NULL,
-    stato TEXT DEFAULT 'In elaborazione', -- Es. 'In elaborazione', 'Spedito', 'Consegnato'
-    user_id INTEGER NOT NULL,
-    prodotto_id INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE SET NULL
-);`, (err) => {
-    if (err) {
-        console.error("Errore durante la creazione della tabella storico_ordini:", err.message);
-    } else {
-        console.log("Tabella 'storico_ordini' pronta.");
-    }
-});
 
 // NUOVA ROTTA: Fornisce i prodotti dell'utente per la pagina del profilo
 app.get('/api/user/products', ensureAuthenticated, (req, res) => {
