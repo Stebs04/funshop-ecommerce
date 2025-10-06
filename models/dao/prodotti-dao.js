@@ -1,6 +1,6 @@
 'use strict';
 
-const db = require('./managedb'); // Assicurati che il percorso al tuo database sia corretto
+const db = require('../../managedb'); // Assicurati che il percorso al tuo database sia corretto
 
 /**
  * ProdottiDAO (Data Access Object)

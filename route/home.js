@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const prodottiDao = require('./prodotti-dao'); // Importa il DAO dei prodotti
+const prodottiDao = require('../models/dao/prodotti-dao'); // Importa il DAO dei prodotti
 
 /**
  * ROTTA PER LA HOMEPAGE

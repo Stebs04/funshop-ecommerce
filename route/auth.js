@@ -2,9 +2,9 @@
 
 const express = require('express');
 const router = express.Router();
-const passport = require('./passport');
+const passport = require('.././middleware/passport');
 const { check, validationResult } = require('express-validator');
-const utentiDao = require('./utenti-dao');
+const utentiDao = require('../models/dao/utenti-dao');
 
 // --- NUOVO: ROTTE PER VISUALIZZARE LE PAGINE EJS ---
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const db = require('../managedb'); // Assicurati che il percorso sia corretto
+const db = require('../../managedb'); // Assicurati che il percorso sia corretto
 const bcrypt = require('bcrypt');
 
 /**

@@ -3,7 +3,7 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-const utentiDao = require('./utenti-dao'); // Importa il tuo DAO
+const utentiDao = require('../models/dao/utenti-dao'); // Importa il tuo DAO
 
 /**
  * Configurazione della strategia di autenticazione locale (login).
