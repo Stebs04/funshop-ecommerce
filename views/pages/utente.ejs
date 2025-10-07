@@ -16,9 +16,11 @@
                 <a href="#v-pills-indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>" data-bs-toggle="pill">
                     <i class="bi bi-geo-alt me-2"></i>Indirizzi
                 </a>
+                <% if (user.tipo_account === 'venditore') { %>
                 <a href="#v-pills-prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>" data-bs-toggle="pill">
                     <i class="bi bi-tag me-2"></i>I miei Prodotti
                 </a>
+                <% } %>
                 <% if (user.tipo_account === 'venditore') { %>
                     <a href="#v-pills-statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>" data-bs-toggle="pill">
                         <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
@@ -91,8 +93,31 @@
                 </div>
                 <div class="tab-pane fade <%= currentSection === 'indirizzi' ? 'show active' : '' %>" id="v-pills-indirizzi" role="tabpanel">
                     <h3>I Miei Indirizzi</h3>
-                    <p>Gestisci i tuoi indirizzi di spedizione.</p>
-                    <!-- Qui puoi aggiungere la gestione degli indirizzi -->
+                    <p>Gestisci i tuoi indirizzi di spedizione e fatturazione.</p>
+                    <div class="row">
+                        <% if (indirizzi && indirizzi.length > 0) { %>
+                            <% indirizzi.forEach(indirizzo => { %>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Indirizzo</h5>
+                                            <p class="card-text">
+                                                <%= indirizzo.indirizzo %>, <%= indirizzo.citta %><br>
+                                                <%= indirizzo.cap %>
+                                            </p>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">Modifica</a>
+                                            <a href="#" class="btn btn-sm btn-outline-danger">Elimina</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="col">
+                                <p class="text-center text-muted">Non hai ancora aggiunto nessun indirizzo.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                    <button class="btn btn-primary mt-3">Aggiungi un nuovo indirizzo</button>
                 </div>
                 <div class="tab-pane fade <%= currentSection === 'prodotti' ? 'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
                     <h3>I Miei Prodotti</h3>
@@ -103,7 +128,9 @@
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="mb-1"><%= prodotto.nome %></h5>
-                                    <small>Prezzo: € <%= prodotto.prezzo.toFixed(2) %></small>
+                                    <small>
+                                        Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : 'N/D' %>
+                                    </small>
                                 </div>
                                 <div>
                                     <a href="/products/modifica/<%= prodotto.id %>" class="btn btn-sm btn-outline-primary">Modifica</a>

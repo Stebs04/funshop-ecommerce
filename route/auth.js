@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const passport = require('.././middleware/passport');
+const passport = require('../middleware/passport-config');
 const { check, validationResult } = require('express-validator');
 const utentiDao = require('../models/dao/utenti-dao');
 

@@ -64,5 +64,17 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Esporta l'istanza di Passport completamente configurata
+/**
+ * Middleware per verificare se l'utente è autenticato.
+ * Può essere usato per proteggere le rotte che richiedono accesso autenticato.
+ */
+function isLoggedIn(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.redirect('/login');
+}
+
+passport.isLoggedIn = isLoggedIn;
+
 module.exports = passport;

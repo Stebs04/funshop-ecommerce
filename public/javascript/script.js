@@ -1,90 +1,158 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-    const profileButton = document.getElementById('profile-button');
-    if (!profileButton) return;
+    /**
+     * Gestisce la logica per il popup del profilo utente.
+     */
+    const updateUserProfileLogic = async () => {
+        const profileButton = document.getElementById('profile-button');
+        if (!profileButton) return;
 
-    let profilePreview;
-    let hideProfileTimeout;
-    const HIDE_DELAY = 300;
+        let profilePreview;
+        let hideProfileTimeout;
+        const HIDE_DELAY = 300;
 
-    const getAuthData = async () => {
-        try {
-            const response = await fetch('/api/auth/status');
-            if (!response.ok) return null;
-            return await response.json();
-        } catch (error) {
-            console.error('Errore nel controllo dello stato di autenticazione:', error);
-            return null;
+        const getAuthData = async () => {
+            try {
+                const response = await fetch('/api/auth/status');
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.error('Errore nel controllo dello stato di autenticazione:', error);
+                return null;
+            }
+        };
+
+        const authData = await getAuthData();
+
+        if (authData && authData.isAuthenticated) {
+            profilePreview = document.createElement('div');
+            profilePreview.id = 'profile-preview';
+            const isSeller = authData.user.tipo_account === 'venditore';
+
+            profilePreview.innerHTML = `
+                <a href="/utente/dati" class="profile-link">Il mio account</a>
+                <a href="/utente/impostazioni" class="profile-link">Impostazioni</a>
+                ${isSeller ? `<a href="/products/new" class="profile-link">Aggiungi un nuovo prodotto</a>` : ''}
+                <div class="profile-divider"></div>
+                <a href="/auth/logout" class="profile-link">Esci</a>
+            `;
+            document.body.appendChild(profilePreview);
+
+            const showProfilePreview = () => {
+                clearTimeout(hideProfileTimeout);
+                const buttonRect = profileButton.getBoundingClientRect();
+                profilePreview.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
+                const previewRect = profilePreview.getBoundingClientRect();
+                let leftPosition = buttonRect.right + window.scrollX - previewRect.width;
+                if (leftPosition < 10) leftPosition = 10;
+                profilePreview.style.left = `${leftPosition}px`;
+                profilePreview.style.opacity = '1';
+                profilePreview.style.visibility = 'visible';
+                profilePreview.style.transform = 'translateY(0)';
+            };
+
+            const hideProfilePreview = () => {
+                if (!profilePreview) return;
+                profilePreview.style.opacity = '0';
+                profilePreview.style.visibility = 'hidden';
+                profilePreview.style.transform = 'translateY(10px)';
+            };
+
+            const startProfileHideTimer = () => {
+                hideProfileTimeout = setTimeout(hideProfilePreview, HIDE_DELAY);
+            };
+
+            [profileButton, profilePreview].forEach(element => {
+                element.addEventListener('mouseenter', showProfilePreview);
+                element.addEventListener('mouseleave', startProfileHideTimer);
+            });
         }
     };
 
-    const authData = await getAuthData();
-
-    // Esegui la logica del popup SOLO se l'utente è loggato
-    if (authData && authData.isAuthenticated) {
-
-        // Crea l'elemento del popup
-        profilePreview = document.createElement('div');
-        profilePreview.id = 'profile-preview';
-
-        const isSeller = authData.user.tipo_account === 'venditore';
-
-        // Popola con il contenuto corretto
-        if (isSeller) {
-            profilePreview.innerHTML = `
-                <a href="/utente" class="profile-link">Il mio account</a>
-                <a href="/utente/impostazioni" class="profile-link">Impostazioni</a>
-                <a href="/nuovo-prodotto" class="profile-link">Aggiungi un nuovo prodotto</a>
-                <div class="profile-divider"></div>
-                <a href="/auth/logout" class="profile-link">Esci</a>
-            `;
-        } else {
-            profilePreview.innerHTML = `
-                <a href="/utente" class="profile-link">Il mio account</a>
-                <a href="/utente/impostazioni" class="profile-link">Impostazioni</a>
-                <div class="profile-divider"></div>
-                <a href="/auth/logout" class="profile-link">Esci</a>
-            `;
+    /**
+     * Carica i prodotti dal database e li visualizza nella pagina.
+     */
+    const loadProducts = async () => {
+        const container = document.getElementById('product-container');
+        if (!container) {
+            // Se il contenitore non c'è, significa che non siamo nella homepage.
+            return;
         }
-        document.body.appendChild(profilePreview);
 
-        // Funzioni per mostrare/nascondere il popup
-        const showProfilePreview = () => {
-            clearTimeout(hideProfileTimeout);
-            const buttonRect = profileButton.getBoundingClientRect();
-            profilePreview.style.top = `${buttonRect.bottom + window.scrollY + 5}px`;
-            const previewRect = profilePreview.getBoundingClientRect();
-            let leftPosition = buttonRect.right + window.scrollX - previewRect.width;
-            if (leftPosition < 10) leftPosition = 10;
-            profilePreview.style.left = `${leftPosition}px`;
-            profilePreview.style.opacity = '1';
-            profilePreview.style.visibility = 'visible';
-            profilePreview.style.transform = 'translateY(0)';
-        };
+        try {
+            const response = await fetch('/api/products');
+            if (!response.ok) {
+                throw new Error(`Errore HTTP! stato: ${response.status}`);
+            }
+            const products = await response.json();
 
-        const hideProfilePreview = () => {
-            if (!profilePreview) return;
-            profilePreview.style.opacity = '0';
-            profilePreview.style.visibility = 'hidden';
-            profilePreview.style.transform = 'translateY(10px)';
-        };
+            container.innerHTML = ''; // Pulisce il contenitore
 
-        const startProfileHideTimer = () => {
-            hideProfileTimeout = setTimeout(hideProfilePreview, HIDE_DELAY);
-        };
+            if (products.length === 0) {
+                container.innerHTML = '<p class="text-center text-muted">Nessun prodotto disponibile al momento.</p>';
+                return;
+            }
 
-        // Collega gli eventi SOLO per il mouse (hover)
-        [profileButton, profilePreview].forEach(element => {
-            element.addEventListener('mouseenter', showProfilePreview);
-            element.addEventListener('mouseleave', startProfileHideTimer);
-        });
-        
-        // NESSUN event listener per il 'click' viene aggiunto qui.
-        // In questo modo, il click sul pulsante si comporterà come un link normale 
-        // e ti porterà a "/utente" come specificato in navbar.ejs.
+            products.forEach(product => {
+                const displayPrice = product.prezzo > 0 ? product.prezzo : product.prezzo_asta;
+                const col = document.createElement('div');
+                col.className = 'col';
 
-    } else {
-        // Se l'utente non è loggato, il link in navbar.ejs punterà già a /auth/registrazione
-        // e funzionerà al click senza bisogno di JavaScript.
-    }
+                col.innerHTML = `
+                    <div class="card h-100 shadow-sm product-card">
+                        <img src="${product.percorso_immagine}" class="card-img-top" alt="${product.nome}" style="height: 200px; object-fit: cover;">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">
+                                <a href="/prodotto/${product.id}" class="text-decoration-none text-dark stretched-link">
+                                    ${product.nome}
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted small">${product.parola_chiave || ''}</p>
+                            <p class="card-text text-primary small">Venduto da <strong>${product.nome_venditore}</strong></p>
+                            <div class="mt-auto d-flex justify-content-between align-items-center">
+                                <span class="fw-bold fs-5">€ ${displayPrice.toFixed(2)}</span>
+                                <a href="#" class="btn btn-sm btn-primary" style="position: relative; z-index: 2;" title="Aggiungi al carrello">
+                                    <i class="bi bi-cart-plus-fill fs-5"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0 text-center">
+                            <small class="text-success fw-bold">${product.condizione}</small>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+
+        } catch (error) {
+            console.error('Impossibile caricare i prodotti:', error);
+            container.innerHTML = '<p class="text-center text-danger">Non è stato possibile caricare i prodotti. Riprova più tardi.</p>';
+        }
+    };
+
+    /**
+     * Nasconde il link "Diventa un venditore" se l'utente lo è già.
+     */
+    const updateNavbarForSeller = async () => {
+        try {
+            const response = await fetch('/api/auth/status');
+            if (!response.ok) return;
+
+            const data = await response.json();
+            if (data.isAuthenticated && data.user.tipo_account === 'venditore') {
+                // Cerca il link tramite una classe o un ID più specifico se necessario
+                const becomeSellerLink = document.querySelector('a[href="venditore.html"]');
+                if (becomeSellerLink) {
+                    becomeSellerLink.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Errore nel controllare lo stato del venditore:', error);
+        }
+    };
+
+    // Esegui tutte le funzioni di inizializzazione
+    updateUserProfileLogic();
+    loadProducts();
+    updateNavbarForSeller();
 });

@@ -7,8 +7,8 @@ const { check, validationResult } = require('express-validator');
 // Importa i tuoi DAO (assicurati che i percorsi siano corretti)
 const utentiDao = require('../models/dao/utenti-dao');
 const prodottiDao = require('../models/dao/prodotti-dao');
-// Nota: Per lo storico ordini, dovrai creare un 'ordini-dao.js'
-// const ordiniDao = require('../ordini-dao');
+const ordiniDao = require('../models/dao/ordini-dao');
+const informazioniDao = require('../models/dao/informazioni-dao');
 
 /**
  * Middleware di protezione:
@@ -30,37 +30,37 @@ router.use(ensureAuthenticated);
  * Gestisce la visualizzazione di tutte le sezioni: /utente, /utente/ordini, /utente/prodotti, etc.
  */
 router.get('/:section', async (req, res) => {
-    const section = req.params.section;
-    // ... (il resto della logica rimane IDENTICO a prima)
+    // Se non viene specificata una sezione, reindirizza a 'dati'
+    const section = req.params.section || 'dati';
     const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche'];
 
     if (!validSections.includes(section)) {
+        // Se la sezione non è valida, vai alla dashboard di default
         return res.redirect('/utente');
     }
 
+    // Se un utente normale prova ad accedere alle statistiche, reindirizza
     if (section === 'statistiche' && req.user.tipo_account !== 'venditore') {
         return res.redirect('/utente');
     }
 
     try {
-        let prodottiUtente = [], storicoOrdini = [];
-
-        if (section === 'prodotti') {
-            prodottiUtente = await prodottiDao.getProductsByUserId(req.user.id);
-        }
-        if (section === 'ordini') {
-            // storicoOrdini = await ordiniDao.getOrdersByUserId(req.user.id);
-        }
+        // Carica TUTTI i dati necessari per la dashboard, indipendentemente dalla sezione
+        const prodottiUtente = await prodottiDao.getProductsByUserId(req.user.id);
+        const storicoOrdini = await ordiniDao.getOrdersByUserId(req.user.id);
+        const indirizziUtente = await informazioniDao.getAccountInfosByUserId(req.user.id);
 
         res.render('pages/utente', {
             title: 'Il Mio Profilo',
+            user: req.user, // Passa l'intero oggetto utente al template
             currentSection: section,
             prodotti: prodottiUtente,
             ordini: storicoOrdini,
+            indirizzi: indirizziUtente,
         });
     } catch (error) {
-        console.error(`Errore nel caricare la sezione '${section}':`, error);
-        req.flash('error', 'Si è verificato un errore.');
+        console.error(`Errore nel caricare la dashboard utente:`, error);
+        req.flash('error', 'Si è verificato un errore durante il caricamento del tuo profilo.');
         res.redirect('/');
     }
 });
@@ -93,5 +93,76 @@ router.post('/dati/aggiorna', [
     }
 });
 
+// Aggiungi un nuovo indirizzo
+router.post('/indirizzi/aggiungi', [
+    check('indirizzo').notEmpty().withMessage('L\'indirizzo è obbligatorio.'),
+    check('citta').notEmpty().withMessage('La città è obbligatoria.'),
+    check('cap').isPostalCode('IT').withMessage('Il CAP non è valido.')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        req.flash('error', errors.array().map(e => e.msg));
+        return res.redirect('/utente/indirizzi');
+    }
+    try {
+        await utentiDao.addIndirizzo(req.user.id, req.body);
+        req.flash('success', 'Indirizzo aggiunto con successo!');
+        res.redirect('/utente/indirizzi');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', "Errore durante l'aggiunta dell'indirizzo.");
+        res.redirect('/utente/indirizzi');
+    }
+});
+
+// Prendi i dati di un indirizzo per la modifica (restituisce JSON)
+router.get('/indirizzi/modifica/:id', async (req, res) => {
+    try {
+        const indirizzo = await informazioniDao.getAccountInfoById(req.params.id);
+        if (indirizzo && indirizzo.user_id === req.user.id) {
+            res.json(indirizzo);
+        } else {
+            res.status(404).send('Indirizzo non trovato.');
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Errore nel recupero dell'indirizzo.");
+    }
+});
+
+// Aggiorna un indirizzo
+router.post('/indirizzi/aggiorna/:id', [
+    check('indirizzo').notEmpty().withMessage('L\'indirizzo è obbligatorio.'),
+    check('citta').notEmpty().withMessage('La città è obbligatoria.'),
+    check('cap').isPostalCode('IT').withMessage('Il CAP non è valido.')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        req.flash('error', errors.array().map(e => e.msg));
+        return res.redirect('/utente/indirizzi');
+    }
+    try {
+        await utentiDao.updateIndirizzo(req.params.id, req.body);
+        req.flash('success', 'Indirizzo aggiornato con successo!');
+        res.redirect('/utente/indirizzi');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', "Errore durante l'aggiornamento dell'indirizzo.");
+        res.redirect('/utente/indirizzi');
+    }
+});
+
+// Elimina un indirizzo
+router.post('/indirizzi/elimina/:id', async (req, res) => {
+    try {
+        await utentiDao.deleteIndirizzo(req.params.id);
+        req.flash('success', 'Indirizzo eliminato con successo!');
+        res.redirect('/utente/indirizzi');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', "Errore durante l'eliminazione dell'indirizzo.");
+        res.redirect('/utente/indirizzi');
+    }
+});
 
 module.exports = router;

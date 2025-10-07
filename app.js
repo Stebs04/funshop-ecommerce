@@ -5,14 +5,16 @@ console.log('✅ FILE AUTH.JS CARICATO CORRETTAMENTE');
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const passport = require('./middleware/passport'); // La tua configurazione Passport
+const passport = require('passport');
+const passportConfig = require('./middleware/passport-config');
 const flash = require('connect-flash');
 const morgan = require('morgan'); // Per il logging delle richieste
 
 // Importazione dei file di rotte
 const authRoutes = require('./route/auth');
 const mainRoutes = require('./route/home');
-const userRoutes = require('./route/userRoutes')
+const userRoutes = require('./route/userRoutes');
+const productRoutes = require('./route/productRoutes');
 
 const app = express();
 
@@ -56,6 +58,7 @@ app.use((req, res, next) => {
 app.use('/', mainRoutes); // Rotte principali (es. homepage)
 app.use('/auth', authRoutes); // Rotte di autenticazione (es. /auth/login)
 app.use('/utente', userRoutes);
+app.use('/products', productRoutes);
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {

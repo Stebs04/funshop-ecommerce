@@ -115,6 +115,64 @@ class UtentiDAO {
           });
       });
   }
+
+  /**
+   * Aggiunge un nuovo indirizzo per un utente.
+   * @param {number} userId - L'ID dell'utente.
+   * @param {object} indirizzoData - Dati dell'indirizzo: { indirizzo, citta, cap }
+   * @returns {Promise<number>} L'ID del nuovo indirizzo.
+   */
+  async addIndirizzo(userId, indirizzoData) {
+    const { indirizzo, citta, cap } = indirizzoData;
+    const sql = 'INSERT INTO accountinfos (user_id, indirizzo, citta, cap) VALUES (?, ?, ?, ?)';
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, [userId, indirizzo, citta, cap], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.lastID);
+        }
+      });
+    });
+  }
+
+  /**
+   * Aggiorna un indirizzo esistente.
+   * @param {number} indirizzoId - L'ID dell'indirizzo da aggiornare.
+   * @param {object} indirizzoData - Dati da modificare: { indirizzo, citta, cap }
+   * @returns {Promise<number>} Il numero di righe modificate.
+   */
+  async updateIndirizzo(indirizzoId, indirizzoData) {
+    const { indirizzo, citta, cap } = indirizzoData;
+    const sql = 'UPDATE accountinfos SET indirizzo = ?, citta = ?, cap = ? WHERE id = ?';
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, [indirizzo, citta, cap, indirizzoId], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes);
+        }
+      });
+    });
+  }
+
+  /**
+   * Elimina un indirizzo.
+   * @param {number} indirizzoId - L'ID dell'indirizzo da eliminare.
+   * @returns {Promise<number>} Il numero di righe eliminate.
+   */
+  async deleteIndirizzo(indirizzoId) {
+    const sql = 'DELETE FROM accountinfos WHERE id = ?';
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, [indirizzoId], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes);
+        }
+      });
+    });
+  }
 }
 
 // Esporta una singola istanza della classe, passando la connessione al database.
