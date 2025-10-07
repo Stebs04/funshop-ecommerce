@@ -29,9 +29,9 @@ router.use(ensureAuthenticated);
  * ROTTA DINAMICA PER LA DASHBOARD UTENTE
  * Gestisce la visualizzazione di tutte le sezioni: /utente, /utente/ordini, /utente/prodotti, etc.
  */
-router.get('/:section', async (req, res) => {
+router.get('/', async (req, res) => {
     // Se non viene specificata una sezione, reindirizza a 'dati'
-    const section = req.params.section || 'dati';
+    const section = req.query.section || 'dati';
     const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche'];
 
     if (!validSections.includes(section)) {
@@ -162,6 +162,82 @@ router.post('/indirizzi/elimina/:id', async (req, res) => {
         console.error(err);
         req.flash('error', "Errore durante l'eliminazione dell'indirizzo.");
         res.redirect('/utente/indirizzi');
+    }
+});
+
+// Rotta per l'eliminazione di un prodotto
+router.post('/prodotti/:id/delete', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const userId = req.user.id;
+
+        const result = await prodottiDao.deleteProduct(productId, userId);
+
+        if (result === 0) {
+            req.flash('error', 'Azione non permessa o prodotto non trovato.');
+        } else {
+            req.flash('success', 'Prodotto eliminato con successo.');
+        }
+        res.redirect('/utente?section=prodotti');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Errore durante l\'eliminazione del prodotto.');
+        res.redirect('/utente?section=prodotti');
+    }
+});
+
+// Rotta per mostrare il form di modifica del prodotto
+router.get('/prodotti/:id/edit', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await prodottiDao.getProductById(productId);
+
+        if (!product || product.user_id !== req.user.id) {
+            req.flash('error', 'Azione non permessa.');
+            return res.redirect('/utente?section=prodotti');
+        }
+
+        res.render('pages/edit-prodotto', {
+            title: 'Modifica Prodotto',
+            prodotto: product,
+            user: req.user
+        });
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Errore nel caricamento della pagina di modifica.');
+        res.redirect('/utente?section=prodotti');
+    }
+});
+
+// Rotta per aggiornare un prodotto
+router.post('/prodotti/:id/edit', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const userId = req.user.id;
+
+        const updatedData = {
+            nome: req.body.nome,
+            descrizione: req.body.descrizione,
+            prezzo: parseFloat(req.body.prezzo),
+            parola_chiave: req.body.parola_chiave
+        };
+
+        if (req.file) {
+            updatedData.percorso_immagine = '/uploads/' + req.file.filename;
+        }
+
+        const result = await prodottiDao.updateProduct(productId, updatedData, userId);
+
+        if (result === 0) {
+            req.flash('error', 'Azione non permessa o prodotto non trovato.');
+        } else {
+            req.flash('success', 'Prodotto aggiornato con successo.');
+        }
+        res.redirect('/utente?section=prodotti');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
+        res.redirect('/utente?section=prodotti');
     }
 });
 

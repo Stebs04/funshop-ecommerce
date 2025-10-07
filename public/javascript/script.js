@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isSeller = authData.user.tipo_account === 'venditore';
 
             profilePreview.innerHTML = `
-                <a href="/utente/dati" class="profile-link">Il mio account</a>
-                <a href="/utente/impostazioni" class="profile-link">Impostazioni</a>
+                <a href="/utente?section=dati" class="profile-link">Il mio account</a>
+                <a href="/utente?section=impostazioni" class="profile-link">Impostazioni</a>
                 ${isSeller ? `<a href="/products/new" class="profile-link">Aggiungi un nuovo prodotto</a>` : ''}
                 <div class="profile-divider"></div>
                 <a href="/auth/logout" class="profile-link">Esci</a>

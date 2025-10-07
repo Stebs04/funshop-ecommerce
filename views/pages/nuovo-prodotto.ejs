@@ -38,19 +38,31 @@
                     <input name="percorso_immagine" class="form-control" type="file" id="productImages" accept="image/*" required>
                     </div>
 
-                    <!-- Prezzo -->
-                    <div id="price-section" class="mb-3">
-                    <label for="productPrice" class="form-label">Prezzo</label>
-                    <div class="input-group">
-                        <span class="input-group-text">€</span>
-                        <input name="prezzo" type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0" required>
-                    </div>
+                    <!-- Modalità di vendita -->
+                    <div class="mb-3">
+                        <label for="sellingType" class="form-label">Modalità di vendita</label>
+                        <select class="form-select" id="sellingType" name="sellingType">
+                            <option value="sell_now" selected>Vendi ora</option>
+                            <option value="auction">Metti all'asta</option>
+                        </select>
                     </div>
 
-                    <!-- Quantità -->
-                    <div class="mb-3">
-                        <label for="productQuantity" class="form-label">Quantità disponibile</label>
-                        <input name="quantita_disponibile" type="number" class="form-control" id="productQuantity" placeholder="1" min="1" required>
+                    <!-- Prezzo per "Vendi ora" -->
+                    <div id="price-section" class="mb-3">
+                        <label for="productPrice" class="form-label">Prezzo</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input name="prezzo" type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0" required>
+                        </div>
+                    </div>
+
+                    <!-- Prezzo per "Metti all'asta" -->
+                    <div id="auction-price-section" class="mb-3 d-none">
+                        <label for="auctionStartPrice" class="form-label">Prezzo di partenza asta</label>
+                        <div class="input-group">
+                            <span class="input-group-text">€</span>
+                            <input name="prezzo_asta" type="number" class="form-control" id="auctionStartPrice" placeholder="9.99" step="0.01" min="0">
+                        </div>
                     </div>
 
                     <!-- Pulsanti -->
@@ -69,26 +81,26 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const sellingTypeRadios = document.querySelectorAll('input[name="sellingType"]');
+            const sellingType = document.getElementById('sellingType');
             const priceSection = document.getElementById('price-section');
             const auctionPriceSection = document.getElementById('auction-price-section');
             const productPriceInput = document.getElementById('productPrice');
             const auctionStartPriceInput = document.getElementById('auctionStartPrice');
 
-            sellingTypeRadios.forEach(radio => {
-                radio.addEventListener('change', function () {
-                    if (this.value === 'auction') {
-                        priceSection.classList.add('d-none');
-                        productPriceInput.required = false;
-                        auctionPriceSection.classList.remove('d-none');
-                        auctionStartPriceInput.required = true;
-                    } else {
-                        priceSection.classList.remove('d-none');
-                        productPriceInput.required = true;
-                        auctionPriceSection.classList.add('d-none');
-                        auctionStartPriceInput.required = false;
-                    }
-                });
+            sellingType.addEventListener('change', function () {
+                if (this.value === 'auction') {
+                    priceSection.classList.add('d-none');
+                    productPriceInput.required = false;
+                    productPriceInput.value = ''; // Svuota il campo
+                    auctionPriceSection.classList.remove('d-none');
+                    auctionStartPriceInput.required = true;
+                } else { // 'sell_now'
+                    priceSection.classList.remove('d-none');
+                    productPriceInput.required = true;
+                    auctionPriceSection.classList.add('d-none');
+                    auctionStartPriceInput.required = false;
+                    auctionStartPriceInput.value = ''; // Svuota il campo
+                }
             });
         });
     </script>

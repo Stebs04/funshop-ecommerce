@@ -9,11 +9,6 @@ const prodottiDao = require('../models/dao/prodotti-dao'); // Importa il DAO dei
  * Recupera tutti i prodotti e li visualizza.
  */
 router.get('/', async (req, res) => {
-    if (req.isAuthenticated()) {
-        // Se l'utente è autenticato, reindirizzalo alla sua dashboard
-        return res.redirect('/utente/dati');
-    }
-
     try {
         // 1. Usa il DAO per recuperare tutti i prodotti dal database.
         // La funzione getAllProducts() include già il nome del venditore.

@@ -22,11 +22,11 @@ exports.getAccountInfosByUserId = (userId) => {
 };
 
 /**
- * Aggiunge nuove informazioni account per un utente.
+ * Crea nuove informazioni account per un utente.
  * @param {Object} infoData - Dati da aggiungere (user_id, indirizzo, citta, cap).
  * @returns {Promise<number>} Una promessa che risolve con l'ID delle nuove informazioni inserite.
  */
-exports.addAccountInfo = (infoData) => {
+exports.createAccountInfo = (infoData) => {
     return new Promise((resolve, reject) => {
         const { user_id, indirizzo, citta, cap } = infoData;
         const sql = `

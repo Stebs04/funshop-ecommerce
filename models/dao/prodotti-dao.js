@@ -120,6 +120,48 @@ class ProdottiDAO {
           });
       });
   }
+
+  /**
+   * Recupera tutte le categorie dal database.
+   * @returns {Promise<Array<object>>} Una lista di tutte le categorie.
+   */
+  async getAllCategories() {
+    const sql = 'SELECT * FROM categorie ORDER BY nome';
+    return new Promise((resolve, reject) => {
+      this.db.all(sql, [], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
+      });
+    });
+  }
+
+  /**
+   * Aggiorna un prodotto esistente nel database.
+   * @param {number} id - L'ID del prodotto da aggiornare.
+   * @param {object} productData - I dati del prodotto da aggiornare.
+   * @param {number} userId - L'ID dell'utente che richiede l'aggiornamento.
+   * @returns {Promise<number>} Il numero di righe modificate.
+   */
+  async updateProduct(id, productData, userId) {
+    const fields = Object.keys(productData);
+    const values = Object.values(productData);
+    const fieldPlaceholders = fields.map(field => `${field} = ?`).join(', ');
+
+    const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = ? AND user_id = ?`;
+    
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, [...values, id, userId], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes);
+        }
+      });
+    });
+  }
 }
 
 // Esporta una singola istanza della classe, passando la connessione al database.

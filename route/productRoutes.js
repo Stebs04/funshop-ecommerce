@@ -62,24 +62,45 @@ router.post('/', isLoggedIn, upload, async (req, res) => {
         return res.redirect('/products/new');
     }
 
+    const { sellingType, nome, descrizione, categoria, condizione } = req.body;
+    let prezzo = null;
+    let prezzo_asta = null;
+
+    if (sellingType === 'sell_now') {
+        prezzo = parseFloat(req.body.prezzo);
+    } else { // 'auction'
+        prezzo_asta = parseFloat(req.body.prezzo_asta);
+    }
+
     const newProduct = {
-        nome: req.body.nome,
-        descrizione: req.body.descrizione,
-        prezzo: parseFloat(req.body.prezzo),
-        categoria: req.body.categoria,
-        quantita_disponibile: parseInt(req.body.quantita_disponibile),
+        nome: nome,
+        descrizione: descrizione,
+        condizione: condizione,
+        parola_chiave: categoria,
+        prezzo: prezzo,
+        prezzo_asta: prezzo_asta,
         percorso_immagine: '/uploads/' + req.file.filename,
-        venditore_id: req.user.id
+        user_id: req.user.id
     };
 
     try {
         await prodottiDao.createProduct(newProduct);
-        req.flash('success', 'Prodotto aggiunto con successo!');
-        res.redirect('/utente'); // O dove vuoi reindirizzare dopo la creazione
+        res.render('pages/redirect-message', {
+            title: 'Successo',
+            message: 'Caricamento andato a buon fine. Redirecting alla home page',
+            redirectUrl: '/',
+            user: req.user,
+            isAuthenticated: req.isAuthenticated()
+        });
     } catch (dbErr) {
         console.error(dbErr);
-        req.flash('error', 'Errore durante il salvataggio del prodotto.');
-        res.redirect('/products/new');
+        res.render('pages/redirect-message', {
+            title: 'Errore',
+            message: 'Caricamento non riuscito. Redirecting alla homepage',
+            redirectUrl: '/',
+            user: req.user,
+            isAuthenticated: req.isAuthenticated()
+        });
     }
 });
 
@@ -95,6 +116,18 @@ router.get('/:id', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Errore del server');
+    }
+});
+
+
+// API per ottenere le categorie
+router.get('/api/categorie', async (req, res) => {
+    try {
+        const categorie = await prodottiDao.getAllCategories();
+        res.json(categorie);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Errore nel recupero delle categorie' });
     }
 });
 

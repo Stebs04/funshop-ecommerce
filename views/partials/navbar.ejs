@@ -2,12 +2,12 @@
     <header class="p-3 mb-3 border-bottom sticky-top bg-white shadow-sm">
         <div class="container">
           <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-            <a href="index.html" class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none">
+            <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none">
               <img src="/immagini/logo.png" alt="Logo" width="40" height="40" style="border-radius: 50%; object-fit: cover;">
             </a>
     
             <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 ms-lg-4">
-              <li><a href="index_login.html" class="nav-link px-2 link-secondary header-nav-link">Home</a></li>
+              <li><a href="/" class="nav-link px-2 link-secondary header-nav-link">Home</a></li>
               <li class="nav-item dropdown">
                 <a class="nav-link px-2 link-dark header-nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   Prodotti
@@ -33,7 +33,7 @@
                <div class="text-end">
   
   <% if (isAuthenticated) { %>
-        <a id="profile-button" href="/utente/dati" class="btn btn-primary me-2" title="Il mio Account">
+        <a id="profile-button" href="/utente?section=dati" class="btn btn-primary me-2" title="Il mio Account">
             <i class="bi bi-person fs-5"></i>
         </a>
     <% } else { %>
