@@ -33,14 +33,14 @@
                <div class="text-end">
   
   <% if (isAuthenticated) { %>
-    <a href="/utente" class="btn btn-primary me-2" id="profile-button" title="Il mio Account">
-      <i class="bi bi-person fs-5"></i> 
-    </a>
-  <% } else { %>
-    <a href="/auth/registrazione" class="btn btn-primary me-2" title="Registrati">
-      <i class="bi bi-person fs-5"></i>
-    </a>
-  <% } %>
+        <a id="profile-button" href="/utente/dati" class="btn btn-primary me-2" title="Il mio Account">
+            <i class="bi bi-person fs-5"></i>
+        </a>
+    <% } else { %>
+        <a id="profile-button" href="/auth/registrazione" class="btn btn-primary me-2" title="Registrati">
+            <i class="bi bi-person fs-5"></i>
+        </a>
+    <% } %>
 
   <a href="/carrello" class="btn btn-primary position-relative" title="Carrello">
       <i class="bi bi-cart fs-5"></i>

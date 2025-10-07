@@ -12,6 +12,7 @@ const morgan = require('morgan'); // Per il logging delle richieste
 // Importazione dei file di rotte
 const authRoutes = require('./route/auth');
 const mainRoutes = require('./route/home');
+const userRoutes = require('./route/userRoutes')
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use((req, res, next) => {
 // Utilizzo dei router
 app.use('/', mainRoutes); // Rotte principali (es. homepage)
 app.use('/auth', authRoutes); // Rotte di autenticazione (es. /auth/login)
+app.use('/utente', userRoutes);
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {

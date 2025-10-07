@@ -1,314 +1,136 @@
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
-
 <body class="d-flex flex-column min-vh-100">
-
  <%- include('../partials/navbar') %>
-
-    <main class="container my-5">
-       <div class="row">
-    <div class="col-md-3">
-        <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-        
-            <button class="nav-link active text-start" id="v-pills-dati-tab" data-bs-toggle="pill" data-bs-target="#v-pills-dati" type="button" role="tab" aria-controls="v-pills-dati" aria-selected="true">
-                <i class="bi bi-person-circle me-2"></i>I miei Dati
-            </button>
-            
-            <button class="nav-link text-start" id="v-pills-ordini-tab" data-bs-toggle="pill" data-bs-target="#v-pills-ordini" type="button" role="tab" aria-controls="v-pills-ordini" aria-selected="false">
-                <i class="bi bi-box-seam me-2"></i>Storico Ordini
-            </button>
-            
-            <button class="nav-link text-start" id="v-pills-indirizzi-tab" data-bs-toggle="pill" data-bs-target="#v-pills-indirizzi" type="button" role="tab" aria-controls="v-pills-indirizzi" aria-selected="false">
-                <i class="bi bi-geo-alt me-2"></i>I Miei Indirizzi
-            </button>
-
-            <button class="nav-link text-start" id="v-pills-prodotti-tab" data-bs-toggle="pill" data-bs-target="#v-pills-prodotti" type="button" role="tab" aria-controls="v-pills-prodotti" aria-selected="false">
-                <i class="bi bi-tags me-2"></i>I Miei Prodotti
-            </button>
-
-            <button class="nav-link text-start" id="v-pills-statistiche-tab" data-bs-toggle="pill" data-bs-target="#v-pills-statistiche" type="button" role="tab" aria-controls="v-pills-statistiche" aria-selected="false">
-                <i class="bi bi-graph-up me-2"></i>Statistiche
-            </button>
+<main class="container my-5">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <a href="#v-pills-dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>" data-bs-toggle="pill">
+                    <i class="bi bi-person-circle me-2"></i>I miei Dati
+                </a>
+                <a href="#v-pills-ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>" data-bs-toggle="pill">
+                    <i class="bi bi-box-seam me-2"></i>Storico Ordini
+                </a>
+                <a href="#v-pills-indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>" data-bs-toggle="pill">
+                    <i class="bi bi-geo-alt me-2"></i>Indirizzi
+                </a>
+                <a href="#v-pills-prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>" data-bs-toggle="pill">
+                    <i class="bi bi-tag me-2"></i>I miei Prodotti
+                </a>
+                <% if (user.tipo_account === 'venditore') { %>
+                    <a href="#v-pills-statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>" data-bs-toggle="pill">
+                        <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
+                    </a>
+                <% } %>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="tab-content" id="v-pills-tabContent">
+                <div class="tab-pane fade <%= currentSection === 'dati' ? 'show active' : '' %>" id="v-pills-dati" role="tabpanel">
+                    <h3>I Miei Dati</h3>
+                    <p>Gestisci le tue informazioni personali.</p>
+                    <div class="card">
+                        <div class="card-body">
+                            <form action="/utente/dati/aggiorna" method="POST">
+                                <div class="mb-3">
+                                    <label for="userName" class="form-label">Nome</label>
+                                    <input type="text" class="form-control" id="userName" name="nome" value="<%= user.nome %>">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userSurname" class="form-label">Cognome</label>
+                                    <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="userEmail" name="email" value="<%= user.email %>" disabled>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userDataNascita" class="form-label">Data di Nascita</label>
+                                    <input type="date" class="form-control" id="userDataNascita" name="data_nascita" value="<%= user.data_nascita ? new Date(user.data_nascita).toISOString().split('T')[0] : '' %>">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade <%= currentSection === 'ordini' ? 'show active' : '' %>" id="v-pills-ordini" role="tabpanel">
+                    <h3>Storico Ordini</h3>
+                    <p>Visualizza tutti gli acquisti che hai effettuato.</p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID Ordine</th>
+                                <th>Data</th>
+                                <th>Totale</th>
+                                <th>Stato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (ordini && ordini.length > 0) { %>
+                                <% ordini.forEach(ordine => { %>
+                                    <tr>
+                                        <td>#<%= ordine.id %></td>
+                                        <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
+                                        <td>€ <%= ordine.totale.toFixed(2) %></td>
+                                        <td><span class="badge bg-success"><%= ordine.stato %></span></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Non hai ancora effettuato nessun ordine.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="tab-pane fade <%= currentSection === 'indirizzi' ? 'show active' : '' %>" id="v-pills-indirizzi" role="tabpanel">
+                    <h3>I Miei Indirizzi</h3>
+                    <p>Gestisci i tuoi indirizzi di spedizione.</p>
+                    <!-- Qui puoi aggiungere la gestione degli indirizzi -->
+                </div>
+                <div class="tab-pane fade <%= currentSection === 'prodotti' ? 'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
+                    <h3>I Miei Prodotti</h3>
+                    <p>Gestisci i prodotti che hai messo in vendita.</p>
+                    <div class="list-group">
+                    <% if (prodotti && prodotti.length > 0) { %>
+                        <% prodotti.forEach(prodotto => { %>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1"><%= prodotto.nome %></h5>
+                                    <small>Prezzo: € <%= prodotto.prezzo.toFixed(2) %></small>
+                                </div>
+                                <div>
+                                    <a href="/products/modifica/<%= prodotto.id %>" class="btn btn-sm btn-outline-primary">Modifica</a>
+                                    <form action="/utente/prodotti/elimina/<%= prodotto.id %>" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                                    </form>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="text-center text-muted">Non hai nessun prodotto in vendita.</p>
+                    <% } %>
+                    </div>
+                </div>
+                <% if (user.tipo_account === 'venditore') { %>
+                <div class="tab-pane fade <%= currentSection === 'statistiche' ? 'show active' : '' %>" id="v-pills-statistiche" role="tabpanel">
+                    <h3>Statistiche Venditore</h3>
+                    <p>Visualizza le tue statistiche di vendita.</p>
+                    <!-- Statistiche venditore qui -->
+                </div>
+                <% } %>
+            </div>
         </div>
     </div>
-
-    <div class="col-md-9 tab-content" id="v-pills-tabContent">
-
-        <div class="tab-pane fade show active" id="v-pills-dati" role="tabpanel" aria-labelledby="v-pills-dati-tab">
-            <div class="card">
-            <div class="card-header">
-                <h4>I miei Dati</h4>
-            </div>
-            <div class="card-body">
-                <form action="/api/user/update" method="POST">
-                <div class="mb-3">
-                    <label for="userName" class="form-label">Nome</label>
-                    <input type="text" class="form-control" id="userName" name="nome">
-                </div>
-                <div class="mb-3">
-                    <label for="userSurname" class="form-label">Cognome</label>
-                    <input type="text" class="form-control" id="userSurname" name="cognome">
-                </div>
-                <div class="mb-3">
-                    <label for="userEmail" class="form-label">Indirizzo Email</label>
-                    <input type="email" class="form-control" id="userEmail" name="email">
-                </div>
-                  <div class="mb-3">
-                    <label for="userDataNascita" class="form-label">Data di nascita</label>
-                    <input type="date" class="form-control" id="userDataNascita" name="data_nascita">
-                </div>
-                <button type="submit" class="btn btn-primary">Salva modifiche</button>
-                </form>
-            </div>
-            </div>
-        </div>
-        
-        <div class="tab-pane fade" id="v-pills-ordini" role="tabpanel" aria-labelledby="v-pills-ordini-tab">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Storico Ordini</h4>
-                </div>
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">ID Ordine</th>
-                                <th scope="col">Data</th>
-                                <th scope="col">Totale</th>
-                                <th scope="col">Stato</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#12345</td>
-                                <td>01/10/2025</td>
-                                <td>€ 45.50</td>
-                                <td><span class="badge bg-success">Spedito</span></td>
-                            </tr>
-                            <tr>
-                                <td>#12301</td>
-                                <td>25/09/2025</td>
-                                <td>€ 112.00</td>
-                                <td><span class="badge bg-success">Consegnato</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="v-pills-indirizzi" role="tabpanel" aria-labelledby="v-pills-indirizzi-tab">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>I Tuoi Indirizzi</h4>
-                    <button class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i> Aggiungi Indirizzo
-                    </button>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">Casa <span class="badge bg-secondary">Predefinito</span></h5>
-                                    <p class="card-text mb-1">Mario Rossi</p>
-                                    <p class="card-text mb-1">Via Roma, 1</p>
-                                    <p class="card-text">10100, Torino (TO)</p>
-                                </div>
-                                <div class="card-footer bg-transparent border-top-0 text-end">
-                                    <button class="btn btn-sm btn-outline-secondary">Modifica</button>
-                                    <button class="btn btn-sm btn-outline-danger">Elimina</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">Ufficio</h5>
-                                    <p class="card-text mb-1">Mario Rossi</p>
-                                    <p class="card-text mb-1">Corso Duca degli Abruzzi, 24</p>
-                                    <p class="card-text">10129, Torino (TO)</p>
-                                </div>
-                                <div class="card-footer bg-transparent border-top-0 text-end">
-                                    <button class="btn btn-sm btn-outline-secondary">Modifica</button>
-                                    <button class="btn btn-sm btn-outline-danger">Elimina</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="v-pills-prodotti" role="tabpanel" aria-labelledby="v-pills-prodotti-tab">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>I Miei Prodotti in Vendita</h4>
-                    <a href="#" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i> Aggiungi Prodotto
-                    </a>
-                </div>
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">Prodotto</th>
-                                <th scope="col">Prezzo</th>
-                                <th scope="col">Quantità</th>
-                                <th scope="col">Azioni</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Funko Pop! Goku</td>
-                                <td>€ 15.00</td>
-                                <td>12</td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-secondary">Modifica</a>
-                                    <a href="#" class="btn btn-sm btn-outline-danger">Elimina</a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Mazzo Pokémon "Scarlatto e Violetto"</td>
-                                <td>€ 25.00</td>
-                                <td>5</td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-outline-secondary">Modifica</a>
-                                    <a href="#" class="btn btn-sm btn-outline-danger">Elimina</a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="tab-pane fade" id="v-pills-statistiche" role="tabpanel" aria-labelledby="v-pills-statistiche-tab">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Statistiche Vendite</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-4">
-                            <div class="card bg-light py-3">
-                                <h5 class="card-title">Guadagni Totali</h5>
-                                <p class="card-text fs-3">€ 1,234.56</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light py-3">
-                                <h5 class="card-title">Prodotti Venduti</h5>
-                                <p class="card-text fs-3">87</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light py-3">
-                                <h5 class="card-title">Valutazione Media</h5>
-                                <p class="card-text fs-3">4.8 <i class="bi bi-star-fill text-warning"></i></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <h6>Andamento Vendite (Ultimi 30 giorni)</h6>
-                        <div class="bg-secondary-subtle p-5 rounded text-center text-muted">
-                            [Area Grafico]
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        </div>
-</div>
-    </main>
-   <%- include('../partials/footer') %>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const response = await fetch('/api/user/details');
-
-                if (response.redirected) {
-                    window.location.href = response.url;
-                    return;
-                }
-                
-                if (response.ok) {
-                    const user = await response.json();
-                    document.getElementById('userName').value = user.nome || '';
-                    // Assicurati che l'ID per il cognome sia corretto
-                    document.getElementById('userSurname').value = user.cognome || '';
-                    document.getElementById('userEmail').value = user.email || '';
-                    
-                    // Formatta la data correttamente per l'input type="date"
-                    if (user.data_nascita) {
-                        // La data dal DB potrebbe essere in formato diverso, es. con l'ora.
-                        // Prendiamo solo la parte YYYY-MM-DD.
-                        document.getElementById('userDataNascita').value = user.data_nascita.split('T')[0];
-                    }
-                } else {
-                    console.error('Errore nel recupero dei dati utente:', response.statusText);
-                    // Potresti voler mostrare un messaggio all'utente qui
-                }
-            } catch (error) {
-                console.error('Errore di rete o durante il fetch:', error);
-            }
-
-            // --- NUOVA FUNZIONE PER CARICARE LO STORICO ORDINI ---
-            try {
-                const ordersResponse = await fetch('/api/user/orders');
-                if (ordersResponse.ok) {
-                    const orders = await ordersResponse.json();
-                    const ordersTableBody = document.querySelector('#v-pills-ordini tbody');
-                    
-                    // Pulisce la tabella prima di aggiungere nuove righe
-                    ordersTableBody.innerHTML = ''; 
-
-                    if (orders.length === 0) {
-                        ordersTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Non hai ancora effettuato ordini.</td></tr>';
-                    } else {
-                        orders.forEach(order => {
-                            const row = document.createElement('tr');
-                            
-                            // Formatta la data in un formato più leggibile (GG/MM/AAAA)
-                            const orderDate = new Date(order.data_ordine).toLocaleDateString('it-IT');
-                            
-                            // Badge colorato per lo stato
-                            let statusBadge;
-                            switch (order.stato.toLowerCase()) {
-                                case 'spedito':
-                                    statusBadge = `<span class="badge bg-primary">${order.stato}</span>`;
-                                    break;
-                                case 'consegnato':
-                                    statusBadge = `<span class="badge bg-success">${order.stato}</span>`;
-                                    break;
-                                case 'in elaborazione':
-                                    statusBadge = `<span class="badge bg-warning text-dark">${order.stato}</span>`;
-                                    break;
-                                default:
-                                    statusBadge = `<span class="badge bg-secondary">${order.stato}</span>`;
-                            }
-
-                            row.innerHTML = `
-                                <td>#${order.id}</td>
-                                <td>${orderDate}</td>
-                                <td>€ ${order.totale.toFixed(2)}</td>
-                                <td>${statusBadge}</td>
-                            `;
-                            ordersTableBody.appendChild(row);
-                        });
-                    }
-                } else {
-                    console.error('Errore nel recupero dello storico ordini:', ordersResponse.statusText);
-                    document.querySelector('#v-pills-ordini tbody').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Impossibile caricare lo storico ordini.</td></tr>';
-                }
-            } catch (error) {
-                console.error('Errore di rete per lo storico ordini:', error);
-            }
-            // --- FINE FUNZIONE STORICO ORDINI ---
-        });
-    </script>
+</main>
+<%- include('../partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<!-- JS rimane invariato -->
 </body>
 </html>
