@@ -66,6 +66,7 @@ router.post('/login',
  * Gestisce la creazione di un nuovo utente con validazione e messaggi flash.
  */
 router.post('/registrazione',
+  // Le regole di validazione rimangono invariate
   [
     check('username').isLength({ min: 3 }).withMessage('L\'username deve avere almeno 3 caratteri.'),
     check('nome').notEmpty().withMessage('Il nome è obbligatorio.'),
@@ -73,22 +74,36 @@ router.post('/registrazione',
     check('email').isEmail().withMessage('Inserisci un\'email valida.'),
     check('password').isLength({ min: 8 }).withMessage('La password deve avere almeno 8 caratteri.')
   ],
-  async (req, res) => {
+  async (req, res, next) => { // Aggiungiamo 'next' per la gestione errori
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // Se ci sono errori, li inviamo alla pagina di registrazione
-      req.flash('error', errors.array().map(e => e.msg)); // Invia un array di messaggi
-      return res.status(400).redirect('/registrazione');
+      req.flash('error', errors.array().map(e => e.msg));
+      return res.status(400).redirect('/auth/registrazione');
     }
 
     try {
-      await utentiDao.createUser(req.body);
-      req.flash('success', 'Registrazione completata! Ora puoi effettuare il login.');
-      res.redirect('/login');
+      // 1. Crea l'utente e ottieni il suo ID
+      const newUserId = await utentiDao.createUser(req.body);
+      
+      // 2. Recupera l'oggetto completo del nuovo utente
+      const newUser = await utentiDao.getUserById(newUserId);
+
+      // 3. Esegui il login automatico dell'utente appena creato
+      req.logIn(newUser, (err) => {
+        if (err) {
+          // Se c'è un errore durante il login, passalo al gestore di errori
+          return next(err);
+        }
+        
+        // 4. Se il login ha successo, reindirizza alla homepage
+        req.flash('success', 'Registrazione e login effettuati con successo!');
+        return res.redirect('/');
+      });
+
     } catch (error) {
       console.error("Errore durante la registrazione:", error);
       req.flash('error', 'Si è verificato un errore. L\'email potrebbe essere già in uso.');
-      res.status(500).redirect('/registrazione');
+      return res.status(500).redirect('/auth/registrazione');
     }
   }
 );

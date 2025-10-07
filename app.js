@@ -1,5 +1,7 @@
 'use strict';
 
+console.log('✅ FILE AUTH.JS CARICATO CORRETTAMENTE');
+
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
@@ -52,6 +54,24 @@ app.use((req, res, next) => {
 // Utilizzo dei router
 app.use('/', mainRoutes); // Rotte principali (es. homepage)
 app.use('/auth', authRoutes); // Rotte di autenticazione (es. /auth/login)
+
+// --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
+app.get('/api/auth/status', (req, res) => {
+  if (req.isAuthenticated()) {
+    // Se l'utente è loggato, invia i suoi dati (ma non quelli sensibili)
+    res.json({
+      isAuthenticated: true,
+      user: {
+        id: req.user.id,
+        username: req.user.username,
+        tipo_account: req.user.tipo_account
+      }
+    });
+  } else {
+    // Se non è loggato, invia una risposta chiara
+    res.json({ isAuthenticated: false });
+  }
+});
 
 // Gestione degli errori 404 (Pagina non trovata)
 app.use((req, res) => {

@@ -11,7 +11,7 @@
         <div class="card shadow-sm">
           <div class="card-body p-4">
             <h3 class="card-title text-center mb-4">Accedi a FunShop</h3>
-            <form action="/login" method="POST">
+            <form action="/auth/login" method="POST">
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input type="email" class="form-control" id="email" name="email" required>
@@ -23,7 +23,8 @@
               <button type="submit" class="btn btn-primary">Accedi</button>
             </form>
             <p class="text-center mt-4 text-muted">
-              Non hai ancora un account? <a href="registrazione.html">Registrati ora</a>
+                Non hai ancora un account? 
+                <a href="/auth/registrazione">Registrati ora</a>
             </p>
           </div>
         </div>

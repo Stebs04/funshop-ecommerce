@@ -240,3 +240,35 @@ footer {
             transform: scale(1.1);
         }
         
+
+#profile-preview {
+    position: absolute;
+    z-index: 1050; /* Sopra la maggior parte degli elementi */
+    min-width: 220px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Spazio tra i link */
+    
+    /* Stili per la transizione di comparsa/scomparsa */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+#profile-preview .profile-link {
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #333;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+#profile-preview .profile-link:hover {
+    background-color: #f5f5f5;
+}

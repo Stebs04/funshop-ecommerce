@@ -30,14 +30,27 @@
     
             <div class="text-end">
                
-                <a id="profile-button" href="utente.html" class="btn btn-primary me-2" title="Il mio Account"><i class="bi bi-person fs-5"></i></a>
-                <a id="cart-button" href="#" class="btn btn-primary position-relative" title="cart-button">
-                    <i class="bi bi-cart fs-5"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                      3
-                      <span class="visually-hidden">prodotti nel carrello</span>
-                    </span>
-                </a>
+               <div class="text-end">
+  
+  <% if (isAuthenticated) { %>
+    <a href="/utente" class="btn btn-primary me-2" id="profile-button" title="Il mio Account">
+      <i class="bi bi-person fs-5"></i> 
+    </a>
+  <% } else { %>
+    <a href="/auth/registrazione" class="btn btn-primary me-2" title="Registrati">
+      <i class="bi bi-person fs-5"></i>
+    </a>
+  <% } %>
+
+  <a href="/carrello" class="btn btn-primary position-relative" title="Carrello">
+      <i class="bi bi-cart fs-5"></i>
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+        3
+        <span class="visually-hidden">prodotti nel carrello</span>
+      </span>
+  </a>
+
+</div>
             </div>
           </div>
         </div>

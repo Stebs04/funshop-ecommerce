@@ -12,7 +12,7 @@
         <div class="card shadow-sm">
           <div class="card-body p-4">
             <h3 class="card-title text-center mb-4">Crea il Tuo Account FunShop</h3>
-            <form action="/registrazione" method="POST">
+            <form action="/auth/registrazione" method="POST">
               <div class="mb-3">
                 <label for="nome" class="form-label">Nome</label>
                 <input type="text" class="form-control" id="nome" name="nome" required>
@@ -39,7 +39,8 @@
               </div>
             </form>
             <p class="text-center mt-4 text-muted">
-              Hai già un account? <a href="login.html">Accedi ora</a>
+                Hai già un account? 
+                <a href="/auth/login">Accedi ora</a>
             </p>
           </div>
         </div>
