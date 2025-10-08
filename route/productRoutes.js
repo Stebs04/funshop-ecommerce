@@ -21,7 +21,7 @@ const upload = multer({
     fileFilter: function(req, file, cb){
         checkFileType(file, cb);
     }
-}).single('percorso_immagine');
+}).array('percorso_immagine', 5);
 
 // Funzione per controllare il tipo di file
 function checkFileType(file, cb){
@@ -107,14 +107,19 @@ router.post('/', isLoggedIn, upload, async (req, res) => {
 // Rotta per visualizzare un singolo prodotto
 router.get('/:id', async (req, res) => {
     try {
-        const product = await prodottiDao.getProductById(req.params.id);
-        if (product) {
-            res.render('pages/prodotto', { title: product.nome, product: product, user: req.user });
+        const prodotto = await prodottiDao.getProductById(req.params.id);
+        if (prodotto) {
+            res.render('pages/prodotto', {
+                title: prodotto.nome,
+                prodotto: prodotto,
+                user: req.user,
+                isAuthenticated: req.isAuthenticated()
+            });
         } else {
             res.status(404).send('Prodotto non trovato');
         }
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error('Errore durante il recupero del prodotto:', error);
         res.status(500).send('Errore del server');
     }
 });

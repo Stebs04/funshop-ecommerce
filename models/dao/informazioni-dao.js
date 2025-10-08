@@ -106,3 +106,35 @@ exports.getAccountInfoById = (infoId) => {
         });
     });
 };
+
+/**
+ * Aggiorna l'immagine del profilo di un utente.
+ * Se non esiste un record in accountinfos, ne crea uno nuovo.
+ * @param {number} userId - L'ID dell'utente.
+ * @param {string} imagePath - Il percorso della nuova immagine.
+ * @returns {Promise<number>} Il numero di righe modificate.
+ */
+exports.updateProfileImage = (userId, imagePath) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'UPDATE accountinfos SET immagine_profilo = ? WHERE user_id = ?';
+        db.run(sql, [imagePath, userId], function (err) {
+            if (err) {
+                reject(err);
+            } else {
+                if (this.changes === 0) {
+                    // Se non ci sono righe modificate, potrebbe non esistere un record.
+                    const insertSql = 'INSERT INTO accountinfos (user_id, immagine_profilo) VALUES (?, ?)';
+                    db.run(insertSql, [userId, imagePath], function(err) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(this.lastID);
+                        }
+                    });
+                } else {
+                    resolve(this.changes);
+                }
+            }
+        });
+    });
+};

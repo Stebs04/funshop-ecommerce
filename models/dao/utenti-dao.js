@@ -173,6 +173,7 @@ class UtentiDAO {
       });
     });
   }
+
 }
 
 // Esporta una singola istanza della classe, passando la connessione al database.

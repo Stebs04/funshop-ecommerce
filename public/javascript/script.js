@@ -96,14 +96,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             products.forEach(product => {
                 const displayPrice = product.prezzo > 0 ? product.prezzo : product.prezzo_asta;
                 const col = document.createElement('div');
-                col.className = 'col';
+                col.className = 'col-12 col-md-4 col-lg-3 mb-4';
 
                 col.innerHTML = `
-                    <div class="card h-100 shadow-sm product-card">
+                    <div class="card h-100 shadow-sm product-card" data-product-id="${product.id}">
                         <img src="${product.percorso_immagine}" class="card-img-top" alt="${product.nome}" style="height: 200px; object-fit: cover;">
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">
-                                <a href="/prodotto/${product.id}" class="text-decoration-none text-dark stretched-link">
+                                <a href="/products/${product.id}" class="text-decoration-none text-dark">
                                     ${product.nome}
                                 </a>
                             </h5>
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <p class="card-text text-primary small">Venduto da <strong>${product.nome_venditore}</strong></p>
                             <div class="mt-auto d-flex justify-content-between align-items-center">
                                 <span class="fw-bold fs-5">€ ${displayPrice.toFixed(2)}</span>
-                                <a href="#" class="btn btn-sm btn-primary" style="position: relative; z-index: 2;" title="Aggiungi al carrello">
+                                <a href="#" class="btn btn-sm btn-primary add-to-cart-btn" style="position: relative; z-index: 2;" title="Aggiungi al carrello">
                                     <i class="bi bi-cart-plus-fill fs-5"></i>
                                 </a>
                             </div>
@@ -122,6 +122,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 `;
                 container.appendChild(col);
+
+                const card = col.querySelector('.product-card');
+                card.addEventListener('click', (event) => {
+                    // Se il click non proviene dal pulsante "Aggiungi al carrello"
+                    if (!event.target.closest('.add-to-cart-btn')) {
+                        const productId = card.dataset.productId;
+                        window.location.href = `/products/${productId}`;
+                    }
+                });
             });
 
         } catch (error) {
@@ -151,8 +160,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Esegui tutte le funzioni di inizializzazione
-    updateUserProfileLogic();
-    loadProducts();
-    updateNavbarForSeller();
+    /**
+     * Gestisce il pop-up per il caricamento dell'immagine del profilo.
+     */
+    const handleProfileImageUpload = () => {
+        const imageContainer = document.querySelector('.profile-image-container');
+        const uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+
+        if (imageContainer) {
+            imageContainer.addEventListener('click', () => {
+                uploadModal.show();
+            });
+        }
+    };
+
+    // Inizializza tutte le funzioni
+    await updateUserProfileLogic();
+    await loadProducts();
+    handleProfileImageUpload();
 });

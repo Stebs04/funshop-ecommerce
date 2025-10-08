@@ -42,9 +42,10 @@ class ProdottiDAO {
    */
   async getProductById(id) {
     const sql = `
-      SELECT p.*, u.username as nome_venditore 
+      SELECT p.*, u.username as nome_venditore, ai.immagine_profilo
       FROM prodotti p 
-      JOIN users u ON p.user_id = u.id 
+      JOIN users u ON p.user_id = u.id
+      LEFT JOIN accountinfos ai ON u.id = ai.user_id
       WHERE p.id = ?`;
 
     return new Promise((resolve, reject) => {

@@ -43,10 +43,11 @@ CREATE TABLE IF NOT EXISTS venditori (
 -- Tabella per le informazioni aggiuntive dell'account utente
 CREATE TABLE IF NOT EXISTS accountinfos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL,
     indirizzo TEXT,
     citta TEXT, 
-    cap TEXT, 
+    cap TEXT,
+    immagine_profilo TEXT, 
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
@@ -66,3 +67,4 @@ CREATE TABLE IF NOT EXISTS storico_ordini (
 -- SQLite non ha un comando 'IF NOT EXISTS' per ALTER TABLE, quindi l'errore viene ignorato nell'applicazione.
 -- Qui lo commentiamo per chiarezza, ma l'applicazione lo gestisce.
 -- ALTER TABLE accountinfos ADD COLUMN data_nascita DATE;
+

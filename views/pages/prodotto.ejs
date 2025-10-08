@@ -6,57 +6,57 @@
   <%- include('../partials/navbar') %>
 
   <main class="container my-5">
-
+    <% if (prodotto) { %>
     <div class="row g-5">
 
       <div class="col-md-7">
-        <img src="https://placehold.co/800x800/E95793/white?text=Prodotto" class="img-fluid rounded shadow-sm mb-3" alt="Immagine principale del prodotto">
+        <img src="<%= prodotto.percorso_immagine %>" class="img-fluid rounded shadow-sm mb-3" alt="Immagine principale del prodotto">
         
+        <!-- Thumbnail non implementati dinamicamente per ora -->
         <div class="row g-2">
-          <div class="col-3">
+          <!-- <div class="col-3">
             <img src="https://placehold.co/200x200/E95793/white" class="img-fluid rounded" alt="Thumbnail 1">
-          </div>
-          <div class="col-3">
-            <img src="https://placehold.co/200x200/E95793/white" class="img-fluid rounded" alt="Thumbnail 2">
-          </div>
-          <div class="col-3">
-            <img src="https://placehold.co/200x200/E95793/white" class="img-fluid rounded" alt="Thumbnail 3">
-          </div>
+          </div> -->
         </div>
       </div>
 
       <div class="col-md-5">
         <div class="card p-4 shadow-sm">
-          <h1 class="display-5 fw-bold">€ 25,00</h1>
-          <h2>Gas Sweater vintage</h2>
+          <h1 class="display-5 fw-bold">€ <%= prodotto.prezzo || prodotto.prezzo_asta %></h1>
+          <h2><%= prodotto.nome %></h2>
           <hr>
           
           <ul class="list-unstyled mb-4">
-            <li class="d-flex justify-content-between"><span>TAGLIA:</span><strong>M</strong></li>
-            <li class="d-flex justify-content-between"><span>CONDIZIONI:</span><strong>Ottime</strong></li>
-            <li class="d-flex justify-content-between"><span>COLORE:</span><strong>Grigio</strong></li>
-            <li class="d-flex justify-content-between"><span>MARCA:</span><strong>Gas</strong></li>
+            <li class="d-flex justify-content-between"><span>CONDIZIONI:</span><strong><%= prodotto.condizione %></strong></li>
+            <li class="d-flex justify-content-between"><span>CATEGORIA:</span><strong><%= prodotto.parola_chiave %></strong></li>
           </ul>
 
           <h5 class="fw-bold">Descrizione</h5>
-          <p class="text-muted">Maglione vintage della Gas, taglia M. Comodo e in ottime condizioni, perfetto per un look casual e ricercato.</p>
+          <p class="text-muted"><%= prodotto.descrizione %></p>
           <hr>
           
           <div class="d-flex align-items-center mb-4">
-            <img src="https://github.com/mdo.png" alt="Avatar venditore" width="48" height="48" class="rounded-circle me-3">
+            <img src="<%= prodotto.immagine_profilo ? prodotto.immagine_profilo : '/immagini/avatardefault_92824.png' %>" alt="Avatar venditore" width="48" height="48" class="rounded-circle me-3">
             <div>
-              <h6 class="mb-0 fw-bold">NomeVenditore</h6>
-              <span><i class="bi bi-star-fill text-warning"></i> 5.0 (12 recensioni)</span>
+              <h6 class="mb-0 fw-bold"><%= prodotto.nome_venditore %></h6>
+              <!-- Recensioni non implementate -->
             </div>
           </div>
 
           <a href="#" class="btn btn-primary btn-lg w-100 mb-2">Acquista</a>
           <a href="#" class="btn btn-outline-secondary w-100 mb-2"><i class="bi bi-star me-2"></i>Osserva prodotto</a>
+          <% if (prodotto.prezzo_asta) { %>
           <a href="#" class="btn btn-outline-primary w-100 mb-2">Fai un'offerta</a>
+          <% } %>
           <a href="#" class="btn btn-outline-secondary w-100">Chiedi informazioni</a>
         </div>
       </div>
     </div>
+    <% } else { %>
+      <div class="alert alert-danger" role="alert">
+        Prodotto non trovato.
+      </div>
+    <% } %>
   </main>
 
   <%- include('../partials/footer') %>

@@ -3,6 +3,8 @@
 const express = require('express');
 const router = express.Router();
 const { check, validationResult } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
 
 // Importa i tuoi DAO (assicurati che i percorsi siano corretti)
 const utentiDao = require('../models/dao/utenti-dao');
@@ -29,9 +31,9 @@ router.use(ensureAuthenticated);
  * ROTTA DINAMICA PER LA DASHBOARD UTENTE
  * Gestisce la visualizzazione di tutte le sezioni: /utente, /utente/ordini, /utente/prodotti, etc.
  */
-router.get('/', async (req, res) => {
+router.get(['/', '/:section'], async (req, res) => {
     // Se non viene specificata una sezione, reindirizza a 'dati'
-    const section = req.query.section || 'dati';
+    const section = req.params.section || req.query.section || 'dati';
     const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche'];
 
     if (!validSections.includes(section)) {
@@ -49,10 +51,12 @@ router.get('/', async (req, res) => {
         const prodottiUtente = await prodottiDao.getProductsByUserId(req.user.id);
         const storicoOrdini = await ordiniDao.getOrdersByUserId(req.user.id);
         const indirizziUtente = await informazioniDao.getAccountInfosByUserId(req.user.id);
+        const accountInfo = indirizziUtente[0] || {};
 
         res.render('pages/utente', {
             title: 'Il Mio Profilo',
             user: req.user, // Passa l'intero oggetto utente al template
+            accountInfo: accountInfo,
             currentSection: section,
             prodotti: prodottiUtente,
             ordini: storicoOrdini,
@@ -79,18 +83,77 @@ router.post('/dati/aggiorna', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         req.flash('error', errors.array().map(e => e.msg));
-        return res.redirect('/utente/dati'); // Torna alla sezione dati
+        return res.redirect('/utente?section=dati'); // Torna alla sezione dati
     }
 
     try {
         await utentiDao.updateUserData(req.user.id, req.body);
         req.flash('success', 'Dati aggiornati con successo!');
-        res.redirect('/utente');
+        res.redirect('/utente?section=dati');
     } catch (error) {
         console.error("Errore durante l'aggiornamento dei dati:", error);
         req.flash('error', 'Si è verificato un errore.');
-        res.redirect('/utente');
+        res.redirect('/utente?section=dati');
     }
+});
+
+// Configurazione di Multer per l'upload delle immagini
+const storage = multer.diskStorage({
+    destination: './public/uploads/',
+    filename: function(req, file, cb){
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+  });
+  
+  const upload = multer({
+    storage: storage,
+    limits:{fileSize: 1000000}, // Limite di 1MB per file
+    fileFilter: function(req, file, cb){
+      checkFileType(file, cb);
+    }
+  }).single('immagineProfilo');
+  
+  // Funzione per controllare il tipo di file
+  function checkFileType(file, cb){
+    // Estensioni permesse
+    const filetypes = /jpeg|jpg|png|gif/;
+    // Controlla estensione
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    // Controlla il mimetype
+    const mimetype = filetypes.test(file.mimetype);
+  
+    if(mimetype && extname){
+      return cb(null,true);
+    } else {
+      cb('Error: Images Only!');
+    }
+  }
+
+/**
+ * ROTTA PER AGGIORNARE L'IMMAGINE DEL PROFILO
+ */
+router.post('/dati/upload-immagine', (req, res) => {
+    upload(req, res, async (err) => {
+        if (err) {
+            req.flash('error', err);
+            return res.redirect('/utente?section=dati');
+        }
+        if (req.file == undefined) {
+            req.flash('error', 'Nessun file selezionato!');
+            return res.redirect('/utente?section=dati');
+        }
+
+        try {
+            const imagePath = '/uploads/' + req.file.filename;
+            await informazioniDao.updateProfileImage(req.user.id, imagePath);
+            req.flash('success', 'Immagine del profilo aggiornata!');
+            res.redirect('/utente?section=dati');
+        } catch (error) {
+            console.error("Errore durante l'aggiornamento dell'immagine del profilo:", error);
+            req.flash('error', 'Si è verificato un errore durante l\'aggiornamento dell\'immagine.');
+            res.redirect('/utente?section=dati');
+        }
+    });
 });
 
 // Aggiungi un nuovo indirizzo
@@ -102,16 +165,22 @@ router.post('/indirizzi/aggiungi', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         req.flash('error', errors.array().map(e => e.msg));
-        return res.redirect('/utente/indirizzi');
+        return res.redirect('/utente?section=indirizzi');
     }
     try {
-        await utentiDao.addIndirizzo(req.user.id, req.body);
+        const infoData = {
+            user_id: req.user.id,
+            indirizzo: req.body.indirizzo,
+            citta: req.body.citta,
+            cap: req.body.cap
+        };
+        await informazioniDao.createAccountInfo(infoData);
         req.flash('success', 'Indirizzo aggiunto con successo!');
-        res.redirect('/utente/indirizzi');
+        res.redirect('/utente?section=indirizzi');
     } catch (err) {
         console.error(err);
         req.flash('error', "Errore durante l'aggiunta dell'indirizzo.");
-        res.redirect('/utente/indirizzi');
+        res.redirect('/utente?section=indirizzi');
     }
 });
 
@@ -139,29 +208,35 @@ router.post('/indirizzi/aggiorna/:id', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         req.flash('error', errors.array().map(e => e.msg));
-        return res.redirect('/utente/indirizzi');
+        return res.redirect('/utente?section=indirizzi');
     }
     try {
-        await utentiDao.updateIndirizzo(req.params.id, req.body);
+        const infoId = req.params.id;
+        const infoData = {
+            indirizzo: req.body.indirizzo,
+            citta: req.body.citta,
+            cap: req.body.cap
+        };
+        await informazioniDao.updateAccountInfo(infoId, infoData);
         req.flash('success', 'Indirizzo aggiornato con successo!');
-        res.redirect('/utente/indirizzi');
+        res.redirect('/utente?section=indirizzi');
     } catch (err) {
         console.error(err);
         req.flash('error', "Errore durante l'aggiornamento dell'indirizzo.");
-        res.redirect('/utente/indirizzi');
+        res.redirect('/utente?section=indirizzi');
     }
 });
 
 // Elimina un indirizzo
 router.post('/indirizzi/elimina/:id', async (req, res) => {
     try {
-        await utentiDao.deleteIndirizzo(req.params.id);
+        await informazioniDao.deleteAccountInfo(req.params.id);
         req.flash('success', 'Indirizzo eliminato con successo!');
-        res.redirect('/utente/indirizzi');
+        res.redirect('/utente?section=indirizzi');
     } catch (err) {
         console.error(err);
         req.flash('error', "Errore durante l'eliminazione dell'indirizzo.");
-        res.redirect('/utente/indirizzi');
+        res.redirect('/utente?section=indirizzi');
     }
 });
 

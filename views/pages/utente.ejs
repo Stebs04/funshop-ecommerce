@@ -33,6 +33,41 @@
                 <div class="tab-pane fade <%= currentSection === 'dati' ? 'show active' : '' %>" id="v-pills-dati" role="tabpanel">
                     <h3>I Miei Dati</h3>
                     <p>Gestisci le tue informazioni personali.</p>
+
+                    <div class="card mb-4">
+                        <div class="card-body text-center">
+                            <div class="profile-image-container">
+                                <img src="<%= accountInfo.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+                                <div class="profile-image-overlay">
+                                    <div class="overlay-text">Modifica</div>
+                                </div>
+                            </div>
+                            <h5 class="my-3"><%= user.username %></h5>
+                            <p class="text-muted mb-1"><%= user.tipo_account %></p>
+                        </div>
+                    </div>
+
+                    <!-- Pop-up per il caricamento dell'immagine -->
+                    <div id="uploadModal" class="modal fade" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Carica Nuova Immagine</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="/utente/dati/upload-immagine" method="POST" enctype="multipart/form-data">
+                                        <div class="mb-3">
+                                            <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
+                                            <input class="form-control" type="file" id="immagineProfilo" name="immagineProfilo">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Carica</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-body">
                             <form action="/utente/dati/aggiorna" method="POST">
@@ -105,8 +140,18 @@
                                                 <%= indirizzo.indirizzo %>, <%= indirizzo.citta %><br>
                                                 <%= indirizzo.cap %>
                                             </p>
-                                            <a href="#" class="btn btn-sm btn-outline-primary edit-address-btn" data-bs-toggle="modal" data-bs-target="#editAddressModal" data-indirizzo='<%- JSON.stringify(indirizzo) %>'>Modifica</a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger delete-address-btn" data-bs-toggle="modal" data-bs-target="#deleteAddressModal" data-address-id="<%= indirizzo.id %>">Elimina</a>
+                                            <button class="btn btn-sm btn-outline-primary edit-address-btn" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#addressModal"
+                                                    data-id="<%= indirizzo.id %>"
+                                                    data-indirizzo="<%= indirizzo.indirizzo %>"
+                                                    data-citta="<%= indirizzo.citta %>"
+                                                    data-cap="<%= indirizzo.cap %>">
+                                                Modifica
+                                            </button>
+                                            <form action="/utente/indirizzi/elimina/<%= indirizzo.id %>" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -117,7 +162,7 @@
                             </div>
                         <% } %>
                     </div>
-                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#editAddressModal">Aggiungi un nuovo indirizzo</button>
+                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addressModal">Aggiungi un nuovo indirizzo</button>
                 </div>
                 <div class="tab-pane fade <%= currentSection === 'prodotti' ? 'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
                     <h3>I Miei Prodotti</h3>
@@ -221,16 +266,15 @@
 </div>
 
 <!-- Modal Aggiungi/Modifica Indirizzo -->
-<div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+<div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editAddressModalLabel">Gestisci Indirizzo</h5>
+                <h5 class="modal-title" id="addressModalLabel">Gestisci Indirizzo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="addressForm" action="" method="POST">
-                    <input type="hidden" id="addressId" name="id">
                     <div class="mb-3">
                         <label for="indirizzo" class="form-label">Indirizzo</label>
                         <input type="text" class="form-control" id="indirizzo" name="indirizzo" required>
@@ -243,28 +287,7 @@
                         <label for="cap" class="form-label">CAP</label>
                         <input type="text" class="form-control" id="cap" name="cap" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Salva Indirizzo</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Conferma Eliminazione Indirizzo -->
-<div class="modal fade" id="deleteAddressModal" tabindex="-1" aria-labelledby="deleteAddressModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteAddressModalLabel">Conferma Eliminazione</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                Sei sicuro di voler eliminare questo indirizzo?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <form id="deleteAddressForm" action="" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-danger">Elimina</button>
+                    <button type="submit" class="btn btn-primary">Salva</button>
                 </form>
             </div>
         </div>
@@ -275,40 +298,29 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Script per i modal degli indirizzi
-        const editAddressModal = document.getElementById('editAddressModal');
+        const addressModal = document.getElementById('addressModal');
         const addressForm = document.getElementById('addressForm');
-        const addressIdInput = document.getElementById('addressId');
+        const addressModalLabel = document.getElementById('addressModalLabel');
 
-        // Modal per aggiungere/modificare indirizzo
-        editAddressModal.addEventListener('show.bs.modal', function (event) {
+        addressModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
-            const isEdit = button.classList.contains('edit-address-btn');
-            
+            const id = button.getAttribute('data-id');
+
+            // Reset form
             addressForm.reset();
-            addressIdInput.value = '';
-
-            if (isEdit) {
-                const indirizzo = JSON.parse(button.getAttribute('data-indirizzo'));
-                document.getElementById('editAddressModalLabel').textContent = 'Modifica Indirizzo';
-                addressForm.action = `/utente/indirizzi/${indirizzo.id}/edit`;
-                addressIdInput.value = indirizzo.id;
-                document.getElementById('indirizzo').value = indirizzo.indirizzo;
-                document.getElementById('citta').value = indirizzo.citta;
-                document.getElementById('cap').value = indirizzo.cap;
+            
+            if (id) {
+                // Modal di modifica
+                addressModalLabel.textContent = 'Modifica Indirizzo';
+                addressForm.action = `/utente/indirizzi/aggiorna/${id}`;
+                document.getElementById('indirizzo').value = button.getAttribute('data-indirizzo');
+                document.getElementById('citta').value = button.getAttribute('data-citta');
+                document.getElementById('cap').value = button.getAttribute('data-cap');
             } else {
-                document.getElementById('editAddressModalLabel').textContent = 'Aggiungi Nuovo Indirizzo';
-                addressForm.action = '/utente/indirizzi/add';
+                // Modal di aggiunta
+                addressModalLabel.textContent = 'Aggiungi Nuovo Indirizzo';
+                addressForm.action = '/utente/indirizzi/aggiungi';
             }
-        });
-
-        // Modal per eliminare indirizzo
-        const deleteAddressModal = document.getElementById('deleteAddressModal');
-        deleteAddressModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const addressId = button.getAttribute('data-address-id');
-            const deleteForm = document.getElementById('deleteAddressForm');
-            deleteForm.action = `/utente/indirizzi/${addressId}/delete`;
         });
     });
 </script>
