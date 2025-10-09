@@ -38,7 +38,7 @@
           <div class="d-flex align-items-center mb-4">
             <img src="<%= prodotto.immagine_profilo ? prodotto.immagine_profilo : '/immagini/avatardefault_92824.png' %>" alt="Avatar venditore" width="48" height="48" class="rounded-circle me-3">
             <div>
-              <h6 class="mb-0 fw-bold"><%= prodotto.nome_venditore %></h6>
+              <h6 class="mb-0 fw-bold"><a href="/member/<%= prodotto.user_id %>" class="text-decoration-none text-dark"><%= prodotto.nome_venditore %></a></h6>
               <!-- Recensioni non implementate -->
             </div>
           </div>

@@ -15,6 +15,7 @@ const authRoutes = require('./route/auth');
 const mainRoutes = require('./route/home');
 const userRoutes = require('./route/userRoutes');
 const productRoutes = require('./route/productRoutes');
+const memberRoutes = require('./route/memberRoutes');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/', mainRoutes); // Rotte principali (es. homepage)
 app.use('/auth', authRoutes); // Rotte di autenticazione (es. /auth/login)
 app.use('/utente', userRoutes);
 app.use('/products', productRoutes);
+app.use('/member', memberRoutes);
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {
