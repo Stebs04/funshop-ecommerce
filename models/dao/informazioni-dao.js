@@ -28,12 +28,12 @@ exports.getAccountInfosByUserId = (userId) => {
  */
 exports.createAccountInfo = (infoData) => {
     return new Promise((resolve, reject) => {
-        const { user_id, indirizzo, citta, cap } = infoData;
+        const { user_id, indirizzo, citta, cap, descrizione } = infoData;
         const sql = `
-            INSERT INTO accountinfos (user_id, indirizzo, citta, cap)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO accountinfos (user_id, indirizzo, citta, cap, descrizione)
+            VALUES (?, ?, ?, ?, ?)
         `;
-        db.run(sql, [user_id, indirizzo, citta, cap], function(err) {
+        db.run(sql, [user_id, indirizzo, citta, cap, descrizione], function(err) {
             if (err) {
                 console.error("Errore nell'aggiungere le informazioni:", err.message);
                 reject(err);
@@ -52,13 +52,13 @@ exports.createAccountInfo = (infoData) => {
  */
 exports.updateAccountInfo = (infoId, infoData) => {
     return new Promise((resolve, reject) => {
-        const { indirizzo, citta, cap } = infoData;
+        const { indirizzo, citta, cap, descrizione } = infoData;
         const sql = `
             UPDATE accountinfos SET
-            indirizzo = ?, citta = ?, cap = ?
+            indirizzo = ?, citta = ?, cap = ?, descrizione = ?
             WHERE id = ?
         `;
-        db.run(sql, [indirizzo, citta, cap, infoId], function(err) {
+        db.run(sql, [indirizzo, citta, cap, descrizione, infoId], function(err) {
             if (err) {
                 console.error("Errore nell'aggiornare le informazioni:", err.message);
                 reject(err);

@@ -172,7 +172,8 @@ router.post('/indirizzi/aggiungi', [
             user_id: req.user.id,
             indirizzo: req.body.indirizzo,
             citta: req.body.citta,
-            cap: req.body.cap
+            cap: req.body.cap,
+            descrizione: req.body.descrizione
         };
         await informazioniDao.createAccountInfo(infoData);
         req.flash('success', 'Indirizzo aggiunto con successo!');
@@ -215,7 +216,8 @@ router.post('/indirizzi/aggiorna/:id', [
         const infoData = {
             indirizzo: req.body.indirizzo,
             citta: req.body.citta,
-            cap: req.body.cap
+            cap: req.body.cap,
+            descrizione: req.body.descrizione
         };
         await informazioniDao.updateAccountInfo(infoId, infoData);
         req.flash('success', 'Indirizzo aggiornato con successo!');

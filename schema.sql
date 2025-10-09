@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS accountinfos (
     citta TEXT, 
     cap TEXT,
     immagine_profilo TEXT, 
+    descrizione TEXT,
+    follower INTEGER DEFAULT 0,
+    recensioni INTEGER DEFAULT 0,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
