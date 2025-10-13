@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </a>
                             </h5>
                             <p class="card-text text-muted small">${product.parola_chiave || ''}</p>
-                            <p class="card-text text-primary small">Venduto da <strong>${product.nome_venditore}</strong></p>
+                            <p class="card-text text-primary small">Venduto da <strong><a href="/member/${product.user_id}" class="text-decoration-none text-dark">${product.nome_venditore}</a></strong></p>
                             <div class="mt-auto d-flex justify-content-between align-items-center">
                                 <span class="fw-bold fs-5">€ ${displayPrice.toFixed(2)}</span>
                                 <a href="#" class="btn btn-sm btn-primary add-to-cart-btn" style="position: relative; z-index: 2;" title="Aggiungi al carrello">

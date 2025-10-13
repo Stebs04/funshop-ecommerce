@@ -24,10 +24,8 @@ router.get('/:id', async (req, res) => {
         }
 
         const prodottiUtente = await prodottiDao.getProductsByUserId(memberId);
-        // Cerca l'informazione che contiene l'immagine del profilo
-        const allAccountInfos = await informazioniDao.getAccountInfosByUserId(memberId);
-        const accountInfo = allAccountInfos.find(info => info.immagine_profilo) || allAccountInfos[0] || {};
-
+        const accountInfoResult = await informazioniDao.getAccountInfoByUserId(memberId);
+        const accountInfo = accountInfoResult || {}; // Assicura che 'accountInfo' sia sempre un oggetto
 
         res.render('pages/member', {
             title: `Profilo di ${member.username}`,

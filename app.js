@@ -16,6 +16,7 @@ const mainRoutes = require('./route/home');
 const userRoutes = require('./route/userRoutes');
 const productRoutes = require('./route/productRoutes');
 const memberRoutes = require('./route/memberRoutes');
+const sellerRoutes = require('./route/sellerRoutes');
 
 const app = express();
 
@@ -52,6 +53,8 @@ app.use(passport.session());
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     res.locals.isAuthenticated = req.isAuthenticated();
+    res.locals.success = req.flash('success'); // Messaggi di successo
+    res.locals.error = req.flash('error');     // Messaggi di errore
     next();
 });
 
@@ -61,6 +64,7 @@ app.use('/auth', authRoutes); // Rotte di autenticazione (es. /auth/login)
 app.use('/utente', userRoutes);
 app.use('/products', productRoutes);
 app.use('/member', memberRoutes);
+app.use('/venditore', sellerRoutes);
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {

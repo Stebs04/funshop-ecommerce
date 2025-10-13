@@ -21,7 +21,7 @@ const upload = multer({
     fileFilter: function(req, file, cb){
         checkFileType(file, cb);
     }
-}).array('percorso_immagine', 5);
+}).single('percorso_immagine');
 
 // Funzione per controllare il tipo di file
 function checkFileType(file, cb){
@@ -52,13 +52,8 @@ router.post('/', isLoggedIn, upload, async (req, res) => {
         return res.redirect('/');
     }
 
-    // La gestione dell'errore di upload viene spostata qui
-    if (req.fileValidationError) {
-        req.flash('error', req.fileValidationError);
-        return res.redirect('/products/new');
-    }
     if (!req.file) {
-        req.flash('error', 'Nessun file immagine selezionato!');
+        req.flash('error', 'Devi caricare un\'immagine per il prodotto.');
         return res.redirect('/products/new');
     }
 
@@ -67,40 +62,30 @@ router.post('/', isLoggedIn, upload, async (req, res) => {
     let prezzo_asta = null;
 
     if (sellingType === 'sell_now') {
-        prezzo = parseFloat(req.body.prezzo);
+        prezzo = parseFloat(req.body.prezzo) || 0;
     } else { // 'auction'
-        prezzo_asta = parseFloat(req.body.prezzo_asta);
+        prezzo_asta = parseFloat(req.body.prezzo_asta) || 0;
     }
 
     const newProduct = {
-        nome: nome,
-        descrizione: descrizione,
-        condizione: condizione,
+        nome,
+        descrizione,
+        condizione,
         parola_chiave: categoria,
-        prezzo: prezzo,
-        prezzo_asta: prezzo_asta,
+        prezzo,
+        prezzo_asta,
         percorso_immagine: '/uploads/' + req.file.filename,
         user_id: req.user.id
     };
 
     try {
         await prodottiDao.createProduct(newProduct);
-        res.render('pages/redirect-message', {
-            title: 'Successo',
-            message: 'Caricamento andato a buon fine. Redirecting alla home page',
-            redirectUrl: '/',
-            user: req.user,
-            isAuthenticated: req.isAuthenticated()
-        });
+        req.flash('success', 'Prodotto aggiunto con successo!');
+        res.redirect('/');
     } catch (dbErr) {
         console.error(dbErr);
-        res.render('pages/redirect-message', {
-            title: 'Errore',
-            message: 'Caricamento non riuscito. Redirecting alla homepage',
-            redirectUrl: '/',
-            user: req.user,
-            isAuthenticated: req.isAuthenticated()
-        });
+        req.flash('error', 'Si è verificato un errore durante l\'aggiunta del prodotto.');
+        res.redirect('/products/new');
     }
 });
 
