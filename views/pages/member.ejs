@@ -1,3 +1,4 @@
+<%- /* stebs04/funshop-ecommerce/funshop-ecommerce-3f0b7301d71038e99f9c8f010347363920677908/views/pages/member.ejs */ %>
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -8,13 +9,15 @@
     <div class="member-profile-header mb-4">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
-                <img src="<%= accountInfo.immagine_profilo ? '/uploads/' + accountInfo.immagine_profilo : '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle me-4" style="width: 100px; height: 100px; object-fit: cover;">
+                <img src="<%= accountInfo.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle me-4" style="width: 100px; height: 100px; object-fit: cover;">
                 <div>
-                    <h3 class="mb-0"><%= member.username %></h3>
+       
+                     <h3 class="mb-0"><%= member.username %></h3>
                     <div class="text-muted">
                         <i class="bi bi-star-fill text-warning"></i>
                         <i class="bi bi-star-fill text-warning"></i>
-                        <i class="bi bi-star-fill text-warning"></i>
+         
+                         <i class="bi bi-star-fill text-warning"></i>
                         <i class="bi bi-star-fill text-warning"></i>
                         <i class="bi bi-star-half text-warning"></i>
                         <span><%= accountInfo.recensioni || 0 %> recensioni</span>
@@ -41,7 +44,8 @@
 
     <ul class="nav nav-tabs" id="memberTab" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="articoli-tab" data-bs-toggle="tab" data-bs-target="#articoli" type="button" role="tab" aria-controls="articoli" aria-selected="true">Articoli (<%= prodotti.length %>)</button>
+            <button class="nav-link active" id="articoli-tab" data-bs-toggle="tab" data-bs-target="#articoli" type="button" role="tab" aria-controls="articoli" aria-selected="true">Articoli 
+ (<%= prodotti.length %>)</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="recensioni-tab" data-bs-toggle="tab" data-bs-target="#recensioni" type="button" role="tab" aria-controls="recensioni" aria-selected="false">Recensioni</button>
@@ -51,29 +55,36 @@
     <div class="tab-content" id="memberTabContent">
         <div class="tab-pane fade show active" id="articoli" role="tabpanel" aria-labelledby="articoli-tab">
             <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3 pt-3">
-                <% if (prodotti.length > 0) { %>
+         
+                 <% if (prodotti.length > 0) { %>
                     <% prodotti.forEach(prodotto => { %>
                         <div class="col">
                             <div class="card h-100">
-                                <a href="/prodotto/<%= prodotto.id %>">
-                                    <img src="<%= prodotto.percorso_immagine ? '/uploads/' + prodotto.percorso_immagine : 'https://via.placeholder.com/150' %>" class="card-img-top" alt="<%= prodotto.nome %>">
+        
+                                <%# CORREZIONE: Il link ora punta a /products/ che è la rotta corretta %>
+                                <a href="/products/<%= prodotto.id %>">
+                                    <img src="<%= prodotto.percorso_immagine || 'https://via.placeholder.com/150' %>" class="card-img-top" alt="<%= prodotto.nome %>">
                                 </a>
                                 <div class="card-body p-2">
+                         
                                     <p class="card-text small">€ <%= prodotto.prezzo.toFixed(2) %></p>
                                     <p class="card-text small text-muted">Taglia <%= prodotto.condizione %></p>
                                 </div>
-                            </div>
+          
+                               </div>
                         </div>
                     <% }) %>
                 <% } else { %>
-                    <p>Questo utente non ha ancora messo in vendita nessun articolo.</p>
+                
+                     <p>Questo utente non ha ancora messo in vendita nessun articolo.</p>
                 <% } %>
             </div>
         </div>
         <div class="tab-pane fade" id="recensioni" role="tabpanel" aria-labelledby="recensioni-tab">
             <div class="p-3">
                 <p>Nessuna recensione disponibile.</p>
-            </div>
+     
+             </div>
         </div>
     </div>
 </main>
