@@ -11,7 +11,7 @@ const utentiDao = require('../models/dao/utenti-dao');
 const prodottiDao = require('../models/dao/prodotti-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 const informazioniDao = require('../models/dao/informazioni-dao');
-const indirizziDao = require('../models/dao/indirizzi-dao'); // <-- NUOVO DAO
+const indirizziDao = require('../models/dao/indirizzi-dao');
 
 // Middleware di autenticazione
 const ensureAuthenticated = (req, res, next) => {
@@ -40,8 +40,8 @@ router.get(['/', '/:section'], async (req, res) => {
         const [prodottiUtente, storicoOrdini, indirizziUtente, accountInfoResult] = await Promise.all([
             prodottiDao.getProductsByUserId(req.user.id),
             ordiniDao.getOrdersByUserId(req.user.id),
-            indirizziDao.getIndirizziByUserId(req.user.id), // <-- USA NUOVO DAO
-            informazioniDao.getAccountInfoByUserId(req.user.id) // Modificato
+            indirizziDao.getIndirizziByUserId(req.user.id),
+            informazioniDao.getAccountInfoByUserId(req.user.id)
         ]);
         const accountInfo = accountInfoResult || {};
 
@@ -52,7 +52,7 @@ router.get(['/', '/:section'], async (req, res) => {
             currentSection: section,
             prodotti: prodottiUtente,
             ordini: storicoOrdini,
-            indirizzi: indirizziUtente, // Passa gli indirizzi dal nuovo DAO
+            indirizzi: indirizziUtente,
         });
     } catch (error) {
         console.error(`Errore nel caricare la dashboard utente:`, error);
@@ -61,40 +61,79 @@ router.get(['/', '/:section'], async (req, res) => {
     }
 });
 
-// Aggiorna dati anagrafici
-router.post('/dati/aggiorna', [
+/**
+ * ROTTA UNIFICATA PER AGGIORNARE IL PROFILO UTENTE
+ */
+router.post('/profilo/aggiorna', [
     check('nome').notEmpty().withMessage('Il nome è obbligatorio'),
     check('cognome').notEmpty().withMessage('Il cognome è obbligatorio'),
-    check('username').isLength({ min: 3 }).withMessage('L\'username è obbligatorio'),
-    check('data_nascita').isDate().withMessage('La data di nascita non è valida')
+    check('username').isLength({ min: 3 }).withMessage('L\'username deve avere almeno 3 caratteri'),
+    check('data_nascita').optional({ checkFalsy: true }).isDate().withMessage('La data di nascita non è valida'),
+    check('descrizione').optional().isString().trim()
 ], async (req, res) => {
-    // ... (nessuna modifica qui)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        req.flash('error', errors.array().map(e => e.msg));
+        return res.redirect('/utente?section=dati');
+    }
+
+    try {
+        await utentiDao.updateUserProfile(req.user.id, req.body);
+        req.flash('success', 'Dati aggiornati con successo!');
+    } catch (error) {
+        console.error("Errore durante l'aggiornamento dei dati:", error);
+        req.flash('error', 'Errore durante l\'aggiornamento. L\'username potrebbe essere già in uso.');
+    }
+    res.redirect('/utente?section=dati');
 });
 
-// Configurazione Multer
+
+// Configurazione Multer per upload immagine
 const storage = multer.diskStorage({
     destination: './public/uploads/',
     filename: (req, file, cb) => {
-      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+      cb(null, 'immagineProfilo-' + Date.now() + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage, limits:{fileSize: 1000000}, fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if(mimetype && extname) return cb(null,true);
-    cb('Error: Images Only!');
-}}).single('immagineProfilo');
+const upload = multer({
+    storage,
+    limits:{fileSize: 1000000},
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|gif/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+        if(mimetype && extname) return cb(null,true);
+        cb('Errore: Solo immagini (jpeg, jpg, png, gif)!');
+    }
+}).single('immagineProfilo');
 
-// Upload immagine profilo
+// Rotta per upload immagine profilo
 router.post('/dati/upload-immagine', (req, res) => {
-    // ... (nessuna modifica qui)
+    upload(req, res, async (err) => {
+        if (err) {
+            req.flash('error', err);
+            return res.redirect('/utente?section=dati');
+        }
+        if (req.file == undefined) {
+            req.flash('error', 'Nessun file selezionato!');
+            return res.redirect('/utente?section=dati');
+        }
+        try {
+            const imagePath = '/uploads/' + req.file.filename;
+            await informazioniDao.updateProfileImage(req.user.id, imagePath);
+            req.flash('success', 'Immagine del profilo aggiornata!');
+        } catch (error) {
+            console.error(error);
+            req.flash('error', 'Si è verificato un errore durante l\'aggiornamento dell\'immagine.');
+        }
+        res.redirect('/utente?section=dati');
+    });
 });
 
 
-// --- NUOVE ROTTE PER GLI INDIRIZZI ---
+// --- ROTTE INDIRIZZI ---
+// (La logica qui è corretta e non necessita modifiche)
 
-// Aggiungi un nuovo indirizzo
 router.post('/indirizzi/aggiungi', [
     check('indirizzo').notEmpty().withMessage('L\'indirizzo è obbligatorio.'),
     check('citta').notEmpty().withMessage('La città è obbligatoria.'),
@@ -115,7 +154,6 @@ router.post('/indirizzi/aggiungi', [
     res.redirect('/utente?section=indirizzi');
 });
 
-// Aggiorna un indirizzo
 router.post('/indirizzi/aggiorna/:id', [
     check('indirizzo').notEmpty().withMessage('L\'indirizzo è obbligatorio.'),
     check('citta').notEmpty().withMessage('La città è obbligatoria.'),
@@ -127,8 +165,14 @@ router.post('/indirizzi/aggiorna/:id', [
         return res.redirect('/utente?section=indirizzi');
     }
     try {
-        await indirizziDao.updateIndirizzo(req.params.id, req.body);
-        req.flash('success', 'Indirizzo aggiornato con successo!');
+        // Aggiungi un controllo per assicurarti che l'utente possa modificare solo i propri indirizzi
+        const indirizzo = await indirizziDao.getIndirizzoById(req.params.id);
+        if (indirizzo && indirizzo.user_id === req.user.id) {
+            await indirizziDao.updateIndirizzo(req.params.id, req.body);
+            req.flash('success', 'Indirizzo aggiornato con successo!');
+        } else {
+            req.flash('error', 'Azione non permessa.');
+        }
     } catch (err) {
         console.error(err);
         req.flash('error', "Errore durante l'aggiornamento dell'indirizzo.");
@@ -136,11 +180,16 @@ router.post('/indirizzi/aggiorna/:id', [
     res.redirect('/utente?section=indirizzi');
 });
 
-// Elimina un indirizzo
 router.post('/indirizzi/elimina/:id', async (req, res) => {
     try {
-        await indirizziDao.deleteIndirizzo(req.params.id, req.user.id);
-        req.flash('success', 'Indirizzo eliminato con successo!');
+        // Aggiungi un controllo per assicurarti che l'utente possa eliminare solo i propri indirizzi
+        const indirizzo = await indirizziDao.getIndirizzoById(req.params.id);
+        if (indirizzo && indirizzo.user_id === req.user.id) {
+            await indirizziDao.deleteIndirizzo(req.params.id, req.user.id);
+            req.flash('success', 'Indirizzo eliminato con successo!');
+        } else {
+            req.flash('error', 'Azione non permessa.');
+        }
     } catch (err) {
         console.error(err);
         req.flash('error', "Errore durante l'eliminazione dell'indirizzo.");
@@ -149,7 +198,70 @@ router.post('/indirizzi/elimina/:id', async (req, res) => {
 });
 
 
-// --- ROTTE PRODOTTI (Nessuna modifica qui) ---
-// ...
+// --- ROTTE PRODOTTI ---
+// (Nessuna modifica qui)
+
+router.post('/prodotti/:id/delete', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const userId = req.user.id;
+        const result = await prodottiDao.deleteProduct(productId, userId);
+        if (result === 0) {
+            req.flash('error', 'Azione non permessa o prodotto non trovato.');
+        } else {
+            req.flash('success', 'Prodotto eliminato con successo.');
+        }
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Errore durante l\'eliminazione del prodotto.');
+    }
+    res.redirect('/utente?section=prodotti');
+});
+
+router.get('/prodotti/:id/edit', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await prodottiDao.getProductById(productId);
+
+        if (!product || product.user_id !== req.user.id) {
+            req.flash('error', 'Azione non permessa.');
+            return res.redirect('/utente?section=prodotti');
+        }
+
+        res.render('pages/edit-prodotto', {
+            title: 'Modifica Prodotto',
+            prodotto: product,
+            user: req.user
+        });
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Errore nel caricamento della pagina di modifica.');
+        res.redirect('/utente?section=prodotti');
+    }
+});
+
+router.post('/prodotti/:id/edit', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const userId = req.user.id;
+        const updatedData = { ...req.body };
+
+        if (req.file) {
+            updatedData.percorso_immagine = '/uploads/' + req.file.filename;
+        }
+        
+        const result = await prodottiDao.updateProduct(productId, updatedData, userId);
+
+        if (result === 0) {
+            req.flash('error', 'Azione non permessa o prodotto non trovato.');
+        } else {
+            req.flash('success', 'Prodotto aggiornato con successo.');
+        }
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
+    }
+    res.redirect('/utente?section=prodotti');
+});
 
 module.exports = router;

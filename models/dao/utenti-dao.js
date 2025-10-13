@@ -8,7 +8,7 @@ class UtentiDAO {
     this.db = database;
   }
 
-  async getUser(email) {
+  getUser(email) {
     const sql = 'SELECT * FROM users WHERE email = ?';
     return new Promise((resolve, reject) => {
       this.db.get(sql, [email], (err, row) => {
@@ -18,7 +18,7 @@ class UtentiDAO {
     });
   }
 
-  async getUserById(id) {
+  getUserById(id) {
     const sql = 'SELECT id, username, nome, cognome, email, data_nascita, tipo_account FROM users WHERE id = ?';
     return new Promise((resolve, reject) => {
       this.db.get(sql, [id], (err, row) => {
@@ -28,34 +28,69 @@ class UtentiDAO {
     });
   }
 
-  async createUser(user) {
+  createUser(user) {
     const { username, nome, cognome, email, password, data_nascita } = user;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const sql = 'INSERT INTO users (username, nome, cognome, email, password_hash, data_nascita) VALUES (?, ?, ?, ?, ?, ?)';
-    const params = [username, nome, cognome, email, hashedPassword, data_nascita];
+    return new Promise(async (resolve, reject) => {
+        try {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const sql = 'INSERT INTO users (username, nome, cognome, email, password_hash, data_nascita) VALUES (?, ?, ?, ?, ?, ?)';
+            const params = [username, nome, cognome, email, hashedPassword, data_nascita];
 
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function (err) {
-        if (err) reject(err);
-        else resolve(this.lastID);
-      });
+            this.db.run(sql, params, function (err) {
+                if (err) reject(err);
+                else resolve(this.lastID);
+            });
+        } catch (error) {
+            reject(error);
+        }
     });
   }
 
-  async updateUserData(userId, userData) {
-    const { nome, cognome, username, data_nascita } = userData;
-    const sql = 'UPDATE users SET nome = ?, cognome = ?, username = ?, data_nascita = ? WHERE id = ?';
-    const params = [nome, cognome, username, data_nascita, userId];
+  /**
+   * NUOVA FUNZIONE UNIFICATA
+   * Aggiorna il profilo utente usando una transazione per sicurezza.
+   */
+  async updateUserProfile(userId, data) {
+    const { nome, cognome, username, data_nascita, descrizione } = data;
 
     return new Promise((resolve, reject) => {
-        this.db.run(sql, params, function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
+        this.db.serialize(() => {
+            this.db.run('BEGIN TRANSACTION', (err) => {
+              if (err) return reject(err);
+            });
+
+            // 1. Aggiorna la tabella 'users'
+            const userSql = 'UPDATE users SET nome = ?, cognome = ?, username = ?, data_nascita = ? WHERE id = ?';
+            this.db.run(userSql, [nome, cognome, username, data_nascita || null, userId], function(err) {
+                if (err) {
+                    return this.db.run('ROLLBACK', () => reject(err));
+                }
+            });
+
+            // 2. Esegui un "UPSERT" per la tabella 'accountinfos'
+            const accountInfoSql = `
+                INSERT INTO accountinfos (user_id, descrizione) VALUES (?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET descrizione = excluded.descrizione;
+            `;
+            this.db.run(accountInfoSql, [userId, descrizione || ''], function(err) {
+                if (err) {
+                    return this.db.run('ROLLBACK', () => reject(err));
+                }
+            });
+
+            // 3. Conferma le modifiche
+            this.db.run('COMMIT', (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(true); // Successo
+                }
+            });
         });
     });
   }
 
-  async deleteUser(userId) {
+  deleteUser(userId) {
       const sql = 'DELETE FROM users WHERE id = ?';
       return new Promise((resolve, reject) => {
           this.db.run(sql, [userId], function(err) {

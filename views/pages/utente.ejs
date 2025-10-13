@@ -7,29 +7,27 @@
     <div class="row">
         <div class="col-md-3">
             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                <a href="#v-pills-dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>" data-bs-toggle="pill">
+                <a href="/utente?section=dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>" data-bs-toggle="pill">
                     <i class="bi bi-person-circle me-2"></i>I miei Dati
                 </a>
-                <a href="#v-pills-ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>" data-bs-toggle="pill">
+                <a href="/utente?section=ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>" data-bs-toggle="pill">
                     <i class="bi bi-box-seam me-2"></i>Storico Ordini
                 </a>
-                <a href="#v-pills-indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>" data-bs-toggle="pill">
+                <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>" data-bs-toggle="pill">
                     <i class="bi bi-geo-alt me-2"></i>Indirizzi
                 </a>
                 <% if (user.tipo_account === 'venditore') { %>
-                <a href="#v-pills-prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>" data-bs-toggle="pill">
+                <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>" data-bs-toggle="pill">
                     <i class="bi bi-tag me-2"></i>I miei Prodotti
                 </a>
-                <% } %>
-                <% if (user.tipo_account === 'venditore') { %>
-                    <a href="#v-pills-statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>" data-bs-toggle="pill">
-                        <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
-                    </a>
+                <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>" data-bs-toggle="pill">
+                    <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
+                </a>
                 <% } %>
             </div>
         </div>
         <div class="col-md-9">
-            <div class="tab-content" id="v-pills-tabContent">
+             <div class="tab-content" id="v-pills-tabContent">
                 <div class="tab-pane fade <%= currentSection === 'dati' ? 'show active' : '' %>" id="v-pills-dati" role="tabpanel">
                     <h3>I Miei Dati</h3>
                     <p>Gestisci le tue informazioni personali.</p>
@@ -44,55 +42,58 @@
                             </div>
                             <h5 class="my-3"><%= user.username %></h5>
                             <p class="text-muted mb-1"><%= user.tipo_account %></p>
-                        </div>
+                         </div>
                     </div>
 
-                    <!-- Pop-up per il caricamento dell'immagine -->
                     <div id="uploadModal" class="modal fade" tabindex="-1">
-                        <div class="modal-dialog">
+                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Carica Nuova Immagine</h5>
+                                     <h5 class="modal-title">Carica Nuova Immagine</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body">
+                                 <div class="modal-body">
                                     <form action="/utente/dati/upload-immagine" method="POST" enctype="multipart/form-data">
                                         <div class="mb-3">
-                                            <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
+                                             <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
                                             <input class="form-control" type="file" id="immagineProfilo" name="immagineProfilo">
-                                        </div>
+                                         </div>
                                         <button type="submit" class="btn btn-primary">Carica</button>
-                                    </form>
+                                     </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                     </div>
 
                     <div class="card">
                         <div class="card-body">
-                            <form action="/utente/dati/aggiorna" method="POST">
-                                <div class="mb-3">
+                            <form action="/utente/profilo/aggiorna" method="POST">
+                                 <div class="mb-3">
                                     <label for="userName" class="form-label">Nome</label>
                                     <input type="text" class="form-control" id="userName" name="nome" value="<%= user.nome %>">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="userSurname" class="form-label">Cognome</label>
+                                     <label for="userSurname" class="form-label">Cognome</label>
                                     <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
                                 </div>
-                                <div class="mb-3">
+                                 <div class="mb-3">
                                     <label for="username" class="form-label">Username</label>
                                     <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>">
-                                </div>
+                                 </div>
                                 <div class="mb-3">
                                     <label for="userEmail" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="userEmail" name="email" value="<%= user.email %>" disabled>
                                 </div>
-                                <div class="mb-3">
+                                 <div class="mb-3">
                                     <label for="userDataNascita" class="form-label">Data di Nascita</label>
                                     <input type="date" class="form-control" id="userDataNascita" name="data_nascita" value="<%= user.data_nascita ? new Date(user.data_nascita).toISOString().split('T')[0] : '' %>">
                                 </div>
+                                <div class="mb-3">
+                                    <label for="userDescrizione" class="form-label">Descrizione Profilo</label>
+                                    <textarea class="form-control" id="userDescrizione" name="descrizione" rows="3"><%= accountInfo.descrizione || '' %></textarea>
+                                </div>
                                 <button type="submit" class="btn btn-primary">Salva Modifiche</button>
-                            </form>
+                             </form>
                         </div>
                     </div>
                 </div>
@@ -101,31 +102,31 @@
                     <p>Visualizza tutti gli acquisti che hai effettuato.</p>
                     <table class="table">
                         <thead>
-                            <tr>
+                           <tr>
                                 <th>ID Ordine</th>
                                 <th>Data</th>
                                 <th>Totale</th>
                                 <th>Stato</th>
                             </tr>
-                        </thead>
+                         </thead>
                         <tbody>
                             <% if (ordini && ordini.length > 0) { %>
                                 <% ordini.forEach(ordine => { %>
                                     <tr>
                                         <td>#<%= ordine.id %></td>
-                                        <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
+                                         <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
                                         <td>€ <%= ordine.totale.toFixed(2) %></td>
-                                        <td><span class="badge bg-success"><%= ordine.stato %></span></td>
+                                         <td><span class="badge bg-success"><%= ordine.stato %></span></td>
                                     </tr>
                                 <% }) %>
-                            <% } else { %>
+                             <% } else { %>
                                 <tr>
                                     <td colspan="4" class="text-center text-muted">Non hai ancora effettuato nessun ordine.</td>
-                                </tr>
+                                 </tr>
                             <% } %>
                         </tbody>
                     </table>
-                </div>
+                 </div>
                 <div class="tab-pane fade <%= currentSection === 'indirizzi' ? 'show active' : '' %>" id="v-pills-indirizzi" role="tabpanel">
                     <h3>I Miei Indirizzi</h3>
                     <p>Gestisci i tuoi indirizzi di spedizione e fatturazione.</p>
@@ -133,7 +134,7 @@
                         <% if (indirizzi && indirizzi.length > 0) { %>
                             <% indirizzi.forEach(indirizzo => { %>
                                 <div class="col-md-6 mb-3">
-                                    <div class="card h-100">
+                                     <div class="card h-100">
                                         <div class="card-body">
                                             <h5 class="card-title">Indirizzo</h5>
                                             <p class="card-text">
@@ -146,25 +147,24 @@
                                                     data-id="<%= indirizzo.id %>"
                                                     data-indirizzo="<%= indirizzo.indirizzo %>"
                                                     data-citta="<%= indirizzo.citta %>"
-                                                    data-cap="<%= indirizzo.cap %>"
-                                                    data-descrizione="<%= indirizzo.descrizione %>">
+                                                    data-cap="<%= indirizzo.cap %>">
                                                 Modifica
                                             </button>
                                             <form action="/utente/indirizzi/elimina/<%= indirizzo.id %>" method="POST" class="d-inline">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
                                             </form>
                                         </div>
-                                    </div>
+                                     </div>
                                 </div>
                             <% }) %>
-                        <% } else { %>
+                         <% } else { %>
                             <div class="col">
                                 <p class="text-center text-muted">Non hai ancora aggiunto nessun indirizzo.</p>
-                            </div>
+                             </div>
                         <% } %>
                     </div>
                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addressModal">Aggiungi un nuovo indirizzo</button>
-                </div>
+                 </div>
                 <div class="tab-pane fade <%= currentSection === 'prodotti' ? 'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
                     <h3>I Miei Prodotti</h3>
                     <p>Gestisci i prodotti che hai messo in vendita.</p>
@@ -173,100 +173,35 @@
                         <% prodotti.forEach(prodotto => { %>
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h5 class="mb-1"><%= prodotto.nome %></h5>
+                                     <h5 class="mb-1"><%= prodotto.nome %></h5>
                                     <small>
-                                        Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : 'N/D' %>
+                                         Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : 'N/D' %>
                                     </small>
                                 </div>
-                                <div>
+                                 <div>
                                     <a href="/utente/prodotti/<%= prodotto.id %>/edit" class="btn btn-sm btn-outline-primary">Modifica</a>
                                     <form action="/utente/prodotti/<%= prodotto.id %>/delete" method="POST" style="display: inline;">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
                                     </form>
-                                </div>
+                                 </div>
                             </div>
                         <% }) %>
                     <% } else { %>
-                        <p class="text-center text-muted">Non hai nessun prodotto in vendita.</p>
+                         <p class="text-center text-muted">Non hai nessun prodotto in vendita.</p>
                     <% } %>
                     </div>
                 </div>
-                <% if (user.tipo_account === 'venditore') { %>
+                 <% if (user.tipo_account === 'venditore') { %>
                 <div class="tab-pane fade <%= currentSection === 'statistiche' ? 'show active' : '' %>" id="v-pills-statistiche" role="tabpanel">
                     <h3>Statistiche Venditore</h3>
                     <p>Visualizza le tue statistiche di vendita.</p>
-                    <!-- Statistiche venditore qui -->
                 </div>
-                <% } %>
+                 <% } %>
             </div>
         </div>
     </div>
 </main>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteConfirmModalLabel">Conferma Eliminazione</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Sei sicuro di voler eliminare questo prodotto?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-        <form id="deleteProductForm" action="" method="POST" style="display: inline;">
-            <button type="submit" class="btn btn-danger">Elimina</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Product Modal -->
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editProductModalLabel">Modifica Prodotto</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="editNome" class="form-label">Nome Prodotto</label>
-                        <input type="text" class="form-control" id="editNome" name="nome" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDescrizione" class="form-label">Descrizione</label>
-                        <textarea class="form-control" id="editDescrizione" name="descrizione" rows="3" required></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="editPrezzo" class="form-label">Prezzo</label>
-                            <input type="number" class="form-control" id="editPrezzo" name="prezzo" step="0.01" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="editCategoria" class="form-label">Categoria</label>
-                            <select class="form-select" id="editCategoria" name="categoria_id" required>
-                                <!-- Le opzioni verranno popolate dinamicamente -->
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editImmagine" class="form-label">Immagine Prodotto</label>
-                        <input class="form-control" type="file" id="editImmagine" name="percorso_immagine">
-                        <small class="form-text text-muted">Carica una nuova immagine solo se vuoi sostituire quella attuale.</small>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Salva Modifiche</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Aggiungi/Modifica Indirizzo -->
 <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -288,10 +223,6 @@
                         <label for="cap" class="form-label">CAP</label>
                         <input type="text" class="form-control" id="cap" name="cap" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="descrizione" class="form-label">Descrizione</label>
-                        <textarea class="form-control" id="descrizione" name="descrizione" rows="3"></textarea>
-                    </div>
                     <button type="submit" class="btn btn-primary">Salva</button>
                 </form>
             </div>
@@ -310,20 +241,15 @@
         addressModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const id = button.getAttribute('data-id');
-
-            // Reset form
             addressForm.reset();
             
             if (id) {
-                // Modal di modifica
                 addressModalLabel.textContent = 'Modifica Indirizzo';
                 addressForm.action = `/utente/indirizzi/aggiorna/${id}`;
                 document.getElementById('indirizzo').value = button.getAttribute('data-indirizzo');
                 document.getElementById('citta').value = button.getAttribute('data-citta');
                 document.getElementById('cap').value = button.getAttribute('data-cap');
-                document.getElementById('descrizione').value = button.getAttribute('data-descrizione');
             } else {
-                // Modal di aggiunta
                 addressModalLabel.textContent = 'Aggiungi Nuovo Indirizzo';
                 addressForm.action = '/utente/indirizzi/aggiungi';
             }
