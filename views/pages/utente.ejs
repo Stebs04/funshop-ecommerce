@@ -7,24 +7,24 @@
     <div class="row">
         <div class="col-md-3">
             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                <a href="/utente?section=dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>" data-bs-toggle="pill">
-                    <i class="bi bi-person-circle me-2"></i>I miei Dati
-                </a>
-                <a href="/utente?section=ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>" data-bs-toggle="pill">
-                    <i class="bi bi-box-seam me-2"></i>Storico Ordini
-                </a>
-                <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>" data-bs-toggle="pill">
-                    <i class="bi bi-geo-alt me-2"></i>Indirizzi
-                </a>
-                <% if (user.tipo_account === 'venditore') { %>
-                <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>" data-bs-toggle="pill">
-                    <i class="bi bi-tag me-2"></i>I miei Prodotti
-                </a>
-                <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>" data-bs-toggle="pill">
-                    <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
-                </a>
-                <% } %>
-            </div>
+    <a href="/utente?section=dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>">
+        <i class="bi bi-person-circle me-2"></i>I miei Dati
+    </a>
+    <a href="/utente?section=ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>">
+        <i class="bi bi-box-seam me-2"></i>Storico Ordini
+    </a>
+    <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>">
+        <i class="bi bi-geo-alt me-2"></i>Indirizzi
+    </a>
+    <% if (user.tipo_account === 'venditore') { %>
+    <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>">
+        <i class="bi bi-tag me-2"></i>I miei Prodotti
+    </a>
+    <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>">
+        <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
+    </a>
+    <% } %>
+</div>
         </div>
         <div class="col-md-9">
              <div class="tab-content" id="v-pills-tabContent">

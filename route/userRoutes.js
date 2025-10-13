@@ -43,7 +43,7 @@ router.get(['/', '/:section'], async (req, res) => {
             indirizziDao.getIndirizziByUserId(req.user.id),
             informazioniDao.getAccountInfoByUserId(req.user.id)
         ]);
-        const accountInfo = accountInfoResult || {};
+       const accountInfo = accountInfoResult || {}; // Assicura che accountInfo sia sempre un oggetto
 
         res.render('pages/utente', {
             title: 'Il Mio Profilo',
