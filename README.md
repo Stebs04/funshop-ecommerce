@@ -8,22 +8,46 @@ Benvenuto in FunShop, un progetto di e-commerce full-stack costruito con Node.js
 
 Questo progetto è attualmente in **fase di sviluppo attivo**. Le funzionalità presenti sono una base solida ma verranno aggiornate, migliorate e ampliate nel tempo. L'obiettivo è trasformare FunShop in una piattaforma e-commerce completa e robusta.
 
-**Sviluppi futuri includeranno:**
--   **Chat in tempo reale** tra venditore e acquirente.
--   **Gestione completa del checkout** sia per utenti registrati che per ospiti.
--   Integrazione di un sistema di pagamento reale (es. Stripe).
--   Un pannello di amministrazione per la gestione di utenti e prodotti.
-
 ---
 
 ## ✨ Features Attuali
 
--   **Sistema di Autenticazione Completo**: Registrazione e login funzionanti, con gestione delle sessioni e login automatico dopo la registrazione.
--   **Homepage Dinamica**: Visualizza i prodotti caricati nel database con le informazioni principali.
--   **Dashboard Utente**: Area personale multi-sezione (quasi interamente funzionante) per la gestione dei propri dati e dei prodotti in vendita.
--   **Pagina di Dettaglio Prodotto**: Struttura base della pagina del singolo prodotto (quasi interamente funzionante).
--   **Frontend Interattivo**: L'interfaccia utente è arricchita da JavaScript per la gestione di popup dinamici che si adattano allo stato di login e al ruolo dell'utente (cliente/venditore).
+-   **Sistema di Autenticazione Completo**:
+    -   Registrazione e login sicuri con password crittografate (bcrypt).
+    -   Gestione delle sessioni utente con `express-session` e `passport.js`.
+    -   Login automatico dopo la registrazione.
+    -   Logout sicuro con reindirizzamento alla homepage.
 
+-   **Gestione Prodotti**:
+    -   I venditori possono aggiungere nuovi prodotti tramite un form dedicato, con caricamento di immagini.
+    -   I venditori possono modificare e aggiornare i dettagli dei propri prodotti, inclusa l'immagine.
+    -   I venditori possono eliminare i prodotti che hanno messo in vendita.
+
+-   **Dashboard Utente**:
+    -   Area personale multi-sezione per la gestione del profilo.
+    -   **I Miei Dati**: Aggiornamento delle informazioni personali (nome, cognome, username, descrizione) e caricamento di un'immagine del profilo.
+    -   **Storico Ordini**: Visualizzazione degli ordini passati (struttura pronta).
+    -   **Indirizzi**: Aggiunta, modifica ed eliminazione degli indirizzi di spedizione.
+    -   **I Miei Prodotti**: Sezione dedicata ai venditori per gestire i loro articoli in vendita.
+
+-   **Logica Venditore**:
+    -   Funzionalità "Diventa un Venditore" che aggiorna il ruolo dell'utente da 'cliente' a 'venditore'.
+    -   Il link per diventare venditore è visibile solo agli utenti non-venditori e reindirizza al login se l'utente non è autenticato.
+
+-   **Sistema di Recensioni**:
+    -   Le recensioni vengono visualizzate nella pagina di dettaglio del prodotto.
+    -   La pagina del profilo pubblico di un venditore (`member.ejs`) mostra la media delle valutazioni ricevute (con stelline) e il numero totale di recensioni.
+
+-   **Pagine Pubbliche**:
+    -   Homepage dinamica che mostra tutti i prodotti presenti nel database, ordinati dal più recente.
+    -   Pagina di dettaglio del singolo prodotto.
+    -   Pagina profilo pubblico per ogni utente, dove sono visibili i suoi prodotti in vendita e le recensioni ricevute.
+
+## 🔮 Sviluppi Futuri
+
+-   **Gestione completa del carrello e del checkout** sia per utenti registrati che per ospiti.
+-   Un pannello di amministrazione per la gestione di utenti e prodotti.
+-   Funzionalità di ricerca e filtro avanzato per i prodotti.
 
 ## 🛠️ Stack Tecnologico
 
@@ -31,7 +55,7 @@ Questo progetto è attualmente in **fase di sviluppo attivo**. Le funzionalità 
 -   **Database**: SQLite 3
 -   **View Engine**: EJS (Embedded JavaScript templates)
 -   **Autenticazione**: Passport.js (Local Strategy)
--   **Middleware**: express-session, bcrypt, express-validator, connect-flash, morgan
+-   **Middleware**: express-session, bcrypt, express-validator, connect-flash, morgan, multer
 -   **Frontend**: HTML, CSS, Bootstrap 5, JavaScript (Fetch API)
 
 ## 🚀 Getting Started
@@ -57,9 +81,8 @@ Segui questi passaggi per avviare il progetto in locale.
     ```
 
 3.  **Configura le variabili d'ambiente:**
-    Crea un file `.env` nella cartella principale del progetto copiando il file `.env.example`.
-    ```bash
-    # Esempio di file .env
+    Crea un file `.env` nella cartella principale del progetto.
+    ```
     NODE_ENV=development
     DB_NAME=datastorage.db
     PORT=5500
@@ -70,8 +93,8 @@ Segui questi passaggi per avviare il progetto in locale.
     ```bash
     npm start
     ```
-    Il server sarà in ascolto su `http://localhost:5500` (o sulla porta specificata nel file `.env`). Al primo avvio, il database `datastorage.db` e le relative tabelle verranno create automaticamente.
+    Il server sarà in ascolto su `http://localhost:5500`. Al primo avvio, il database `datastorage.db` e le relative tabelle verranno create automaticamente.
 
 ## 📜 Script Disponibili
 
--   `npm start`: Avvia l'applicazione in modalità di sviluppo.
+-   `npm start`: Avvia l'applicazione in modalità di produzione.
