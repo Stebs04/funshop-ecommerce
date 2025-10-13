@@ -3,102 +3,16 @@
 const db = require('../../managedb');
 
 /**
- * Recupera tutte le informazioni account associate a un ID utente.
+ * Recupera le informazioni account (non indirizzo) associate a un ID utente.
  * @param {number} userId - L'ID dell'utente.
- * @returns {Promise<Array<Object>>} Una promessa che risolve in un array di oggetti informazione.
+ * @returns {Promise<Object>} Una promessa che risolve in un oggetto informazione.
  */
-exports.getAccountInfosByUserId = (userId) => {
+exports.getAccountInfoByUserId = (userId) => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT * FROM accountinfos WHERE user_id = ?';
-        db.all(sql, [userId], (err, rows) => {
+        db.get(sql, [userId], (err, row) => {
             if (err) {
                 console.error("Errore nel recuperare le informazioni dell'account:", err.message);
-                reject(err);
-            } else {
-                resolve(rows);
-            }
-        });
-    });
-};
-
-/**
- * Crea nuove informazioni account per un utente.
- * @param {Object} infoData - Dati da aggiungere (user_id, indirizzo, citta, cap).
- * @returns {Promise<number>} Una promessa che risolve con l'ID delle nuove informazioni inserite.
- */
-exports.createAccountInfo = (infoData) => {
-    return new Promise((resolve, reject) => {
-        const { user_id, indirizzo, citta, cap, descrizione } = infoData;
-        const sql = `
-            INSERT INTO accountinfos (user_id, indirizzo, citta, cap, descrizione)
-            VALUES (?, ?, ?, ?, ?)
-        `;
-        db.run(sql, [user_id, indirizzo, citta, cap, descrizione], function(err) {
-            if (err) {
-                console.error("Errore nell'aggiungere le informazioni:", err.message);
-                reject(err);
-            } else {
-                resolve(this.lastID);
-            }
-        });
-    });
-};
-
-/**
- * Aggiorna informazioni account esistenti.
- * @param {number} infoId - L'ID delle informazioni da aggiornare.
- * @param {Object} infoData - I nuovi dati (indirizzo, citta, cap).
- * @returns {Promise<number>} Una promessa che risolve con il numero di righe modificate.
- */
-exports.updateAccountInfo = (infoId, infoData) => {
-    return new Promise((resolve, reject) => {
-        const { indirizzo, citta, cap, descrizione } = infoData;
-        const sql = `
-            UPDATE accountinfos SET
-            indirizzo = ?, citta = ?, cap = ?, descrizione = ?
-            WHERE id = ?
-        `;
-        db.run(sql, [indirizzo, citta, cap, descrizione, infoId], function(err) {
-            if (err) {
-                console.error("Errore nell'aggiornare le informazioni:", err.message);
-                reject(err);
-            } else {
-                resolve(this.changes);
-            }
-        });
-    });
-};
-
-/**
- * Elimina un set di informazioni account.
- * @param {number} infoId - L'ID delle informazioni da eliminare.
- * @returns {Promise<number>} Una promessa che risolve con il numero di righe eliminate.
- */
-exports.deleteAccountInfo = (infoId) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'DELETE FROM accountinfos WHERE id = ?';
-        db.run(sql, [infoId], function(err) {
-            if (err) {
-                console.error("Errore nell'eliminare le informazioni:", err.message);
-                reject(err);
-            } else {
-                resolve(this.changes);
-            }
-        });
-    });
-};
-
-/**
- * Recupera un singolo indirizzo tramite il suo ID.
- * @param {number} infoId - L'ID dell'informazione da recuperare.
- * @returns {Promise<Object>} Una promessa che risolve con l'oggetto indirizzo.
- */
-exports.getAccountInfoById = (infoId) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM accountinfos WHERE id = ?';
-        db.get(sql, [infoId], (err, row) => {
-            if (err) {
-                console.error("Errore nel recuperare l'informazione dell'account:", err.message);
                 reject(err);
             } else {
                 resolve(row);
@@ -112,7 +26,7 @@ exports.getAccountInfoById = (infoId) => {
  * Se non esiste un record in accountinfos, ne crea uno nuovo.
  * @param {number} userId - L'ID dell'utente.
  * @param {string} imagePath - Il percorso della nuova immagine.
- * @returns {Promise<number>} Il numero di righe modificate.
+ * @returns {Promise<number>} Il numero di righe modificate o l'ID del nuovo record.
  */
 exports.updateProfileImage = (userId, imagePath) => {
     return new Promise((resolve, reject) => {
@@ -122,7 +36,7 @@ exports.updateProfileImage = (userId, imagePath) => {
                 reject(err);
             } else {
                 if (this.changes === 0) {
-                    // Se non ci sono righe modificate, potrebbe non esistere un record.
+                    // Se non ci sono righe modificate, crea un nuovo record.
                     const insertSql = 'INSERT INTO accountinfos (user_id, immagine_profilo) VALUES (?, ?)';
                     db.run(insertSql, [userId, imagePath], function(err) {
                         if (err) {
@@ -134,6 +48,34 @@ exports.updateProfileImage = (userId, imagePath) => {
                 } else {
                     resolve(this.changes);
                 }
+            }
+        });
+    });
+};
+
+/**
+ * Aggiorna la descrizione del profilo e altre informazioni non di indirizzo.
+ * @param {number} userId - L'ID dell'utente.
+ * @param {Object} infoData - Dati da aggiornare (es. descrizione).
+ * @returns {Promise<number>} Numero di righe modificate o ID del nuovo record.
+ */
+exports.updateProfileInfo = (userId, infoData) => {
+    return new Promise((resolve, reject) => {
+        const { descrizione } = infoData;
+        const sql = 'UPDATE accountinfos SET descrizione = ? WHERE user_id = ?';
+        db.run(sql, [descrizione, userId], function(err) {
+            if (err) {
+                reject(err);
+            } else {
+                 if (this.changes === 0) {
+                    const insertSql = 'INSERT INTO accountinfos (user_id, descrizione) VALUES (?, ?)';
+                    db.run(insertSql, [userId, descrizione], function(err) {
+                        if (err) reject(err);
+                        else resolve(this.lastID);
+                    });
+                 } else {
+                    resolve(this.changes);
+                 }
             }
         });
     });
