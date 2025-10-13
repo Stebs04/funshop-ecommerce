@@ -21,7 +21,9 @@
               </li>
               <li><a href="novità.html" class="nav-link px-2 link-dark header-nav-link">Novità</a></li>
               <li><a href="offerte.html" class="nav-link px-2 link-dark header-nav-link">Offerte</a></li>
-              <li><a href="/venditore" class="nav-link px-2 link-dark header-nav-link">Diventa un venditore</a></li>
+            <% if (!user || user.tipo_account !== 'venditore') { %>
+  <li><a href="/venditore" class="nav-link px-2 link-dark header-nav-link">Diventa un venditore</a></li>
+<% } %>
             </ul>
     
             <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">

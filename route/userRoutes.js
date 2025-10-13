@@ -107,6 +107,25 @@ const upload = multer({
     }
 }).single('immagineProfilo');
 
+const productStorage = multer.diskStorage({
+    destination: './public/uploads/',
+    filename: (req, file, cb) => {
+      cb(null, 'percorso_immagine-' + Date.now() + path.extname(file.originalname));
+    }
+});
+
+const uploadProductImage = multer({
+    storage: productStorage,
+    limits:{fileSize: 1000000},
+    fileFilter: (req, file, cb) => {
+        const filetypes = /jpeg|jpg|png|gif/;
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = filetypes.test(file.mimetype);
+        if(mimetype && extname) return cb(null,true);
+        cb('Errore: Solo immagini (jpeg, jpg, png, gif)!');
+    }
+}).single('percorso_immagine'); // Usa il nome del campo corretto del form
+
 // Rotta per upload immagine profilo
 router.post('/dati/upload-immagine', upload, async (req, res) => {
     // Aggiungiamo un log per il debug
@@ -261,13 +280,17 @@ router.get('/prodotti/:id/edit', async (req, res) => {
     }
 });
 
-router.post('/prodotti/:id/edit', async (req, res) => {
+router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
     try {
         const productId = req.params.id;
         const userId = req.user.id;
+        
+        // Recupera i dati dal form
         const updatedData = { ...req.body };
 
+        // Se è stata caricata una nuova immagine, aggiorna il percorso
         if (req.file) {
+            console.log('Nuova immagine caricata:', req.file.filename);
             updatedData.percorso_immagine = '/uploads/' + req.file.filename;
         }
         
@@ -279,7 +302,7 @@ router.post('/prodotti/:id/edit', async (req, res) => {
             req.flash('success', 'Prodotto aggiornato con successo.');
         }
     } catch (err) {
-        console.error(err);
+        console.error("Errore durante l'aggiornamento del prodotto:", err);
         req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
     }
     res.redirect('/utente?section=prodotti');

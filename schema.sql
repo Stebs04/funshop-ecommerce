@@ -72,3 +72,15 @@ CREATE TABLE IF NOT EXISTS storico_ordini (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE SET NULL
 );
+
+-- Tabella per le recensioni
+CREATE TABLE IF NOT EXISTS recensioni (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contenuto TEXT NOT NULL,
+    valutazione INTEGER NOT NULL CHECK(valutazione >= 1 AND valutazione <= 5),
+    data_creazione DATETIME DEFAULT CURRENT_TIMESTAMP,
+    prodotto_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);

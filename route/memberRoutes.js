@@ -1,5 +1,6 @@
 'use strict';
 
+const recensioniDao = require('../models/dao/recensioni-dao');
 const express = require('express');
 const router = express.Router();
 const utentiDao = require('../models/dao/utenti-dao');
@@ -24,15 +25,26 @@ router.get('/:id', async (req, res) => {
         }
 
         const prodottiUtente = await prodottiDao.getProductsByUserId(memberId);
+        const recensioniRicevute = await recensioniDao.getReviewsForUser(memberId);
         const accountInfoResult = await informazioniDao.getAccountInfoByUserId(memberId);
-        const accountInfo = accountInfoResult || {}; // Assicura che 'accountInfo' sia sempre un oggetto
+        const accountInfo = accountInfoResult || {};
+
+        // Calcola la media delle recensioni
+        let averageRating = 0;
+        if (recensioniRicevute.length > 0) {
+            const totalRating = recensioniRicevute.reduce((sum, review) => sum + review.valutazione, 0);
+            averageRating = totalRating / recensioniRicevute.length;
+        }
 
         res.render('pages/member', {
             title: `Profilo di ${member.username}`,
-            user: req.user, // Utente loggato (se c'è)
+            user: req.user,
             member: member,
             accountInfo: accountInfo,
-            prodotti: prodottiUtente
+            prodotti: prodottiUtente,
+            recensioni: recensioniRicevute,
+            averageRating: averageRating, // Passa la media
+            reviewCount: recensioniRicevute.length // Passa il numero di recensioni
         });
     } catch (error) {
         console.error(`Errore nel caricare la pagina membro:`, error);

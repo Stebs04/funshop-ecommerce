@@ -1,5 +1,6 @@
 'use strict';
 
+const recensioniDao = require('../models/dao/recensioni-dao');
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -94,9 +95,13 @@ router.get('/:id', async (req, res) => {
     try {
         const prodotto = await prodottiDao.getProductById(req.params.id);
         if (prodotto) {
+            // Recupera le recensioni per questo prodotto
+            const recensioni = await recensioniDao.getReviewsByProductId(req.params.id);
+            
             res.render('pages/prodotto', {
                 title: prodotto.nome,
                 prodotto: prodotto,
+                recensioni: recensioni, // Passa le recensioni al template
                 user: req.user,
                 isAuthenticated: req.isAuthenticated()
             });

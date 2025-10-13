@@ -17,6 +17,7 @@ const userRoutes = require('./route/userRoutes');
 const productRoutes = require('./route/productRoutes');
 const memberRoutes = require('./route/memberRoutes');
 const sellerRoutes = require('./route/sellerRoutes');
+const recensioniRoutes = require('./route/recensioniRoutes');
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/utente', userRoutes);
 app.use('/products', productRoutes);
 app.use('/member', memberRoutes);
 app.use('/venditore', sellerRoutes);
+app.use('/recensioni', recensioniRoutes);
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {

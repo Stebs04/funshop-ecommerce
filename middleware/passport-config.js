@@ -72,7 +72,8 @@ function isLoggedIn(req, res, next) {
     if (req.isAuthenticated()) {
         return next();
     }
-    res.redirect('/login');
+    req.flash('error', 'Devi effettuare il login per accedere a questa pagina.');
+    res.redirect('/auth/login');
 }
 
 passport.isLoggedIn = isLoggedIn;

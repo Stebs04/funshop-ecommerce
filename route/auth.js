@@ -108,14 +108,11 @@ router.post('/registrazione',
   }
 );
 
-/**
- * ROTTA PER IL LOGOUT
- */
 router.get('/logout', (req, res, next) => {
     req.logout(function(err) {
         if (err) { return next(err); }
         req.flash('success', 'Logout effettuato con successo.');
-        res.redirect('/login');
+        res.redirect('/'); // Reindirizza alla homepage
     });
 });
 

@@ -7,39 +7,35 @@
 
 <main class="container my-5">
     <div class="member-profile-header mb-4">
-        <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center">
-                <img src="<%= accountInfo.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle me-4" style="width: 100px; height: 100px; object-fit: cover;">
-                <div>
-       
-                     <h3 class="mb-0"><%= member.username %></h3>
-                    <div class="text-muted">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <img src="<%= accountInfo.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle me-4" style="width: 100px; height: 100px; object-fit: cover;">
+            <div>
+                <h3 class="mb-0"><%= member.username %></h3>
+                <div class="text-muted d-flex align-items-center">
+                    <% const fullStars = Math.floor(averageRating); %>
+                    <% const halfStar = averageRating % 1 !== 0; %>
+                    <% const emptyStars = 5 - fullStars - (halfStar ? 1 : 0); %>
+
+                    <% for(let i = 0; i < fullStars; i++) { %>
                         <i class="bi bi-star-fill text-warning"></i>
-                        <i class="bi bi-star-fill text-warning"></i>
-         
-                         <i class="bi bi-star-fill text-warning"></i>
-                        <i class="bi bi-star-fill text-warning"></i>
+                    <% } %>
+                    <% if (halfStar) { %>
                         <i class="bi bi-star-half text-warning"></i>
-                        <span><%= accountInfo.recensioni || 0 %> recensioni</span>
-                    </div>
+                    <% } %>
+                    <% for(let i = 0; i < emptyStars; i++) { %>
+                        <i class="bi bi-star text-warning"></i>
+                    <% } %>
+                    <span class="ms-2">(<%= reviewCount %> recensioni)</span>
                 </div>
             </div>
-            <button class="btn btn-primary">Segui</button>
         </div>
-        <div class="mt-3">
-            <p><%= accountInfo.descrizione || 'Nessuna descrizione fornita.' %> <a href="#">Ulteriori informazioni</a></p>
-        </div>
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <h5>Informazioni</h5>
-                <ul class="list-unstyled">
-                    <li><i class="bi bi-geo-alt-fill me-2"></i><%= accountInfo.localita || 'Non specificato' %></li>
-                    <li><i class="bi bi-clock-fill me-2"></i>Ultima visita <%= new Date(member.data_ultimo_accesso).toLocaleString('it-IT') %></li>
-                    <li><i class="bi bi-people-fill me-2"></i><%= accountInfo.follower || 0 %> follower, <%= accountInfo.seguiti || 0 %> seguiti</li>
-                </ul>
-            </div>
-            </div>
-        </div>
+        <button class="btn btn-primary">Segui</button>
+    </div>
+    <div class="mt-3">
+        <p><%= accountInfo.descrizione || 'Nessuna descrizione fornita.' %></p>
+    </div>
+</div>
     </div>
 
     <ul class="nav nav-tabs" id="memberTab" role="tablist">
@@ -80,11 +76,40 @@
                 <% } %>
             </div>
         </div>
-        <div class="tab-pane fade" id="recensioni" role="tabpanel" aria-labelledby="recensioni-tab">
+      <div class="tab-pane fade" id="recensioni" role="tabpanel" aria-labelledby="recensioni-tab">
             <div class="p-3">
-                <p>Nessuna recensione disponibile.</p>
-     
-             </div>
+                <% if (recensioni && recensioni.length > 0) { %>
+                    <% recensioni.forEach(recensione => { %>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            Recensione per: <a href="/products/<%= recensione.prodotto_id %>"><%= recensione.nome_prodotto %></a>
+                                        </h6>
+                                        <h6 class="card-subtitle mb-2 text-muted">
+                                            Da: <%= recensione.autore_recensione %>
+                                        </h6>
+                                    </div>
+                                    <div>
+                                        <% for(let i = 0; i < recensione.valutazione; i++) { %>
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        <% } %>
+                                        <% for(let i = recensione.valutazione; i < 5; i++) { %>
+                                            <i class="bi bi-star text-warning"></i>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <p class="card-text"><%= recensione.contenuto %></p>
+                                <small class="text-muted"><%= new Date(recensione.data_creazione).toLocaleDateString('it-IT') %></small>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <p>Questo utente non ha ancora ricevuto nessuna recensione.</p>
+                <% } %>
+            </div>
+        </div>
         </div>
     </div>
 </main>
