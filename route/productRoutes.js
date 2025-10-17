@@ -8,6 +8,15 @@ const path = require('path');
 const prodottiDao = require('../models/dao/prodotti-dao');
 const { isLoggedIn } = require('../middleware/passport-config');
 
+const categorie = [
+    "Anime & Manga",
+    "Carte da gioco collezionabili",
+    "Action Figure & Statue",
+    "Videogiochi",
+    "Modellismo & Replica",
+    "LEGO / Brick compatibili"
+];
+
 // Configurazione di Multer per il caricamento delle immagini
 const storage = multer.diskStorage({
     destination: './public/uploads/',
@@ -43,7 +52,11 @@ router.get('/new', isLoggedIn, (req, res) => {
         req.flash('error', 'Solo i venditori possono aggiungere prodotti.');
         return res.redirect('/');
     }
-    res.render('pages/nuovo-prodotto', { title: 'Aggiungi Prodotto', user: req.user });
+    res.render('pages/nuovo-prodotto', { 
+        title: 'Aggiungi Prodotto', 
+        user: req.user,
+        categorie: categorie // Passa le categorie al template
+    });
 });
 
 // Rotta per creare un nuovo prodotto

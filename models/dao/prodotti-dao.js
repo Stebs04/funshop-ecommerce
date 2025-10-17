@@ -1,5 +1,4 @@
 // File: models/dao/prodotti-dao.js
-
 'use strict';
 
 const { db } = require('../../managedb');
@@ -10,37 +9,48 @@ class ProdottiDAO {
   }
 
   /**
-   * Recupera i prodotti in base a un filtro.
-   * @param {string} filterType - Tipo di filtro ('all', 'new', 'offers', 'category').
-   * @param {string} [value] - Valore per il filtro (es. nome della categoria).
-   * @returns {Promise<Array<object>>} Una lista di prodotti.
+   * Recupera i prodotti in base a una serie di filtri e opzioni di ordinamento.
    */
-  async getProducts(filterType = 'all', value = null) {
+  async getProducts(filters = {}) {
+    const { view, category, condition, sortBy } = filters;
     let sql = `
       SELECT p.*, u.username as nome_venditore 
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
     `;
-
     const params = [];
+    const whereClauses = [];
 
-    switch (filterType) {
-        case 'new':
-            // Prodotti inseriti oggi
-            sql += ' WHERE DATE(p.data_inserimento) = DATE(\'now\')';
-            break;
-        case 'offers':
-            // Prodotti con un prezzo scontato valido
-            sql += ' WHERE p.prezzo_scontato IS NOT NULL AND p.prezzo_scontato > 0';
-            break;
-        case 'category':
-            // Prodotti di una specifica categoria
-            sql += ' WHERE p.parola_chiave = ?';
-            params.push(value);
-            break;
+    if (view === 'new') {
+      whereClauses.push('DATE(p.data_inserimento) = DATE(\'now\')');
+    } else if (view === 'offers') {
+      whereClauses.push('p.prezzo_scontato IS NOT NULL AND p.prezzo_scontato > 0');
     }
 
-    sql += ' ORDER BY p.data_inserimento DESC';
+    if (category) {
+      whereClauses.push('p.parola_chiave = ?');
+      params.push(category);
+    }
+
+    if (condition) {
+      whereClauses.push('p.condizione = ?');
+      params.push(condition);
+    }
+
+    if (whereClauses.length > 0) {
+      sql += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    // Logica di ordinamento
+    if (sortBy === 'price_asc') {
+      // Ordina per prezzo, dando priorità a quello scontato se esiste
+      sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) ASC';
+    } else if (sortBy === 'price_desc') {
+      sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) DESC';
+    } else {
+      // Ordinamento di default
+      sql += ' ORDER BY p.data_inserimento DESC';
+    }
 
     return new Promise((resolve, reject) => {
       this.db.all(sql, params, (err, rows) => {
@@ -50,8 +60,7 @@ class ProdottiDAO {
     });
   }
   
-  // ... (le altre funzioni come getProductById, getProductsByUserId rimangono invariate) ...
-
+  // ... il resto delle funzioni (getProductById, createProduct, etc.) rimane invariato ...
   async getProductById(id) {
     const sql = `
       SELECT p.*, u.username as nome_venditore, ai.immagine_profilo
@@ -59,14 +68,10 @@ class ProdottiDAO {
       JOIN users u ON p.user_id = u.id
       LEFT JOIN accountinfos ai ON u.id = ai.user_id
       WHERE p.id = ?`;
-
     return new Promise((resolve, reject) => {
       this.db.get(sql, [id], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
+        if (err) reject(err);
+        else resolve(row);
       });
     });
   }
@@ -75,25 +80,18 @@ class ProdottiDAO {
     const sql = 'SELECT * FROM prodotti WHERE user_id = ? ORDER BY data_inserimento DESC';
     return new Promise((resolve, reject) => {
       this.db.all(sql, [userId], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
+        if (err) reject(err);
+        else resolve(rows);
       });
     });
   }
   
   async createProduct(product) {
     const { nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_asta, user_id } = product;
-    
-    // Includiamo prezzo_scontato, che sarà null di default
     const sql = `
       INSERT INTO prodotti (nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_asta, prezzo_scontato, user_id) 
       VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)`;
-      
     const params = [nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo || null, prezzo_asta || null, user_id];
-
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function (err) {
         if (err) reject(err);
@@ -111,47 +109,22 @@ class ProdottiDAO {
           });
       });
   }
-  
-  /**
-   * Recupera tutte le categorie (parole_chiave) uniche dal database.
-   * @returns {Promise<Array<string>>} Una lista di stringhe di categorie.
-   */
-  async getAllCategories() {
-    const sql = 'SELECT DISTINCT parola_chiave FROM prodotti ORDER BY parola_chiave';
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, [], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          // Estrai solo i nomi delle categorie dall'oggetto
-          resolve(rows.map(row => row.parola_chiave));
-        }
-      });
-    });
-  }
 
   async updateProduct(id, productData, userId) {
-    // Aggiungi 'prezzo_scontato' ai campi potenzialmente aggiornabili
-    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato'];
-    
+    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
     const fieldsToUpdate = Object.keys(productData)
         .filter(key => allowedFields.includes(key));
-        
     if (fieldsToUpdate.length === 0) {
-        return Promise.resolve(0); // Nessun campo valido da aggiornare
+        return Promise.resolve(0);
     }
-
     const fieldPlaceholders = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
     const values = fieldsToUpdate.map(field => {
-        // Se il prezzo scontato è una stringa vuota, salvalo come NULL
-        if (field === 'prezzo_scontato' && productData[field] === '') {
+        if (field === 'prezzo_scontato' && (productData[field] === '' || parseFloat(productData[field]) === 0)) {
             return null;
         }
         return productData[field];
     });
-
     const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = ? AND user_id = ?`;
-    
     return new Promise((resolve, reject) => {
       this.db.run(sql, [...values, id, userId], function (err) {
         if (err) reject(err);

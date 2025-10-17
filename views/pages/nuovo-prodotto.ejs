@@ -26,10 +26,16 @@
                     <textarea name="descrizione" class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
                     </div>
 
-                    <!-- Categoria -->
-                    <div class="mb-3">
+                  <div class="mb-3">
                         <label for="productCategory" class="form-label">Categoria</label>
-                        <input name="categoria" type="text" class="form-control" id="productCategory" placeholder="Es. Action Figure" required>
+                        <select name="categoria" class="form-select" id="productCategory" required>
+                            <option value="" disabled selected>Seleziona una categoria</option>
+                            <% if (locals.categorie) { %>
+                                <% categorie.forEach(cat => { %>
+                                    <option value="<%= cat %>"><%= cat %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
                     </div>
 
                     <!-- Condizione -->

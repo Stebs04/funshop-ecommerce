@@ -1,63 +1,50 @@
 // File: route/home.js
-
 'use strict';
 
 const express = require('express');
 const router = express.Router();
 const prodottiDao = require('../models/dao/prodotti-dao');
 
-/**
- * ROTTA DINAMICA PER LA HOMEPAGE E LE SEZIONI
- * Mostra i prodotti in base ai filtri passati come query parameters.
- */
+// Definiamo le categorie in un unico posto
+const categorie = [
+    "Anime & Manga",
+    "Carte da gioco collezionabili",
+    "Action Figure & Statue",
+    "Videogiochi",
+    "Modellismo & Replica",
+    "LEGO / Brick compatibili"
+];
+
+const condizioni = ["Come nuovo", "Ottimo stato", "Tanto usato"];
+
 router.get('/', async (req, res) => {
     try {
-        const { view, category } = req.query;
-        let prodotti;
-        let title = 'Prodotti in Evidenza'; // Titolo di default
+        const { view, category, condition, sortBy } = req.query;
+        let title = 'Prodotti in Evidenza';
 
-        // Recupera dinamicamente le categorie per la navbar
-        const categorie = await prodottiDao.getAllCategories();
+        // Costruisci l'oggetto dei filtri da passare al DAO
+        const filters = { view, category, condition, sortBy };
 
-        if (view === 'novita') {
-            title = 'Novità del Giorno';
-            prodotti = await prodottiDao.getProducts('new');
-        } else if (view === 'offerte') {
-            title = 'Prodotti in Offerta';
-            prodotti = await prodottiDao.getProducts('offers');
-        } else if (category) {
-            title = `Categoria: ${category}`;
-            prodotti = await prodottiDao.getProducts('category', category);
-        } else {
-            // Se nessun filtro è specificato, mostra tutti i prodotti
-            prodotti = await prodottiDao.getProducts('all');
-        }
+        if (view === 'novita') title = 'Novità del Giorno';
+        if (view === 'offerte') title = 'Prodotti in Offerta';
+        if (category) title = `Categoria: ${category}`;
 
-        // Renderizza la pagina 'home.ejs' passando i dati filtrati
+        const prodotti = await prodottiDao.getProducts(filters);
+        
         res.render('pages/home', {
-            pageTitle: title, // Titolo dinamico per la pagina
+            pageTitle: title,
             prodotti: prodotti,
-            categorie: categorie, // Passa le categorie alla vista
+            categorie: categorie, // Categorie predefinite
+            condizioni: condizioni, // Condizioni predefinite
+            currentFilters: filters, // Passa i filtri attuali per popolare il form
             user: req.user || null,
             isAuthenticated: req.isAuthenticated(),
         });
 
     } catch (error) {
-        console.error('Errore durante il recupero dei prodotti per la homepage:', error);
+        console.error('Errore durante il recupero dei prodotti:', error);
         res.status(500).send("Si è verificato un errore nel caricamento dei prodotti.");
     }
-});
-
-
-// L'API route non è più necessaria per la homepage, ma la lasciamo se serve altrove
-router.get('/api/products', async (req, res) => {
-  try {
-    const prodotti = await prodottiDao.getProducts('all');
-    res.json(prodotti);
-  } catch (error) {
-    console.error('Errore API durante il recupero dei prodotti:', error);
-    res.status(500).json({ error: 'Impossibile recuperare i prodotti' });
-  }
 });
 
 module.exports = router;

@@ -1,3 +1,5 @@
+// File: public/javascript/script.js
+
 document.addEventListener('DOMContentLoaded', async () => {
 
     /**
@@ -69,34 +71,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-
-    /**
-     * Nasconde il link "Diventa un venditore" se l'utente lo è già.
-     */
-    const updateNavbarForSeller = async () => {
-        try {
-            const response = await fetch('/api/auth/status');
-            if (!response.ok) return;
-
-            const data = await response.json();
-            if (data.isAuthenticated && data.user.tipo_account === 'venditore') {
-                // Cerca il link tramite una classe o un ID più specifico se necessario
-                const becomeSellerLink = document.querySelector('a[href="venditore.html"]');
-                if (becomeSellerLink) {
-                    becomeSellerLink.style.display = 'none';
-                }
-            }
-        } catch (error) {
-            console.error('Errore nel controllare lo stato del venditore:', error);
-        }
-    };
-
     /**
      * Gestisce il pop-up per il caricamento dell'immagine del profilo.
      */
     const handleProfileImageUpload = () => {
         const imageContainer = document.querySelector('.profile-image-container');
-        const uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+        // Assicurati che il modal esista prima di provare a inizializzarlo
+        const uploadModalElement = document.getElementById('uploadModal');
+        if (!uploadModalElement) return;
+
+        const uploadModal = new bootstrap.Modal(uploadModalElement);
 
         if (imageContainer) {
             imageContainer.addEventListener('click', () => {
@@ -105,8 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Inizializza tutte le funzioni
+    // Inizializza le funzioni
     await updateUserProfileLogic();
-    await loadProducts();
     handleProfileImageUpload();
 });
