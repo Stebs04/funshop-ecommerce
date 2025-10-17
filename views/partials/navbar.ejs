@@ -1,59 +1,61 @@
+<header class="p-3 mb-3 border-bottom sticky-top bg-white shadow-sm">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+        <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none">
+          <img src="/immagini/logo.png" alt="Logo" width="40" height="40" style="border-radius: 50%; object-fit: cover;">
+        </a>
 
-    <header class="p-3 mb-3 border-bottom sticky-top bg-white shadow-sm">
-        <div class="container">
-          <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-            <a href="/" class="d-flex align-items-center mb-2 mb-lg-0 text-dark text-decoration-none">
-              <img src="/immagini/logo.png" alt="Logo" width="40" height="40" style="border-radius: 50%; object-fit: cover;">
+        <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 ms-lg-4">
+          <li><a href="/" class="nav-link px-2 link-secondary header-nav-link">Home</a></li>
+          
+          <li class="nav-item dropdown">
+            <a class="nav-link px-2 link-dark header-nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Categorie
             </a>
-    
-            <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 ms-lg-4">
-              <li><a href="/" class="nav-link px-2 link-secondary header-nav-link">Home</a></li>
-              <li class="nav-item dropdown">
-                <a class="nav-link px-2 link-dark header-nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Prodotti
-                </a>
-                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <li><a class="dropdown-item" href="#">Manga</a></li>
-                  <li><a class="dropdown-item" href="#">Action Figure</a></li>
-                  <li><a class="dropdown-item" href="#">Carte</a></li>
-                  <li><a class="dropdown-item" href="#">Videogiochi</a></li>
-                </ul>
-              </li>
-              <li><a href="novità.html" class="nav-link px-2 link-dark header-nav-link">Novità</a></li>
-              <li><a href="offerte.html" class="nav-link px-2 link-dark header-nav-link">Offerte</a></li>
-            <% if (!user || user.tipo_account !== 'venditore') { %>
-  <li><a href="/venditore" class="nav-link px-2 link-dark header-nav-link">Diventa un venditore</a></li>
-<% } %>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              <% if (locals.categorie && categorie.length > 0) { %>
+                <% categorie.forEach(cat => { %>
+                  <li><a class="dropdown-item" href="/?category=<%= encodeURIComponent(cat) %>"><%= cat %></a></li>
+                <% }) %>
+              <% } else { %>
+                <li><a class="dropdown-item" href="#">Nessuna categoria</a></li>
+              <% } %>
             </ul>
-    
-            <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
-              <input type="search" class="form-control" placeholder="Cerca prodotto..." aria-label="Search">
-            </form>
-    
-            <div class="text-end">
-               
-               <div class="text-end">
-  
-  <% if (isAuthenticated) { %>
-        <a id="profile-button" href="/utente?section=dati" class="btn btn-primary me-2" title="Il mio Account">
-            <i class="bi bi-person fs-5"></i>
-        </a>
-    <% } else { %>
-        <a id="profile-button" href="/auth/registrazione" class="btn btn-primary me-2" title="Registrati">
-            <i class="bi bi-person fs-5"></i>
-        </a>
-    <% } %>
+          </li>
 
-  <a href="/carrello" class="btn btn-primary position-relative" title="Carrello">
-      <i class="bi bi-cart fs-5"></i>
-      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-        3
-        <span class="visually-hidden">prodotti nel carrello</span>
-      </span>
-  </a>
+          <li><a href="/?view=novita" class="nav-link px-2 link-dark header-nav-link">Novità</a></li>
+          <li><a href="/?view=offerte" class="nav-link px-2 link-dark header-nav-link">Offerte</a></li>
+          
+          <% if (!user || user.tipo_account !== 'venditore') { %>
+            <li><a href="/venditore" class="nav-link px-2 link-dark header-nav-link">Diventa un venditore</a></li>
+          <% } %>
+        </ul>
 
-</div>
-            </div>
+        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
+          <input type="search" class="form-control" placeholder="Cerca prodotto..." aria-label="Search">
+        </form>
+
+        <div class="text-end">
+          <div class="text-end">
+            <% if (isAuthenticated) { %>
+              <a id="profile-button" href="/utente?section=dati" class="btn btn-primary me-2" title="Il mio Account">
+                <i class="bi bi-person fs-5"></i>
+              </a>
+            <% } else { %>
+              <a id="profile-button" href="/auth/registrazione" class="btn btn-primary me-2" title="Registrati">
+                <i class="bi bi-person fs-5"></i>
+              </a>
+            <% } %>
+
+            <a href="/carrello" class="btn btn-primary position-relative" title="Carrello">
+              <i class="bi bi-cart fs-5"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                3
+                <span class="visually-hidden">prodotti nel carrello</span>
+              </span>
+            </a>
           </div>
         </div>
-    </header>
+      </div>
+    </div>
+</header>

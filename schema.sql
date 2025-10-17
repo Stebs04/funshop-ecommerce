@@ -18,11 +18,12 @@ CREATE TABLE IF NOT EXISTS prodotti (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     descrizione TEXT,
-    condizione TEXT, -- Es. 'nuovo', 'usato come nuovo', 'usato'
+    condizione TEXT,
     parola_chiave TEXT NOT NULL,
-    percorso_immagine TEXT, -- Percorso del file dell'immagine
-    prezzo REAL, -- Per la vendita 'Compralo Subito'
-    prezzo_asta REAL, -- Per la vendita 'Asta'
+    percorso_immagine TEXT,
+    prezzo REAL,
+    prezzo_asta REAL,
+    prezzo_scontato REAL, -- NUOVO CAMPO PER GLI SCONTI
     data_inserimento DATETIME DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
