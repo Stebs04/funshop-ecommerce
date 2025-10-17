@@ -19,6 +19,7 @@ const memberRoutes = require('./route/memberRoutes');
 const sellerRoutes = require('./route/sellerRoutes');
 const recensioniRoutes = require('./route/recensioniRoutes');
 const informationRoutes = require('./route/information');
+const cartRoutes = require('./route/cartRoutes');
 
 const app = express();
 
@@ -51,12 +52,14 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware per passare dati globali a tutte le viste EJS
+// Middleware per passare dati globali a tutte le viste EJS (BLOCCO MODIFICATO)
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     res.locals.isAuthenticated = req.isAuthenticated();
-    res.locals.success = req.flash('success'); // Messaggi di successo
-    res.locals.error = req.flash('error');     // Messaggi di errore
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    // Aggiungi questa riga per rendere l'intera sessione disponibile nelle viste
+    res.locals.session = req.session; 
     next();
 });
 
@@ -69,6 +72,7 @@ app.use('/member', memberRoutes);
 app.use('/venditore', sellerRoutes);
 app.use('/recensioni', recensioniRoutes);
 app.use('/information', informationRoutes);
+app.use('/carrello', cartRoutes);
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {

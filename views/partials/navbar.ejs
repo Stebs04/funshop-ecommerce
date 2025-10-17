@@ -7,10 +7,8 @@
 
         <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 ms-lg-4">
           <li><a href="/" class="nav-link px-2 link-secondary header-nav-link">Home</a></li>
-
           <li><a href="/?view=novita" class="nav-link px-2 link-dark header-nav-link">Novità</a></li>
           <li><a href="/?view=offerte" class="nav-link px-2 link-dark header-nav-link">Offerte</a></li>
-          
           <% if (!user || user.tipo_account !== 'venditore') { %>
             <li><a href="/venditore" class="nav-link px-2 link-dark header-nav-link">Diventa un venditore</a></li>
           <% } %>
@@ -32,11 +30,12 @@
               </a>
             <% } %>
 
-            <a href="/carrello" class="btn btn-primary position-relative" title="Carrello">
+            <a href="/carrello" id="cart-button" class="btn btn-primary position-relative" title="Carrello">
               <i class="bi bi-cart fs-5"></i>
-              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                3
-                <span class="visually-hidden">prodotti nel carrello</span>
+              <span id="cart-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                <% if (session.cart && session.cart.totalQty > 0) { %>
+                  <%= session.cart.totalQty %>
+                <% } %>
               </span>
             </a>
           </div>

@@ -318,3 +318,26 @@ footer {
     font-size: 1.2rem;
     font-weight: bold;
 }
+
+/* Stili per il popup del carrello */
+#cart-preview {
+    position: absolute;
+    min-width: 300px;
+    max-width: 350px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 15px;
+    font-family: 'Poppins', sans-serif;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+}
+
+/* Nasconde il contatore se è vuoto */
+#cart-counter:empty {
+    display: none;
+}

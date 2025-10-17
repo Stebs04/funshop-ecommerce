@@ -85,3 +85,12 @@ CREATE TABLE IF NOT EXISTS recensioni (
     FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS metodi_pagamento (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    nome_titolare TEXT NOT NULL,
+    numero_carta TEXT NOT NULL, -- Verrà salvato in modo sicuro in futuro
+    data_scadenza TEXT NOT NULL, -- Formato MM/AA
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
