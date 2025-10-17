@@ -16,6 +16,9 @@
     <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>">
         <i class="bi bi-geo-alt me-2"></i>Indirizzi
     </a>
+    <a href="/utente?section=pagamento" class="nav-link text-start <%= currentSection === 'pagamento' ? 'active' : '' %>">
+            <i class="bi bi-credit-card me-2"></i>Dati di Pagamento
+        </a>
     <% if (user.tipo_account === 'venditore') { %>
     <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>">
         <i class="bi bi-tag me-2"></i>I miei Prodotti
@@ -165,6 +168,56 @@
                     </div>
                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addressModal">Aggiungi un nuovo indirizzo</button>
                  </div>
+                 <div class="tab-pane fade <%= currentSection === 'pagamento' ? 'show active' : '' %>" id="v-pills-pagamento" role="tabpanel">
+                    <h3>Dati di Pagamento</h3>
+                    <p>Gestisci i tuoi metodi di pagamento salvati.</p>
+
+                    <div class="row">
+                        <% if (metodiPagamento && metodiPagamento.length > 0) { %>
+                            <% metodiPagamento.forEach(metodo => { %>
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="bi bi-credit-card-fill"></i> Carta che termina in **** <%= metodo.last4 %></h5>
+                                            <p class="card-text mb-1">Titolare: <%= metodo.nome_titolare %></p>
+                                            <p class="card-text">Scadenza: <%= metodo.data_scadenza %></p>
+                                            <form action="/utente/pagamento/elimina/<%= metodo.id %>" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="col-12">
+                                <p class="text-center text-muted">Non hai ancora aggiunto nessun metodo di pagamento.</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h4>Aggiungi una nuova carta</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <form action="/utente/pagamento/aggiungi" method="POST">
+                                <div class="mb-3">
+                                    <label for="nome_titolare" class="form-label">Nome e Cognome Titolare</label>
+                                    <input type="text" class="form-control" id="nome_titolare" name="nome_titolare" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="numero_carta" class="form-label">Numero Carta</label>
+                                    <input type="text" class="form-control" id="numero_carta" name="numero_carta" placeholder="xxxx xxxx xxxx xxxx" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="data_scadenza" class="form-label">Data Scadenza</label>
+                                    <input type="text" class="form-control" id="data_scadenza" name="data_scadenza" placeholder="MM/YY" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Salva Metodo di Pagamento</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
                 <div class="tab-pane fade <%= currentSection === 'prodotti' ? 'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
                     <h3>I Miei Prodotti</h3>
                     <p>Gestisci i prodotti che hai messo in vendita.</p>

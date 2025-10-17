@@ -12,6 +12,7 @@ const prodottiDao = require('../models/dao/prodotti-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 const informazioniDao = require('../models/dao/informazioni-dao');
 const indirizziDao = require('../models/dao/indirizzi-dao');
+const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao'); // <-- NUOVO
 
 // Middleware di autenticazione
 const ensureAuthenticated = (req, res, next) => {
@@ -26,7 +27,7 @@ router.use(ensureAuthenticated);
 // Rotta per la dashboard utente
 router.get(['/', '/:section'], async (req, res) => {
     const section = req.params.section || req.query.section || 'dati';
-    const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche'];
+    const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche', 'pagamento']; // <-- AGGIUNTO 'pagamento'
 
     if (!validSections.includes(section)) {
         return res.redirect('/utente');
@@ -36,14 +37,14 @@ router.get(['/', '/:section'], async (req, res) => {
     }
 
     try {
-        // Carica tutti i dati in parallelo
-        const [prodottiUtente, storicoOrdini, indirizziUtente, accountInfoResult] = await Promise.all([
+        const [prodottiUtente, storicoOrdini, indirizziUtente, accountInfoResult, metodiPagamento] = await Promise.all([
             prodottiDao.getProductsByUserId(req.user.id),
             ordiniDao.getOrdersByUserId(req.user.id),
             indirizziDao.getIndirizziByUserId(req.user.id),
-            informazioniDao.getAccountInfoByUserId(req.user.id)
+            informazioniDao.getAccountInfoByUserId(req.user.id),
+            metodiPagamentoDao.getMetodiPagamentoByUserId(req.user.id) // <-- NUOVO
         ]);
-       const accountInfo = accountInfoResult || {}; // Assicura che accountInfo sia sempre un oggetto
+       const accountInfo = accountInfoResult || {};
 
         res.render('pages/utente', {
             title: 'Il Mio Profilo',
@@ -53,6 +54,7 @@ router.get(['/', '/:section'], async (req, res) => {
             prodotti: prodottiUtente,
             ordini: storicoOrdini,
             indirizzi: indirizziUtente,
+            metodiPagamento: metodiPagamento, // <-- NUOVO
         });
     } catch (error) {
         console.error(`Errore nel caricare la dashboard utente:`, error);
@@ -60,6 +62,8 @@ router.get(['/', '/:section'], async (req, res) => {
         res.redirect('/');
     }
 });
+
+// ... (ROTTA /profilo/aggiorna E CONFIGURAZIONE MULTER INVARIATE) ...
 
 /**
  * ROTTA UNIFICATA PER AGGIORNARE IL PROFILO UTENTE
@@ -87,8 +91,6 @@ router.post('/profilo/aggiorna', [
     res.redirect('/utente?section=dati');
 });
 
-
-// Configurazione Multer per upload immagine
 const storage = multer.diskStorage({
     destination: './public/uploads/',
     filename: (req, file, cb) => {
@@ -124,18 +126,13 @@ const uploadProductImage = multer({
         if(mimetype && extname) return cb(null,true);
         cb('Errore: Solo immagini (jpeg, jpg, png, gif)!');
     }
-}).single('percorso_immagine'); // Usa il nome del campo corretto del form
+}).single('percorso_immagine');
 
-// Rotta per upload immagine profilo
 router.post('/dati/upload-immagine', upload, async (req, res) => {
-    // Aggiungiamo un log per il debug
-    console.log('File ricevuto:', req.file);
-
     if (!req.file) {
         req.flash('error', 'Nessun file selezionato o formato non valido.');
         return res.redirect('/utente?section=dati');
     }
-
     try {
         const imagePath = '/uploads/' + req.file.filename;
         await informazioniDao.updateProfileImage(req.user.id, imagePath);
@@ -149,8 +146,6 @@ router.post('/dati/upload-immagine', upload, async (req, res) => {
 
 
 // --- ROTTE INDIRIZZI ---
-// (La logica qui è corretta e non necessita modifiche)
-
 router.post('/indirizzi/aggiungi', [
     check('indirizzo').notEmpty().withMessage('L\'indirizzo è obbligatorio.'),
     check('citta').notEmpty().withMessage('La città è obbligatoria.'),
@@ -165,7 +160,6 @@ router.post('/indirizzi/aggiungi', [
         await indirizziDao.createIndirizzo({ ...req.body, user_id: req.user.id });
         req.flash('success', 'Indirizzo aggiunto con successo!');
     } catch (err) {
-        console.error(err);
         req.flash('error', "Errore durante l'aggiunta dell'indirizzo.");
     }
     res.redirect('/utente?section=indirizzi');
@@ -176,53 +170,27 @@ router.post('/indirizzi/aggiorna/:id', [
     check('citta').notEmpty().withMessage('La città è obbligatoria.'),
     check('cap').isNumeric().withMessage('Il CAP deve essere un numero.').isLength({ min: 5, max: 5 }).withMessage('Il CAP deve essere di 5 cifre.')
 ], async (req, res) => {
-    console.log('--- Richiesta di aggiornamento indirizzo ---');
-    console.log('ID Indirizzo:', req.params.id);
-    console.log('Dati ricevuti:', req.body);
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log('Errore di validazione:', errors.array());
         req.flash('error', errors.array().map(e => e.msg));
         return res.redirect('/utente?section=indirizzi');
     }
-
     try {
-        const indirizzoId = req.params.id;
-        const userId = req.user.id;
-
-        console.log(`Recupero indirizzo con ID: ${indirizzoId}`);
-        const indirizzo = await indirizziDao.getIndirizzoById(indirizzoId);
-
-        if (indirizzo) {
-            console.log('Indirizzo trovato:', indirizzo);
-            console.log(`Confronto ID utente: (req.user.id: ${userId}, tipo: ${typeof userId}) vs (indirizzo.user_id: ${indirizzo.user_id}, tipo: ${typeof indirizzo.user_id})`);
-
-            if (indirizzo.user_id === userId) {
-                console.log('Autorizzazione confermata. Aggiornamento in corso...');
-                await indirizziDao.updateIndirizzo(indirizzoId, req.body);
-                req.flash('success', 'Indirizzo aggiornato con successo!');
-                console.log('Aggiornamento completato con successo.');
-            } else {
-                console.log('Autorizzazione negata.');
-                req.flash('error', 'Azione non permessa.');
-            }
+        const indirizzo = await indirizziDao.getIndirizzoById(req.params.id);
+        if (indirizzo && indirizzo.user_id === req.user.id) {
+            await indirizziDao.updateIndirizzo(req.params.id, req.body);
+            req.flash('success', 'Indirizzo aggiornato con successo!');
         } else {
-            console.log('Indirizzo non trovato.');
-            req.flash('error', 'Indirizzo non trovato.');
+            req.flash('error', 'Azione non permessa.');
         }
     } catch (err) {
-        console.error('--- ERRORE CRITICO ---');
-        console.error(err);
-        req.flash('error', "Si è verificato un errore grave durante l'aggiornamento dell'indirizzo.");
+        req.flash('error', "Errore durante l'aggiornamento dell'indirizzo.");
     }
-    console.log('--- Fine richiesta ---');
     res.redirect('/utente?section=indirizzi');
 });
 
 router.post('/indirizzi/elimina/:id', async (req, res) => {
     try {
-        // Aggiungi un controllo per assicurarti che l'utente possa eliminare solo i propri indirizzi
         const indirizzo = await indirizziDao.getIndirizzoById(req.params.id);
         if (indirizzo && indirizzo.user_id === req.user.id) {
             await indirizziDao.deleteIndirizzo(req.params.id, req.user.id);
@@ -231,28 +199,54 @@ router.post('/indirizzi/elimina/:id', async (req, res) => {
             req.flash('error', 'Azione non permessa.');
         }
     } catch (err) {
-        console.error(err);
         req.flash('error', "Errore durante l'eliminazione dell'indirizzo.");
     }
     res.redirect('/utente?section=indirizzi');
 });
 
 
-// --- ROTTE PRODOTTI ---
-// (Nessuna modifica qui)
+// --- NUOVE ROTTE PER I METODI DI PAGAMENTO ---
 
+router.post('/pagamento/aggiungi', [
+    check('nome_titolare').notEmpty().withMessage('Il nome del titolare è obbligatorio.'),
+    check('numero_carta').isCreditCard().withMessage('Numero di carta non valido.'),
+    check('data_scadenza').matches(/^(0[1-9]|1[0-2])\/?([0-9]{2})$/).withMessage('Data di scadenza non valida (MM/YY).')
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        req.flash('error', errors.array().map(e => e.msg));
+        return res.redirect('/utente?section=pagamento');
+    }
+    try {
+        await metodiPagamentoDao.createMetodoPagamento({ ...req.body, user_id: req.user.id });
+        req.flash('success', 'Metodo di pagamento aggiunto con successo!');
+    } catch (err) {
+        req.flash('error', "Errore durante l'aggiunta del metodo di pagamento.");
+    }
+    res.redirect('/utente?section=pagamento');
+});
+
+router.post('/pagamento/elimina/:id', async (req, res) => {
+    try {
+        await metodiPagamentoDao.deleteMetodoPagamento(req.params.id, req.user.id);
+        req.flash('success', 'Metodo di pagamento eliminato con successo!');
+    } catch (err) {
+        req.flash('error', "Errore durante l'eliminazione.");
+    }
+    res.redirect('/utente?section=pagamento');
+});
+
+
+// --- ROTTE PRODOTTI (INVARIATE) ---
 router.post('/prodotti/:id/delete', async (req, res) => {
     try {
-        const productId = req.params.id;
-        const userId = req.user.id;
-        const result = await prodottiDao.deleteProduct(productId, userId);
+        const result = await prodottiDao.deleteProduct(req.params.id, req.user.id);
         if (result === 0) {
             req.flash('error', 'Azione non permessa o prodotto non trovato.');
         } else {
             req.flash('success', 'Prodotto eliminato con successo.');
         }
     } catch (err) {
-        console.error(err);
         req.flash('error', 'Errore durante l\'eliminazione del prodotto.');
     }
     res.redirect('/utente?section=prodotti');
@@ -260,21 +254,17 @@ router.post('/prodotti/:id/delete', async (req, res) => {
 
 router.get('/prodotti/:id/edit', async (req, res) => {
     try {
-        const productId = req.params.id;
-        const product = await prodottiDao.getProductById(productId);
-
+        const product = await prodottiDao.getProductById(req.params.id);
         if (!product || product.user_id !== req.user.id) {
             req.flash('error', 'Azione non permessa.');
             return res.redirect('/utente?section=prodotti');
         }
-
         res.render('pages/edit-prodotto', {
             title: 'Modifica Prodotto',
             prodotto: product,
             user: req.user
         });
     } catch (err) {
-        console.error(err);
         req.flash('error', 'Errore nel caricamento della pagina di modifica.');
         res.redirect('/utente?section=prodotti');
     }
@@ -282,27 +272,17 @@ router.get('/prodotti/:id/edit', async (req, res) => {
 
 router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
     try {
-        const productId = req.params.id;
-        const userId = req.user.id;
-        
-        // Recupera i dati dal form
         const updatedData = { ...req.body };
-
-        // Se è stata caricata una nuova immagine, aggiorna il percorso
         if (req.file) {
-            console.log('Nuova immagine caricata:', req.file.filename);
             updatedData.percorso_immagine = '/uploads/' + req.file.filename;
         }
-        
-        const result = await prodottiDao.updateProduct(productId, updatedData, userId);
-
+        const result = await prodottiDao.updateProduct(req.params.id, updatedData, req.user.id);
         if (result === 0) {
             req.flash('error', 'Azione non permessa o prodotto non trovato.');
         } else {
             req.flash('success', 'Prodotto aggiornato con successo.');
         }
     } catch (err) {
-        console.error("Errore durante l'aggiornamento del prodotto:", err);
         req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
     }
     res.redirect('/utente?section=prodotti');
