@@ -2,7 +2,7 @@
 
 'use strict';
 
-const db = require('../../managedb');
+const { db } = require('../../managedb');
 
 class ProdottiDAO {
   constructor(database) {

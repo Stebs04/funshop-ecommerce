@@ -1,6 +1,6 @@
 'use strict';
 
-const db = require('../../managedb');
+const { db } = require('../../managedb');
 
 class SellerDAO {
     /**

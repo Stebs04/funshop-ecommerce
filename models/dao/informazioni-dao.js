@@ -1,6 +1,6 @@
 'use strict';
 
-const db = require('../../managedb');
+const { db } = require('../../managedb');
 
 /**
  * Recupera le informazioni account (non indirizzo) associate a un ID utente.
