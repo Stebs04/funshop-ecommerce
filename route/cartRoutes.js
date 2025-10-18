@@ -8,7 +8,9 @@ const indirizziDao = require('../models/dao/indirizzi-dao');
 const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 const { db } = require('../managedb');
+const { sendOrderConfirmationEmail } = require('../services/emailService'); // <-- AGGIUNGI
 
+// ... (tutte le altre rotte come /add, /remove, GET /checkout rimangono invariate) ...
 router.use((req, res, next) => {
     if (!req.session.cart) {
         req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
@@ -19,6 +21,7 @@ router.use((req, res, next) => {
 router.post('/add/:id', async (req, res) => {
     const productId = req.params.id;
     const cart = req.session.cart;
+    
     const redirectUrl = req.body.redirectUrl || '/';
 
     if (cart.items[productId]) {
@@ -28,7 +31,7 @@ router.post('/add/:id', async (req, res) => {
 
     try {
         const product = await prodottiDao.getProductById(productId);
-        if (!product || product.stato !== 'disponibile') { // Controlla anche lo stato
+        if (!product || product.stato !== 'disponibile') {
             req.flash('error', 'Prodotto non trovato o non più disponibile!');
             return res.redirect(redirectUrl);
         }
@@ -58,14 +61,18 @@ router.post('/remove/:id', (req, res) => {
         cart.totalPrice -= itemToRemove.price;
         delete cart.items[productId];
         req.flash('success', 'Prodotto rimosso dal carrello.');
+    } else {
+        req.flash('error', 'Si è verificato un errore durante la rimozione del prodotto.');
     }
     res.redirect('/carrello');
 });
 
+
 router.get('/', (req, res) => {
+    const cart = req.session.cart;
     res.render('pages/carrello', {
         title: 'Il Tuo Carrello',
-        cart: req.session.cart
+        cart: cart
     });
 });
 
@@ -75,8 +82,10 @@ router.get('/checkout', async (req, res) => {
         req.flash('error', 'Il tuo carrello è vuoto.');
         return res.redirect('/carrello');
     }
+
     let indirizzi = [];
     let metodiPagamento = [];
+
     if (req.isAuthenticated()) {
         try {
             [indirizzi, metodiPagamento] = await Promise.all([
@@ -89,6 +98,7 @@ router.get('/checkout', async (req, res) => {
             return res.redirect('/carrello');
         }
     }
+
     res.render('pages/checkout', {
         title: 'Checkout',
         cart: cart,
@@ -96,7 +106,7 @@ router.get('/checkout', async (req, res) => {
         metodiPagamento: metodiPagamento
     });
 });
-
+// Rotta POST /checkout (MODIFICATA)
 router.post('/checkout', async (req, res) => {
     const cart = req.session.cart;
 
@@ -130,19 +140,24 @@ router.post('/checkout', async (req, res) => {
 
         await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
 
+        const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
+        
         req.session.latestOrder = {
             buyer: req.user,
             items: purchasedItems,
             total: cart.totalPrice,
             address: formData,
             payment: formData,
-            date: new Date()
+            date: new Date(),
+            reviewLink: reviewLink // Salviamo il link per la pagina di riepilogo
         };
         
         req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
         
-        const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
-        req.session.latestOrder.reviewLink = reviewLink; // Lo salviamo in sessione per mostrarlo
+        // --- MODIFICA: Chiamata reale all'invio dell'email ---
+        // Usiamo "await" per assicurarci che l'invio parta prima di continuare,
+        // ma non blocchiamo la risposta all'utente se l'invio fallisce.
+        sendOrderConfirmationEmail(buyerEmail, req.session.latestOrder).catch(console.error);
 
         res.redirect('/ordine/riepilogo');
 
@@ -153,6 +168,7 @@ router.post('/checkout', async (req, res) => {
         res.redirect('/carrello');
     }
 });
+
 
 router.get('/api/data', (req, res) => {
     res.json(req.session.cart);
