@@ -1,3 +1,4 @@
+// File: app.js
 'use strict';
 
 console.log('✅ FILE AUTH.JS CARICATO CORRETTAMENTE');
@@ -20,6 +21,7 @@ const sellerRoutes = require('./route/sellerRoutes');
 const recensioniRoutes = require('./route/recensioniRoutes');
 const informationRoutes = require('./route/information');
 const cartRoutes = require('./route/cartRoutes');
+const observedRoutes = require('./route/observedRoutes'); // <-- AGGIUNTO
 
 const app = express();
 
@@ -75,6 +77,7 @@ app.use('/venditore', sellerRoutes);
 app.use('/recensioni', recensioniRoutes);
 app.use('/information', informationRoutes);
 app.use('/carrello', cartRoutes);
+app.use('/observed', observedRoutes); // <-- AGGIUNTO
 
 // --- NUOVA API PER LO STATO DELL'AUTENTICAZIONE ---
 app.get('/api/auth/status', (req, res) => {

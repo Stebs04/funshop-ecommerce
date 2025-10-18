@@ -1,3 +1,4 @@
+// File: public/javascript/script.js
 document.addEventListener('DOMContentLoaded', async () => {
 
     /**
@@ -29,13 +30,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             profilePreview.id = 'profile-preview';
             const isSeller = authData.user.tipo_account === 'venditore';
 
+            // --- MODIFICA QUI ---
+            // Abbiamo sostituito "Impostazioni" con "Prodotti Osservati"
             profilePreview.innerHTML = `
                 <a href="/utente?section=dati" class="profile-link">Il mio account</a>
-                <a href="/utente?section=impostazioni" class="profile-link">Impostazioni</a>
+                <a href="/observed" class="profile-link">Prodotti Osservati</a>
                 ${isSeller ? `<a href="/products/new" class="profile-link">Aggiungi un nuovo prodotto</a>` : ''}
                 <div class="profile-divider" style="height: 1px; background: #eee; margin: 8px 0;"></div>
                 <a href="/auth/logout" class="profile-link">Esci</a>
             `;
+            // --- FINE MODIFICA ---
+
             document.body.appendChild(profilePreview);
 
             const showProfilePreview = () => {
@@ -70,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     /**
-     * NUOVA FUNZIONE: Gestisce la logica per il popup del carrello.
+     * Gestisce la logica per il popup del carrello.
      */
     const updateCartPopupLogic = () => {
         const cartButton = document.getElementById('cart-button');

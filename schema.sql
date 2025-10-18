@@ -1,3 +1,5 @@
+-- File: schema.sql
+
 -- Questo file definisce lo schema completo del database.
 -- Eseguire questo script per creare tutte le tabelle necessarie.
 
@@ -92,5 +94,15 @@ CREATE TABLE IF NOT EXISTS metodi_pagamento (
     nome_titolare TEXT NOT NULL,
     numero_carta TEXT NOT NULL, -- Verrà salvato in modo sicuro in futuro
     data_scadenza TEXT NOT NULL, -- Formato MM/AA
+    cvv TEXT NOT NULL, 
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+-- NUOVA TABELLA PER I PRODOTTI OSSERVATI
+CREATE TABLE IF NOT EXISTS observed_products (
+    user_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, product_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES prodotti (id) ON DELETE CASCADE
 );
