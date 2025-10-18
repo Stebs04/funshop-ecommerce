@@ -15,7 +15,7 @@ router.use((req, res, next) => {
     next();
 });
 
-// ... (Rotta POST /add/:id invariata) ...
+// Rotta POST /add/:id - Aggiunge un prodotto al carrello
 router.post('/add/:id', async (req, res) => {
     const productId = req.params.id;
     const cart = req.session.cart;
@@ -35,7 +35,7 @@ router.post('/add/:id', async (req, res) => {
         cart.totalQty++;
         cart.totalPrice += itemPrice;
         req.flash('success', `"${product.nome}" è stato aggiunto al carrello!`);
-        res.redirect('back');
+        res.redirect('back'); // <-- Questa riga ti fa rimanere sulla pagina di provenienza
     } catch (error) {
         console.error("Errore nell'aggiungere prodotto al carrello:", error);
         req.flash('error', 'Impossibile aggiungere il prodotto al carrello.');
@@ -43,8 +43,37 @@ router.post('/add/:id', async (req, res) => {
     }
 });
 
+/**
+ * NUOVA ROTTA
+ * POST /remove/:id
+ * Rimuove un articolo dal carrello.
+ */
+router.post('/remove/:id', (req, res) => {
+    const productId = req.params.id;
+    const cart = req.session.cart;
 
-// ... (Rotta GET / invariata) ...
+    // Controlla se il prodotto esiste nel carrello
+    if (cart.items[productId]) {
+        const itemToRemove = cart.items[productId];
+        
+        // Aggiorna la quantità totale e il prezzo totale
+        cart.totalQty -= itemToRemove.qty;
+        cart.totalPrice -= itemToRemove.price;
+
+        // Rimuovi l'articolo dall'oggetto items
+        delete cart.items[productId];
+
+        req.flash('success', 'Prodotto rimosso dal carrello.');
+    } else {
+        req.flash('error', 'Si è verificato un errore durante la rimozione del prodotto.');
+    }
+
+    // Reindirizza l'utente alla pagina del carrello
+    res.redirect('/carrello');
+});
+
+
+// Rotta GET / - Mostra la pagina del carrello
 router.get('/', (req, res) => {
     const cart = req.session.cart;
     res.render('pages/carrello', {
@@ -89,7 +118,7 @@ router.get('/checkout', async (req, res) => {
     });
 });
 
-// ... (Rotta GET /api/data invariata) ...
+// Rotta GET /api/data - Fornisce i dati del carrello in formato JSON
 router.get('/api/data', (req, res) => {
     res.json(req.session.cart);
 });

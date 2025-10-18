@@ -30,6 +30,7 @@
                             <span class="fw-bold fs-5">€<%= product.price.toFixed(2) %></span>
                         </div>
                         <div class="col-md-2 text-end">
+                            <%# CORREZIONE: Assicurati che l'action punti all'ID corretto del prodotto %>
                             <form action="/carrello/remove/<%= product.item.id %>" method="POST">
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="Rimuovi"><i class="bi bi-trash"></i></button>
                             </form>
@@ -53,7 +54,8 @@
                             Subtotale<span>€<%= cart.totalPrice.toFixed(2) %></span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                            Spedizione<span>€5.00</span> </li>
+                            Spedizione<span>€5.00</span> 
+                        </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 mb-3">
                             <div><strong>Totale</strong></div>
                             <span><strong>€<%= (cart.totalPrice + 5).toFixed(2) %></strong></span>
