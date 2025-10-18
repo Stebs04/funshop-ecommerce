@@ -8,6 +8,8 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const morgan = require('morgan');
 
+// --- CORREZIONE: Assicurati che tutti i percorsi partano da './' ---
+const passportConfig = require('./middleware/passport-config');
 const authRoutes = require('./route/auth');
 const mainRoutes = require('./route/home');
 const userRoutes = require('./route/userRoutes');
@@ -18,7 +20,7 @@ const recensioniRoutes = require('./route/recensioniRoutes');
 const informationRoutes = require('./route/information');
 const cartRoutes = require('./route/cartRoutes');
 const observedRoutes = require('./route/observedRoutes');
-const orderRoutes = require('./route/orderRoutes'); // <-- AGGIUNTO
+const orderRoutes = require('./route/orderRoutes');
 
 const app = express();
 
@@ -57,6 +59,7 @@ app.use((req, res, next) => {
     next();
 });
 
+// Utilizzo dei router
 app.use('/', mainRoutes);
 app.use('/auth', authRoutes);
 app.use('/utente', userRoutes);
@@ -67,7 +70,7 @@ app.use('/recensioni', recensioniRoutes);
 app.use('/information', informationRoutes);
 app.use('/carrello', cartRoutes);
 app.use('/observed', observedRoutes);
-app.use('/ordine', orderRoutes); // <-- AGGIUNTO
+app.use('/ordine', orderRoutes);
 
 app.get('/api/auth/status', (req, res) => {
   if (req.isAuthenticated()) {

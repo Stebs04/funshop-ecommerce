@@ -4,37 +4,40 @@
 <body class="d-flex flex-column min-vh-100">
 <%- include('../partials/navbar') %>
 <main class="container my-5">
+    <%- include('../partials/messages') %>
     <div class="row">
         <div class="col-md-3">
             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-    <a href="/utente?section=dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>">
-        <i class="bi bi-person-circle me-2"></i>I miei Dati
-    </a>
-    <a href="/utente?section=ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>">
-        <i class="bi bi-box-seam me-2"></i>Storico Ordini
-    </a>
-    <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>">
-        <i class="bi bi-geo-alt me-2"></i>Indirizzi
-    </a>
-    <a href="/utente?section=pagamento" class="nav-link text-start <%= currentSection === 'pagamento' ? 'active' : '' %>">
-            <i class="bi bi-credit-card me-2"></i>Dati di Pagamento
-        </a>
-    <% if (user.tipo_account === 'venditore') { %>
-    <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>">
-        <i class="bi bi-tag me-2"></i>I miei Prodotti
-    </a>
-    <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>">
-        <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
-    </a>
-    <% } %>
-</div>
+                <a href="/utente?section=dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>">
+                    <i class="bi bi-person-circle me-2"></i>I miei Dati
+                </a>
+                <a href="/utente?section=ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>">
+                    <i class="bi bi-box-seam me-2"></i>Storico Ordini
+                </a>
+                <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>">
+                    <i class="bi bi-geo-alt me-2"></i>Indirizzi
+                </a>
+                <a href="/utente?section=pagamento" class="nav-link text-start <%= currentSection === 'pagamento' ? 'active' : '' %>">
+                    <i class="bi bi-credit-card me-2"></i>Dati di Pagamento
+                </a>
+                <a href="/observed" class="nav-link text-start">
+                    <i class="bi bi-star-fill me-2"></i>Prodotti Osservati
+                </a>
+                <% if (user.tipo_account === 'venditore') { %>
+                <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>">
+                    <i class="bi bi-tag me-2"></i>I miei Prodotti
+                </a>
+                <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>">
+                    <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
+                </a>
+                <% } %>
+            </div>
         </div>
         <div class="col-md-9">
              <div class="tab-content" id="v-pills-tabContent">
                 <div class="tab-pane fade <%= currentSection === 'dati' ? 'show active' : '' %>" id="v-pills-dati" role="tabpanel">
                     <h3>I Miei Dati</h3>
                     <p>Gestisci le tue informazioni personali.</p>
-
                     <div class="card mb-4">
                         <div class="card-body text-center">
                             <div class="profile-image-container">
@@ -45,49 +48,47 @@
                             </div>
                             <h5 class="my-3"><%= user.username %></h5>
                             <p class="text-muted mb-1"><%= user.tipo_account %></p>
-                         </div>
+                        </div>
                     </div>
-
                     <div id="uploadModal" class="modal fade" tabindex="-1">
                          <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
                                      <h5 class="modal-title">Carica Nuova Immagine</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                 <div class="modal-body">
+                                <div class="modal-body">
                                     <form action="/utente/dati/upload-immagine" method="POST" enctype="multipart/form-data">
                                         <div class="mb-3">
-                                             <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
-                                            <input class="form-control" type="file" id="immagineProfilo" name="immagineProfilo">
-                                         </div>
+                                            <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
+                                            <input class="form-control" type="file" id="immagineProfilo" name="immagineProfilo" required>
+                                        </div>
                                         <button type="submit" class="btn btn-primary">Carica</button>
                                      </form>
                                 </div>
                             </div>
                         </div>
-                     </div>
-
+                    </div>
                     <div class="card">
                         <div class="card-body">
                             <form action="/utente/profilo/aggiorna" method="POST">
-                                 <div class="mb-3">
+                                <div class="mb-3">
                                     <label for="userName" class="form-label">Nome</label>
                                     <input type="text" class="form-control" id="userName" name="nome" value="<%= user.nome %>">
                                 </div>
                                 <div class="mb-3">
                                      <label for="userSurname" class="form-label">Cognome</label>
-                                    <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
+                                     <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
                                 </div>
-                                 <div class="mb-3">
+                                <div class="mb-3">
                                     <label for="username" class="form-label">Username</label>
                                     <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>">
-                                 </div>
+                                </div>
                                 <div class="mb-3">
                                     <label for="userEmail" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="userEmail" name="email" value="<%= user.email %>" disabled>
                                 </div>
-                                 <div class="mb-3">
+                                <div class="mb-3">
                                     <label for="userDataNascita" class="form-label">Data di Nascita</label>
                                     <input type="date" class="form-control" id="userDataNascita" name="data_nascita" value="<%= user.data_nascita ? new Date(user.data_nascita).toISOString().split('T')[0] : '' %>">
                                 </div>
@@ -96,7 +97,7 @@
                                     <textarea class="form-control" id="userDescrizione" name="descrizione" rows="3"><%= accountInfo.descrizione || '' %></textarea>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Salva Modifiche</button>
-                             </form>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -105,31 +106,31 @@
                     <p>Visualizza tutti gli acquisti che hai effettuato.</p>
                     <table class="table">
                         <thead>
-                           <tr>
+                            <tr>
                                 <th>ID Ordine</th>
                                 <th>Data</th>
                                 <th>Totale</th>
                                 <th>Stato</th>
                             </tr>
-                         </thead>
+                        </thead>
                         <tbody>
                             <% if (ordini && ordini.length > 0) { %>
                                 <% ordini.forEach(ordine => { %>
                                     <tr>
                                         <td>#<%= ordine.id %></td>
-                                         <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
+                                        <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
                                         <td>€ <%= ordine.totale.toFixed(2) %></td>
-                                         <td><span class="badge bg-success"><%= ordine.stato %></span></td>
+                                        <td><span class="badge bg-success"><%= ordine.stato %></span></td>
                                     </tr>
                                 <% }) %>
-                             <% } else { %>
+                            <% } else { %>
                                 <tr>
                                     <td colspan="4" class="text-center text-muted">Non hai ancora effettuato nessun ordine.</td>
-                                 </tr>
+                                </tr>
                             <% } %>
                         </tbody>
                     </table>
-                 </div>
+                </div>
                 <div class="tab-pane fade <%= currentSection === 'indirizzi' ? 'show active' : '' %>" id="v-pills-indirizzi" role="tabpanel">
                     <h3>I Miei Indirizzi</h3>
                     <p>Gestisci i tuoi indirizzi di spedizione e fatturazione.</p>
@@ -137,7 +138,7 @@
                         <% if (indirizzi && indirizzi.length > 0) { %>
                             <% indirizzi.forEach(indirizzo => { %>
                                 <div class="col-md-6 mb-3">
-                                     <div class="card h-100">
+                                    <div class="card h-100">
                                         <div class="card-body">
                                             <h5 class="card-title">Indirizzo</h5>
                                             <p class="card-text">
@@ -167,11 +168,10 @@
                         <% } %>
                     </div>
                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addressModal">Aggiungi un nuovo indirizzo</button>
-                 </div>
-                 <div class="tab-pane fade <%= currentSection === 'pagamento' ? 'show active' : '' %>" id="v-pills-pagamento" role="tabpanel">
+                </div>
+                <div class="tab-pane fade <%= currentSection === 'pagamento' ? 'show active' : '' %>" id="v-pills-pagamento" role="tabpanel">
                     <h3>Dati di Pagamento</h3>
                     <p>Gestisci i tuoi metodi di pagamento salvati.</p>
-
                     <div class="row">
                         <% if (metodiPagamento && metodiPagamento.length > 0) { %>
                             <% metodiPagamento.forEach(metodo => { %>
@@ -194,9 +194,7 @@
                             </div>
                         <% } %>
                     </div>
-
                     <hr class="my-4">
-
                     <h4>Aggiungi una nuova carta</h4>
                     <div class="card">
                         <div class="card-body">
@@ -209,9 +207,15 @@
                                     <label for="numero_carta" class="form-label">Numero Carta</label>
                                     <input type="text" class="form-control" id="numero_carta" name="numero_carta" placeholder="xxxx xxxx xxxx xxxx" required>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="data_scadenza" class="form-label">Data Scadenza</label>
-                                    <input type="text" class="form-control" id="data_scadenza" name="data_scadenza" placeholder="MM/YY" required>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="data_scadenza" class="form-label">Data Scadenza</label>
+                                        <input type="text" class="form-control" id="data_scadenza" name="data_scadenza" placeholder="MM/YY" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="cvv" class="form-label">CVV</label>
+                                        <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
+                                    </div>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Salva Metodo di Pagamento</button>
                             </form>
@@ -226,17 +230,15 @@
                         <% prodotti.forEach(prodotto => { %>
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                     <h5 class="mb-1"><%= prodotto.nome %></h5>
-                                    <small>
-                                         Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : 'N/D' %>
-                                    </small>
+                                    <h5 class="mb-1"><%= prodotto.nome %></h5>
+                                    <small>Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : 'N/D' %></small>
                                 </div>
-                                 <div>
+                                <div>
                                     <a href="/utente/prodotti/<%= prodotto.id %>/edit" class="btn btn-sm btn-outline-primary">Modifica</a>
                                     <form action="/utente/prodotti/<%= prodotto.id %>/delete" method="POST" style="display: inline;">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
                                     </form>
-                                 </div>
+                                </div>
                             </div>
                         <% }) %>
                     <% } else { %>
@@ -244,7 +246,7 @@
                     <% } %>
                     </div>
                 </div>
-                 <% if (user.tipo_account === 'venditore') { %>
+                <% if (user.tipo_account === 'venditore') { %>
                 <div class="tab-pane fade <%= currentSection === 'statistiche' ? 'show active' : '' %>" id="v-pills-statistiche" role="tabpanel">
                     <h3>Statistiche Venditore</h3>
                     <p>Visualizza le tue statistiche di vendita.</p>
@@ -284,18 +286,16 @@
 </div>
 
 <%- include('../partials/footer') %>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const addressModal = document.getElementById('addressModal');
         const addressForm = document.getElementById('addressForm');
         const addressModalLabel = document.getElementById('addressModalLabel');
-
         addressModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const id = button.getAttribute('data-id');
             addressForm.reset();
-            
             if (id) {
                 addressModalLabel.textContent = 'Modifica Indirizzo';
                 addressForm.action = `/utente/indirizzi/aggiorna/${id}`;
