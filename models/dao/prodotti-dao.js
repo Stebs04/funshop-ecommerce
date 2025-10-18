@@ -14,7 +14,8 @@ class ProdottiDAO {
       SELECT p.*, u.username as nome_venditore 
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
-    `;
+      WHERE p.stato = 'disponibile'
+    `; // <-- MODIFICA: Mostra solo prodotti disponibili
     const params = [];
     const whereClauses = [];
 
@@ -32,7 +33,7 @@ class ProdottiDAO {
       params.push(condition);
     }
     if (whereClauses.length > 0) {
-      sql += ' WHERE ' + whereClauses.join(' AND ');
+      sql += ' AND ' + whereClauses.join(' AND ');
     }
     if (sortBy === 'price_asc') {
       sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) ASC';
@@ -51,18 +52,12 @@ class ProdottiDAO {
   }
   
   async getProductById(id) {
-    // --- MODIFICA QUI ---
-    // Abbiamo aggiunto "u.email as email_venditore" per ottenere l'email del venditore
     const sql = `
-      SELECT p.*, 
-             u.username as nome_venditore, 
-             u.email as email_venditore, 
-             ai.immagine_profilo
+      SELECT p.*, u.username as nome_venditore, u.email as email_venditore, ai.immagine_profilo
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       LEFT JOIN accountinfos ai ON u.id = ai.user_id
       WHERE p.id = ?`;
-    // --- FINE MODIFICA ---
     return new Promise((resolve, reject) => {
       this.db.get(sql, [id], (err, row) => {
         if (err) reject(err);
@@ -72,7 +67,7 @@ class ProdottiDAO {
   }
 
   async getProductsByUserId(userId) {
-    const sql = 'SELECT * FROM prodotti WHERE user_id = ? ORDER BY data_inserimento DESC';
+    const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato = 'disponibile' ORDER BY data_inserimento DESC";
     return new Promise((resolve, reject) => {
       this.db.all(sql, [userId], (err, rows) => {
         if (err) reject(err);
@@ -107,8 +102,7 @@ class ProdottiDAO {
 
   async updateProduct(id, productData, userId) {
     const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
-    const fieldsToUpdate = Object.keys(productData)
-        .filter(key => allowedFields.includes(key));
+    const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
     if (fieldsToUpdate.length === 0) {
         return Promise.resolve(0);
     }
@@ -125,6 +119,19 @@ class ProdottiDAO {
         if (err) reject(err);
         else resolve(this.changes);
       });
+    });
+  }
+
+  /**
+   * NUOVA FUNZIONE: Aggiorna lo stato di un prodotto.
+   */
+  updateProductStatus(productId, status) {
+    const sql = 'UPDATE prodotti SET stato = ? WHERE id = ?';
+    return new Promise((resolve, reject) => {
+        this.db.run(sql, [status, productId], function(err) {
+            if (err) reject(err);
+            else resolve(this.changes);
+        });
     });
   }
 }

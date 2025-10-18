@@ -1,9 +1,4 @@
 -- File: schema.sql
-
--- Questo file definisce lo schema completo del database.
--- Eseguire questo script per creare tutte le tabelle necessarie.
-
--- Tabella per gli utenti
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
@@ -12,10 +7,9 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   data_nascita DATE,
-  tipo_account TEXT DEFAULT 'cliente' -- Può essere 'cliente' o 'venditore'
+  tipo_account TEXT DEFAULT 'cliente'
 );
 
--- Tabella per i prodotti
 CREATE TABLE IF NOT EXISTS prodotti (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
@@ -25,13 +19,13 @@ CREATE TABLE IF NOT EXISTS prodotti (
     percorso_immagine TEXT,
     prezzo REAL,
     prezzo_asta REAL,
-    prezzo_scontato REAL, -- NUOVO CAMPO PER GLI SCONTI
+    prezzo_scontato REAL,
+    stato TEXT DEFAULT 'disponibile', -- 'disponibile', 'venduto'
     data_inserimento DATETIME DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- Tabella per i dati aggiuntivi dei venditori
 CREATE TABLE IF NOT EXISTS venditori (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_negozio TEXT NOT NULL,
@@ -43,7 +37,6 @@ CREATE TABLE IF NOT EXISTS venditori (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- Tabella per le informazioni aggiuntive dell'account utente
 CREATE TABLE IF NOT EXISTS accountinfos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL UNIQUE,
@@ -54,7 +47,6 @@ CREATE TABLE IF NOT EXISTS accountinfos (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- NUOVA TABELLA PER GLI INDIRIZZI
 CREATE TABLE IF NOT EXISTS indirizzi (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -64,19 +56,17 @@ CREATE TABLE IF NOT EXISTS indirizzi (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- Tabella per lo storico degli ordini
 CREATE TABLE IF NOT EXISTS storico_ordini (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     data_ordine DATETIME DEFAULT CURRENT_TIMESTAMP,
     totale REAL NOT NULL,
-    stato TEXT DEFAULT 'In elaborazione', -- Es. 'In elaborazione', 'Spedito', 'Consegnato'
+    stato TEXT DEFAULT 'In elaborazione',
     user_id INTEGER NOT NULL,
     prodotto_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE SET NULL
 );
 
--- Tabella per le recensioni
 CREATE TABLE IF NOT EXISTS recensioni (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     contenuto TEXT NOT NULL,
@@ -92,13 +82,12 @@ CREATE TABLE IF NOT EXISTS metodi_pagamento (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     nome_titolare TEXT NOT NULL,
-    numero_carta TEXT NOT NULL, -- Verrà salvato in modo sicuro in futuro
-    data_scadenza TEXT NOT NULL, -- Formato MM/AA
+    numero_carta TEXT NOT NULL,
+    data_scadenza TEXT NOT NULL,
     cvv TEXT NOT NULL, 
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- NUOVA TABELLA PER I PRODOTTI OSSERVATI
 CREATE TABLE IF NOT EXISTS observed_products (
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
