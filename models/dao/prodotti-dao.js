@@ -8,9 +8,6 @@ class ProdottiDAO {
     this.db = database;
   }
 
-  /**
-   * Recupera i prodotti in base a una serie di filtri e opzioni di ordinamento.
-   */
   async getProducts(filters = {}) {
     const { view, category, condition, sortBy } = filters;
     let sql = `
@@ -22,33 +19,26 @@ class ProdottiDAO {
     const whereClauses = [];
 
     if (view === 'new') {
-      whereClauses.push('DATE(p.data_inserimento) = DATE(\'now\')');
+      whereClauses.push("DATE(p.data_inserimento) = DATE('now')");
     } else if (view === 'offers') {
       whereClauses.push('p.prezzo_scontato IS NOT NULL AND p.prezzo_scontato > 0');
     }
-
     if (category) {
       whereClauses.push('p.parola_chiave = ?');
       params.push(category);
     }
-
     if (condition) {
       whereClauses.push('p.condizione = ?');
       params.push(condition);
     }
-
     if (whereClauses.length > 0) {
       sql += ' WHERE ' + whereClauses.join(' AND ');
     }
-
-    // Logica di ordinamento
     if (sortBy === 'price_asc') {
-      // Ordina per prezzo, dando priorità a quello scontato se esiste
       sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) ASC';
     } else if (sortBy === 'price_desc') {
       sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) DESC';
     } else {
-      // Ordinamento di default
       sql += ' ORDER BY p.data_inserimento DESC';
     }
 
@@ -60,14 +50,19 @@ class ProdottiDAO {
     });
   }
   
-  // ... il resto delle funzioni (getProductById, createProduct, etc.) rimane invariato ...
   async getProductById(id) {
+    // --- MODIFICA QUI ---
+    // Abbiamo aggiunto "u.email as email_venditore" per ottenere l'email del venditore
     const sql = `
-      SELECT p.*, u.username as nome_venditore, ai.immagine_profilo
+      SELECT p.*, 
+             u.username as nome_venditore, 
+             u.email as email_venditore, 
+             ai.immagine_profilo
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       LEFT JOIN accountinfos ai ON u.id = ai.user_id
       WHERE p.id = ?`;
+    // --- FINE MODIFICA ---
     return new Promise((resolve, reject) => {
       this.db.get(sql, [id], (err, row) => {
         if (err) reject(err);

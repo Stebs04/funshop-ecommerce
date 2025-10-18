@@ -30,8 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             profilePreview.id = 'profile-preview';
             const isSeller = authData.user.tipo_account === 'venditore';
 
-            // --- MODIFICA QUI ---
-            // Abbiamo sostituito "Impostazioni" con "Prodotti Osservati"
             profilePreview.innerHTML = `
                 <a href="/utente?section=dati" class="profile-link">Il mio account</a>
                 <a href="/observed" class="profile-link">Prodotti Osservati</a>
@@ -39,8 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="profile-divider" style="height: 1px; background: #eee; margin: 8px 0;"></div>
                 <a href="/auth/logout" class="profile-link">Esci</a>
             `;
-            // --- FINE MODIFICA ---
-
             document.body.appendChild(profilePreview);
 
             const showProfilePreview = () => {
@@ -90,11 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 cartPreview = document.getElementById('cart-preview');
                 return;
             };
-
             cartPreview = document.createElement('div');
             cartPreview.id = 'cart-preview';
             document.body.appendChild(cartPreview);
-
             cartPreview.addEventListener('mouseenter', () => clearTimeout(hideCartTimeout));
             cartPreview.addEventListener('mouseleave', startCartHideTimer);
         };
@@ -104,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const response = await fetch('/carrello/api/data');
                 const cart = await response.json();
                 const cartCounter = document.getElementById('cart-counter');
-
                 if (cart && cart.totalQty > 0) {
                     cartCounter.innerText = cart.totalQty;
                     cartCounter.style.display = 'block';
@@ -112,9 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     cartCounter.innerText = '';
                     cartCounter.style.display = 'none';
                 }
-
                 if (!cartPreview) createCartPopup();
-
                 if (!cart || cart.totalQty === 0) {
                     cartPreview.innerHTML = `<p class="text-center text-muted m-0">Il tuo carrello è vuoto.</p>`;
                 } else {
@@ -128,7 +119,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span class="fw-bold small">€${product.price.toFixed(2)}</span>
                         </div>
                     `).join('');
-                    
                     cartPreview.innerHTML = `
                         ${itemsHtml}
                         <hr class="my-2">
@@ -152,12 +142,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!cartPreview) createCartPopup();
             clearTimeout(hideCartTimeout);
             updatePopupContent();
-
             const buttonRect = cartButton.getBoundingClientRect();
             cartPreview.style.top = `${buttonRect.bottom + window.scrollY + 10}px`;
             const previewRect = cartPreview.getBoundingClientRect();
             cartPreview.style.left = `${buttonRect.right + window.scrollX - previewRect.width}px`;
-
             cartPreview.style.opacity = '1';
             cartPreview.style.visibility = 'visible';
             cartPreview.style.transform = 'translateY(0)';
@@ -174,7 +162,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         cartButton.addEventListener('mouseenter', showCartPreview);
         cartButton.addEventListener('mouseleave', startCartHideTimer);
-
         updatePopupContent();
     };
 
@@ -185,9 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const imageContainer = document.querySelector('.profile-image-container');
         const uploadModalElement = document.getElementById('uploadModal');
         if (!uploadModalElement) return;
-
         const uploadModal = new bootstrap.Modal(uploadModalElement);
-
         if (imageContainer) {
             imageContainer.addEventListener('click', () => {
                 uploadModal.show();
@@ -195,8 +180,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
+    /**
+     * NUOVA FUNZIONE: Gestisce la logica per il popup "Chiedi Informazioni".
+     */
+    const handleInfoModalLogic = () => {
+        const infoModal = document.getElementById('infoModal');
+        if (!infoModal) return;
+
+        let sellerEmail = '';
+        let productName = '';
+
+        // Quando il modale sta per essere mostrato...
+        infoModal.addEventListener('show.bs.modal', function (event) {
+            // ...prendi i dati dal pulsante che lo ha attivato
+            const button = event.relatedTarget;
+            sellerEmail = button.getAttribute('data-seller-email');
+            productName = button.getAttribute('data-product-name');
+        });
+
+        const infoForm = document.getElementById('infoForm');
+        infoForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Impedisce l'invio tradizionale del form
+
+            const message = document.getElementById('infoMessage').value;
+            
+            // Crea l'oggetto e il corpo dell'email
+            const subject = `Richiesta informazioni per il prodotto: ${productName}`;
+            const body = `${message}\n\n---\nMessaggio inviato tramite FunShop per il prodotto: ${window.location.href}`;
+            
+            // Costruisci e apri il link mailto:
+            const mailtoLink = `mailto:${sellerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoLink;
+
+            // Chiudi il modale
+            const modalInstance = bootstrap.Modal.getInstance(infoModal);
+            modalInstance.hide();
+        });
+    };
+
     // Inizializza tutte le funzioni
     await updateUserProfileLogic();
     updateCartPopupLogic();
     handleProfileImageUpload();
+    handleInfoModalLogic(); // <-- NUOVA FUNZIONE
 });
