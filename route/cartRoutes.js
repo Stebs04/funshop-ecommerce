@@ -15,31 +15,42 @@ router.use((req, res, next) => {
     next();
 });
 
-// Rotta POST /add/:id - Aggiunge un prodotto al carrello
 router.post('/add/:id', async (req, res) => {
     const productId = req.params.id;
     const cart = req.session.cart;
+    
+    // --- NUOVA LOGICA DI REDIRECT ---
+    // Usiamo il campo nascosto del form, con un fallback alla home page per sicurezza.
+    const redirectUrl = req.body.redirectUrl || '/';
+
+    // --- CONTROLLO DUPLICATI ---
+    // Verifichiamo se l'articolo è già nel carrello.
+    if (cart.items[productId]) {
+        req.flash('error', 'Questo articolo è già presente nel carrello.');
+        // Usiamo il nuovo redirectUrl per tornare alla pagina di provenienza.
+        return res.redirect(redirectUrl);
+    }
+
     try {
         const product = await prodottiDao.getProductById(productId);
         if (!product) {
             req.flash('error', 'Prodotto non trovato!');
-            return res.redirect('back');
+            return res.redirect(redirectUrl);
         }
-        let storedItem = cart.items[productId];
-        if (!storedItem) {
-            storedItem = cart.items[productId] = { item: product, qty: 0, price: 0 };
-        }
-        storedItem.qty++;
+
+        // Aggiungi il prodotto al carrello
         const itemPrice = product.prezzo_scontato || product.prezzo;
-        storedItem.price = itemPrice * storedItem.qty;
+        cart.items[productId] = { item: product, qty: 1, price: itemPrice };
         cart.totalQty++;
         cart.totalPrice += itemPrice;
+
         req.flash('success', `"${product.nome}" è stato aggiunto al carrello!`);
-        res.redirect('back'); // <-- Questa riga ti fa rimanere sulla pagina di provenienza
+        res.redirect(redirectUrl); // Esegui il redirect alla pagina corretta
+
     } catch (error) {
         console.error("Errore nell'aggiungere prodotto al carrello:", error);
         req.flash('error', 'Impossibile aggiungere il prodotto al carrello.');
-        res.redirect('back');
+        res.redirect(redirectUrl); // Anche in caso di errore, torniamo alla pagina di provenienza
     }
 });
 

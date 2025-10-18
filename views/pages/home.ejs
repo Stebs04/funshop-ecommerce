@@ -44,9 +44,11 @@
                   <% } %>
                   
                   <form action="/carrello/add/<%= prodotto.id %>" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
-                      <i class="bi bi-cart-plus-fill fs-5"></i>
-                    </button>
+                      <input type="hidden" name="redirectUrl" value="<%= originalUrl %>">
+
+                      <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
+                          <i class="bi bi-cart-plus-fill fs-5"></i>
+                      </button>
                   </form>
                 </div>
               </div>

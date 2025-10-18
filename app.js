@@ -52,14 +52,16 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware per passare dati globali a tutte le viste EJS (BLOCCO MODIFICATO)
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     res.locals.isAuthenticated = req.isAuthenticated();
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
-    // Aggiungi questa riga per rendere l'intera sessione disponibile nelle viste
     res.locals.session = req.session; 
+    
+    // --- AGGIUNGI QUESTA RIGA ---
+    res.locals.originalUrl = req.originalUrl; // Rende disponibile l'URL corrente
+
     next();
 });
 
