@@ -6,7 +6,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const prodottiDao = require('../models/dao/prodotti-dao');
-const recensioniDao = require('../models/dao/recensioni-dao');
+// const recensioniDao = require('../models/dao/recensioni-dao'); // <-- Rimosso
 const observedDao = require('../models/dao/observed-dao'); // <-- MODIFICA: Aggiunto import
 const { isLoggedIn } = require('../middleware/passport-config');
 
@@ -104,8 +104,6 @@ router.get('/:id', async (req, res) => {
     try {
         const prodotto = await prodottiDao.getProductById(req.params.id);
         if (prodotto) {
-            const recensioni = await recensioniDao.getReviewsByProductId(req.params.id);
-            
             // Controlla se l'utente loggato sta osservando questo prodotto
             let isObserved = false;
             if (req.isAuthenticated()) {
@@ -115,7 +113,6 @@ router.get('/:id', async (req, res) => {
             res.render('pages/prodotto', {
                 title: prodotto.nome,
                 prodotto: prodotto,
-                recensioni: recensioni,
                 user: req.user,
                 isAuthenticated: req.isAuthenticated(),
                 isObserved: isObserved // Passa la variabile alla vista

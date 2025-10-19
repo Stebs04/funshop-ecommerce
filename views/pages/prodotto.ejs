@@ -16,6 +16,7 @@
 
       <div class="col-md-5">
         <div class="card p-4 shadow-sm">
+      
           <h1 class="display-5 fw-bold">€ <%= (prodotto.prezzo_scontato || prodotto.prezzo || prodotto.prezzo_asta).toFixed(2) %></h1>
           <h2><%= prodotto.nome %></h2>
           <hr>
@@ -25,6 +26,7 @@
             <li class="d-flex justify-content-between"><span>CATEGORIA:</span><strong><%= prodotto.parola_chiave %></strong></li>
           </ul>
 
+ 
           <h5 class="fw-bold">Descrizione</h5>
           <p class="text-muted"><%= prodotto.descrizione %></p>
           <hr>
@@ -45,31 +47,37 @@
           <% } %>
 
           <% if (prodotto.stato === 'disponibile') { %>
+    
             <form action="/carrello/add/<%= prodotto.id %>" method="POST">
               <input type="hidden" name="redirectUrl" value="<%= originalUrl %>">
               <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
                   <i class="bi bi-cart-plus-fill me-2"></i>Aggiungi al Carrello
               </button>
+            
             </form>
             
             <% if (isAuthenticated) { %>
               <% if (isObserved) { %>
                 <form action="/observed/remove/<%= prodotto.id %>" method="POST">
                       <button type="submit" class="btn btn-outline-danger w-100 mb-2">
-                          <i class="bi bi-star-fill me-2"></i>Rimuovi dagli Osservati
+       
+                           <i class="bi bi-star-fill me-2"></i>Rimuovi dagli Osservati
                       </button>
                   </form>
               <% } else { %>
-                  <form action="/observed/add/<%= prodotto.id %>" method="POST">
+                  
+                <form action="/observed/add/<%= prodotto.id %>" method="POST">
                       <button type="submit" class="btn btn-outline-secondary w-100 mb-2">
                           <i class="bi bi-star me-2"></i>Osserva Prodotto
                       </button>
-                  </form>
+                 
+                 </form>
               <% } %>
             <% } else { %>
               <a href="/auth/registrazione" class="btn btn-outline-secondary w-100 mb-2">
                   <i class="bi bi-star me-2"></i>Osserva Prodotto
               </a>
+            
             <% } %>
   
             <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#infoModal" data-product-name="<%= prodotto.nome %>" data-seller-email="<%= prodotto.email_venditore %>">
@@ -98,56 +106,6 @@
       <div class="alert alert-danger" role="alert">Prodotto non trovato.</div>
     <% } %>
 
-    <div class="row mt-5">
-      <div class="col-md-12">
-        <h3>Recensioni</h3>
-        <hr>
-        <% if (isAuthenticated && prodotto && prodotto.stato === 'disponibile' ) { %>
-          <div class="card mb-4">
-            <div class="card-body">
-              <h5 class="card-title">Lascia una recensione</h5>
-              <form action="/recensioni" method="POST">
-                <input type="hidden" name="prodotto_id" value="<%= prodotto.id %>">
-                <div class="mb-3">
-                  <label for="valutazione" class="form-label">Valutazione</label>
-                  <select class="form-select" id="valutazione" name="valutazione" required>
-                    <option value="5">5 - Eccellente</option>
-                    <option value="4">4 - Molto buono</option>
-                    <option value="3">3 - Buono</option>
-                    <option value="2">2 - Discreto</option>
-                    <option value="1">1 - Scarso</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label for="contenuto" class="form-label">La tua recensione</label>
-                  <textarea class="form-control" id="contenuto" name="contenuto" rows="3" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Invia recensione</button>
-              </form>
-            </div>
-          </div>
-        <% } %>
-        <% if (recensioni && recensioni.length > 0) { %>
-          <% recensioni.forEach(recensione => { %>
-            <div class="card mb-3">
-              <div class="card-body">
-                <div class="d-flex justify-content-between">
-                  <h6 class="card-subtitle mb-2 text-muted">Da: <%= recensione.username %></h6>
-                  <div>
-                    <% for(let i = 0; i < recensione.valutazione; i++) { %><i class="bi bi-star-fill text-warning"></i><% } %>
-                    <% for(let i = recensione.valutazione; i < 5; i++) { %><i class="bi bi-star text-warning"></i><% } %>
-                  </div>
-                </div>
-                <p class="card-text"><%= recensione.contenuto %></p>
-                <small class="text-muted"><%= new Date(recensione.data_creazione).toLocaleDateString('it-IT') %></small>
-              </div>
-            </div>
-          <% }) %>
-        <% } else { %>
-          <p>Non ci sono ancora recensioni per questo prodotto.</p>
-        <% } %>
-      </div>
-    </div>
   </main>
 
   <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
@@ -157,7 +115,8 @@
                 <h5 class="modal-title" id="infoModalLabel">Chiedi informazioni</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+       
+           <div class="modal-body">
                 <form id="infoForm">
                     <div class="mb-3">
                         <label for="infoMessage" class="form-label">Il tuo messaggio:</label>
@@ -165,7 +124,8 @@
                     </div>
                     <button type="submit" id="sendInfoButton" class="btn btn-primary w-100">
                         <i class="bi bi-send-fill me-2"></i>Invia tramite Email
-                    </button>
+                  
+                   </button>
                 </form>
             </div>
         </div>
@@ -208,13 +168,15 @@
             let sellerEmail = '';
             let productName = '';
             infoModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
+          
+               const button = event.relatedTarget;
                 sellerEmail = button.getAttribute('data-seller-email');
                 productName = button.getAttribute('data-product-name');
             });
             const infoForm = document.getElementById('infoForm');
             infoForm.addEventListener('submit', function(event) {
-                event.preventDefault();
+              
+               event.preventDefault();
                 const message = document.getElementById('infoMessage').value;
                 const subject = `Richiesta informazioni per il prodotto: ${productName}`;
                 const body = `${message}\n\n---\nMessaggio inviato tramite FunShop per il prodotto: ${window.location.href}`;
