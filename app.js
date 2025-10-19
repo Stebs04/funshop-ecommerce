@@ -20,6 +20,7 @@ const informationRoutes = require('./route/information');
 const cartRoutes = require('./route/cartRoutes');
 const observedRoutes = require('./route/observedRoutes');
 const orderRoutes = require('./route/orderRoutes');
+const searchRoutes = require('./route/search'); // <-- NUOVA RIGA
 
 const app = express();
 
@@ -73,6 +74,7 @@ app.use('/information', informationRoutes);
 app.use('/carrello', cartRoutes);
 app.use('/observed', observedRoutes);
 app.use('/ordine', orderRoutes);
+app.use('/search', searchRoutes); // <-- NUOVA RIGA
 
 app.get('/api/auth/status', (req, res) => {
   if (req.isAuthenticated()) {

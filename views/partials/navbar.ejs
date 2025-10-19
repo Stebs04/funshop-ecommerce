@@ -1,3 +1,4 @@
+<%# views/partials/navbar.ejs %>
 <header class="p-3 mb-3 border-bottom sticky-top bg-white shadow-sm">
     <div class="container">
       <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
@@ -14,9 +15,11 @@
           <% } %>
         </ul>
 
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search">
-          <input type="search" class="form-control" placeholder="Cerca prodotto..." aria-label="Search">
+        <%# --- INIZIO MODIFICA --- %>
+        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" role="search" action="/search" method="GET">
+          <input type="search" name="q" class="form-control" placeholder="Cerca prodotto o utente..." aria-label="Search">
         </form>
+        <%# --- FINE MODIFICA --- %>
 
         <div class="text-end">
           <div class="text-end">
