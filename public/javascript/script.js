@@ -29,14 +29,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             profilePreview = document.createElement('div');
             profilePreview.id = 'profile-preview';
             const isSeller = authData.user.tipo_account === 'venditore';
+            
+            // --- INIZIO MODIFICA ---
+            const isAdmin = authData.user.tipo_account === 'admin';
 
             profilePreview.innerHTML = `
                 <a href="/utente?section=dati" class="profile-link">Il mio account</a>
                 <a href="/observed" class="profile-link">Prodotti Osservati</a>
                 ${isSeller ? `<a href="/products/new" class="profile-link">Aggiungi un nuovo prodotto</a>` : ''}
+                ${isAdmin ? `<a href="/admin/dashboard" class="profile-link" style="color: #dc3545; font-weight: bold;">Pannello Admin</a>` : ''}
                 <div class="profile-divider" style="height: 1px; background: #eee; margin: 8px 0;"></div>
                 <a href="/auth/logout" class="profile-link">Esci</a>
             `;
+            // --- FINE MODIFICA ---
+
             document.body.appendChild(profilePreview);
 
             const showProfilePreview = () => {

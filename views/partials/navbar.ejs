@@ -15,10 +15,8 @@
             <li><a href="/venditore" class="nav-link px-2 link-dark header-nav-link">Diventa un venditore</a></li>
           <% } %>
           
-          <%# --- INIZIO MODIFICA --- %>
-          <% if (user && user.tipo_account === 'admin') { %>
-            <li><a href="/admin/dashboard" class="nav-link px-2 link-danger fw-bold header-nav-link">Pannello Admin</a></li>
-          <% } %>
+          <%# --- INIZIO MODIFICA (BLOCCO RIMOSSO) --- %>
+          <%# Il link per il pannello admin è stato spostato nel popup del profilo (script.js) %>
           <%# --- FINE MODIFICA --- %>
         </ul>
 
@@ -29,15 +27,13 @@
         <div class="text-end">
           <div class="text-end">
             <% if (isAuthenticated) { %>
-             
-               <a id="profile-button" href="/utente?section=dati" class="btn btn-primary me-2" title="Il mio Account">
+              <a id="profile-button" href="/utente?section=dati" class="btn btn-primary me-2" title="Il mio Account">
                 <i class="bi bi-person fs-5"></i>
               </a>
             <% } else { %>
               <a id="profile-button" href="/auth/registrazione" class="btn btn-primary me-2" title="Registrati">
                 <i class="bi bi-person fs-5"></i>
-   
-               </a>
+              </a>
             <% } %>
 
             <a href="/carrello" id="cart-button" class="btn btn-primary position-relative" title="Carrello">
