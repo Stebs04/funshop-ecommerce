@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="it">
+<%- include('../partials/header') %>
+<body class="d-flex flex-column min-vh-100 bg-light">
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Pannello di Amministrazione</h1>
+    </div>
+
+    <%- include('../partials/messages') %>
+
+    <section class="mb-5">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-people-fill fs-1 text-primary"></i>
+                        <h5 class="card-title mt-2">Utenti Registrati</h5>
+                        <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-box-seam-fill fs-1 text-success"></i>
+                        <h5 class="card-title mt-2">Prodotti in Vendita</h5>
+                        <p class="card-text display-4 fw-bold"><%= stats.productCount %></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-currency-euro fs-1 text-warning"></i>
+                        <h5 class="card-title mt-2">Guadagni Totali</h5>
+                        <p class="card-text display-4 fw-bold"><%= stats.revenue.toFixed(2) %></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <ul class="nav nav-tabs" id="adminTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab">Gestione Utenti</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-tab-pane" type="button" role="tab">Gestione Prodotti</button>
+        </li>
+    </ul>
+
+    <div class="tab-content bg-white p-3 border border-top-0 rounded-bottom" id="adminTabContent">
+        <div class="tab-pane fade show active" id="users-tab-pane" role="tabpanel">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Tipo Account</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% users.forEach(u => { %>
+                            <tr>
+                                <td><%= u.id %></td>
+                                <td><%= u.username %></td>
+                                <td><%= u.email %></td>
+                                <td><span class="badge bg-secondary"><%= u.tipo_account %></span></td>
+                                <td>
+                                    <% if (u.tipo_account !== 'admin') { %>
+                                        <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+                                        </form>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="products-tab-pane" role="tabpanel">
+             <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Immagine</th>
+                            <th>Nome Prodotto</th>
+                            <th>Venditore</th>
+                            <th>Prezzo</th>
+                            <th>Stato</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% products.forEach(p => { %>
+                            <tr>
+                                <td><%= p.id %></td>
+                                <td><img src="<%= p.percorso_immagine %>" alt="<%= p.nome %>" style="width: 50px; height: 50px; object-fit: cover;"></td>
+                                <td><%= p.nome %></td>
+                                <td><%= p.nome_venditore %></td>
+                                <td>€<%= (p.prezzo_scontato || p.prezzo || 0).toFixed(2) %></td>
+                                <td>
+                                    <% if (p.stato === 'disponibile') { %>
+                                        <span class="badge bg-success">Disponibile</span>
+                                    <% } else if (p.stato === 'venduto') { %>
+                                        <span class="badge bg-warning">Venduto</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Eliminato</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <a href="/admin/products/edit/<%= p.id %>" class="btn btn-sm btn-primary">Modifica</a>
+                                    <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Script per mantenere attiva la tab corretta dopo un redirect
+    document.addEventListener('DOMContentLoaded', function() {
+        if(window.location.hash) {
+            const tabTrigger = document.querySelector('button[data-bs-target="' + window.location.hash + '-tab-pane"]');
+            if (tabTrigger) {
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
+            }
+        }
+    });
+</script>
+</body>
+</html>

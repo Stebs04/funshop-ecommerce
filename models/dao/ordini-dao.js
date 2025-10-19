@@ -2,23 +2,12 @@
 
 const { db } = require('../../managedb'); // Assicurati che il percorso al tuo database sia corretto
 
-/**
- * OrdiniDAO (Data Access Object)
- * Questa classe gestisce tutte le operazioni di interazione
- * con la tabella 'storico_ordini' nel database.
- */
 class OrdiniDAO {
   constructor(database) {
     this.db = database;
   }
 
-  /**
-   * Recupera tutti gli ordini effettuati da un utente specifico.
-   * @param {number} userId - L'ID dell'utente di cui recuperare gli ordini.
-   * @returns {Promise<Array<object>>} Una lista di tutti gli ordini dell'utente.
-   */
   async getOrdersByUserId(userId) {
-    // Usiamo una JOIN con la tabella 'prodotti' per ottenere anche il nome e l'immagine del prodotto acquistato.
     const sql = `
       SELECT 
         so.id, 
@@ -43,18 +32,11 @@ class OrdiniDAO {
     });
   }
 
-  /**
-   * Crea un nuovo ordine nel database.
-   * @param {object} orderData - Dati dell'ordine: { totale, user_id, prodotto_id }
-   * @returns {Promise<number>} L'ID del nuovo ordine creato.
-   */
   async createOrder(orderData) {
     const { totale, user_id, prodotto_id } = orderData;
-    
     const sql = `
       INSERT INTO storico_ordini (totale, user_id, prodotto_id) 
       VALUES (?, ?, ?)`;
-      
     const params = [totale, user_id, prodotto_id];
 
     return new Promise((resolve, reject) => {
@@ -62,17 +44,12 @@ class OrdiniDAO {
         if (err) {
           reject(err);
         } else {
-          resolve(this.lastID); // Restituisce l'ID del nuovo ordine
+          resolve(this.lastID);
         }
       });
     });
   }
 
-  /**
-   * Trova un ordine specifico tramite il suo ID.
-   * @param {number} id - L'ID dell'ordine da cercare.
-   * @returns {Promise<object|undefined>} L'ordine trovato o undefined.
-   */
   async getOrderById(id) {
     const sql = `SELECT * FROM storico_ordini WHERE id = ?`;
 
@@ -86,7 +63,20 @@ class OrdiniDAO {
       });
     });
   }
+
+  // --- NUOVA FUNZIONE ---
+  async getTotalSales() {
+    const sql = `SELECT SUM(totale) as total FROM storico_ordini`;
+    return new Promise((resolve, reject) => {
+        this.db.get(sql, [], (err, row) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(row.total || 0);
+            }
+        });
+    });
+  }
 }
 
-// Esporta una singola istanza della classe, passando la connessione al database.
 module.exports = new OrdiniDAO(db);

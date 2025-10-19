@@ -43,10 +43,13 @@ const initializeDb = () => {
             console.log("Utente 'admin' non trovato, lo creo...");
             try {
               const adminPassword = await bcrypt.hash('admin1234', 10);
+              // --- INIZIO MODIFICA ---
+              // Assegnamo il tipo_account 'admin' invece di 'venditore'
               const insertAdminSQL = `
                 INSERT INTO users (username, nome, cognome, data_nascita, email, password_hash, tipo_account) 
-                VALUES ('admin', 'admin', 'funshop', '2004-11-25', 'admin@mail.com', ?, 'venditore')
+                VALUES ('admin', 'admin', 'funshop', '2004-11-25', 'admin@mail.com', ?, 'admin')
               `;
+              // --- FINE MODIFICA ---
               db.run(insertAdminSQL, [adminPassword], (err) => {
                 if (err) return reject(err);
                 console.log('Utente admin creato con successo!');

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="it">
+<%- include('../partials/header') %>
+<body class="d-flex flex-column min-vh-100">
+<%- include('../partials/navbar') %>
+
+<main class="container my-5">
+    <h1>Modifica Prodotto (Admin)</h1>
+    <form action="/admin/products/edit/<%= prodotto.id %>" method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome Prodotto</label>
+            <input type="text" class="form-control" id="nome" name="nome" value="<%= prodotto.nome %>" required>
+        </div>
+        <div class="mb-3">
+            <label for="descrizione" class="form-label">Descrizione</label>
+            <textarea class="form-control" id="descrizione" name="descrizione" rows="3" required><%= prodotto.descrizione %></textarea>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="prezzo" class="form-label">Prezzo Originale (€)</label>
+                <input type="number" class="form-control" id="prezzo" name="prezzo" step="0.01" value="<%= prodotto.prezzo %>" required>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
+                <input type="number" class="form-control" id="prezzo_scontato" name="prezzo_scontato" step="0.01" value="<%= prodotto.prezzo_scontato || '' %>">
+                <small class="form-text text-muted">Lascia vuoto se non c'è sconto.</small>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="categoria" class="form-label">Categoria</label>
+                <input type="text" class="form-control" id="categoria" name="parola_chiave" value="<%= prodotto.parola_chiave %>">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="immagine" class="form-label">Immagine Prodotto</label>
+            <input class="form-control" type="file" id="immagine" name="percorso_immagine">
+            <small class="form-text text-muted">Lascia vuoto per non modificare l'immagine attuale: <a href="<%= prodotto.percorso_immagine %>" target="_blank">Vedi immagine attuale</a></small>
+        </div>
+        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+        <a href="/admin/dashboard#products" class="btn btn-secondary">Annulla</a>
+    </form>
+</main>
+
+<%- include('../partials/footer') %>
+</body>
+</html>

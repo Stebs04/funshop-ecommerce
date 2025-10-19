@@ -67,8 +67,6 @@ class ProdottiDAO {
   }
 
   async getProductsByUserId(userId) {
-    // --- MODIFICA QUI ---
-    // La query ora seleziona solo i prodotti con stato 'disponibile'
     const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato = 'disponibile' ORDER BY data_inserimento DESC";
     return new Promise((resolve, reject) => {
       this.db.all(sql, [userId], (err, rows) => {
@@ -128,6 +126,50 @@ class ProdottiDAO {
     const sql = 'UPDATE prodotti SET stato = ? WHERE id = ?';
     return new Promise((resolve, reject) => {
         this.db.run(sql, [status, productId], function(err) {
+            if (err) reject(err);
+            else resolve(this.changes);
+        });
+    });
+  }
+
+  // --- NUOVE FUNZIONI ADMIN ---
+  getAllProductsAdmin() {
+    const sql = `
+      SELECT p.*, u.username as nome_venditore 
+      FROM prodotti p 
+      JOIN users u ON p.user_id = u.id
+      ORDER BY p.data_inserimento DESC
+    `;
+    return new Promise((resolve, reject) => {
+        this.db.all(sql, [], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+  }
+
+  deleteProductAdmin(productId) {
+    // Rimuove completamente il prodotto invece di cambiarne solo lo stato
+    const sql = "DELETE FROM prodotti WHERE id = ?";
+    return new Promise((resolve, reject) => {
+        this.db.run(sql, [productId], function(err) {
+            if (err) reject(err);
+            else resolve(this.changes);
+        });
+    });
+  }
+
+  updateProductAdmin(id, productData) {
+    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
+    const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
+    if (fieldsToUpdate.length === 0) return Promise.resolve(0);
+    
+    const fieldPlaceholders = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
+    const values = fieldsToUpdate.map(field => (productData[field] === '' ? null : productData[field]));
+    
+    const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = ?`;
+    return new Promise((resolve, reject) => {
+        this.db.run(sql, [...values, id], function(err) {
             if (err) reject(err);
             else resolve(this.changes);
         });

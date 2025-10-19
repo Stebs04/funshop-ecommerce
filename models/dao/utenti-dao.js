@@ -46,10 +46,6 @@ class UtentiDAO {
     });
   }
 
-  /**
-   * NUOVA FUNZIONE UNIFICATA
-   * Aggiorna il profilo utente usando una transazione per sicurezza.
-   */
   async updateUserProfile(userId, data) {
     const { nome, cognome, username, data_nascita, descrizione } = data;
 
@@ -59,7 +55,6 @@ class UtentiDAO {
               if (err) return reject(err);
             });
 
-            // 1. Aggiorna la tabella 'users'
             const userSql = 'UPDATE users SET nome = ?, cognome = ?, username = ?, data_nascita = ? WHERE id = ?';
             this.db.run(userSql, [nome, cognome, username, data_nascita || null, userId], function(err) {
                 if (err) {
@@ -67,7 +62,6 @@ class UtentiDAO {
                 }
             });
 
-            // 2. Esegui un "UPSERT" per la tabella 'accountinfos'
             const accountInfoSql = `
                 INSERT INTO accountinfos (user_id, descrizione) VALUES (?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET descrizione = excluded.descrizione;
@@ -78,12 +72,11 @@ class UtentiDAO {
                 }
             });
 
-            // 3. Conferma le modifiche
             this.db.run('COMMIT', (err) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(true); // Successo
+                    resolve(true);
                 }
             });
         });
@@ -98,6 +91,17 @@ class UtentiDAO {
               else resolve(this.changes);
           });
       });
+  }
+
+  // --- NUOVA FUNZIONE ---
+  getAllUsers() {
+    const sql = 'SELECT id, username, email, tipo_account FROM users ORDER BY id ASC';
+    return new Promise((resolve, reject) => {
+        this.db.all(sql, [], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
   }
 }
 
