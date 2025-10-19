@@ -8,11 +8,16 @@ const indirizziDao = require('../models/dao/indirizzi-dao');
 const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 const { db } = require('../managedb');
-const { sendOrderConfirmationEmail } = require('../services/emailService'); // <-- AGGIUNGI
+const { sendOrderConfirmationEmail } = require('../services/emailService');
+const cartDao = require('../models/dao/cart-dao');
 
-// ... (tutte le altre rotte come /add, /remove, GET /checkout rimangono invariate) ...
-router.use((req, res, next) => {
-    if (!req.session.cart) {
+// Middleware per caricare/inizializzare il carrello
+router.use(async (req, res, next) => {
+    if (req.isAuthenticated()) {
+        // Utente loggato: carica il carrello dal DB
+        req.session.cart = await cartDao.getCartByUserId(req.user.id);
+    } else if (!req.session.cart) {
+        // Utente ospite: inizializza un carrello vuoto nella sessione
         req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
     }
     next();
@@ -20,14 +25,7 @@ router.use((req, res, next) => {
 
 router.post('/add/:id', async (req, res) => {
     const productId = req.params.id;
-    const cart = req.session.cart;
-    
     const redirectUrl = req.body.redirectUrl || '/';
-
-    if (cart.items[productId]) {
-        req.flash('error', 'Questo articolo è già presente nel carrello.');
-        return res.redirect(redirectUrl);
-    }
 
     try {
         const product = await prodottiDao.getProductById(productId);
@@ -36,12 +34,27 @@ router.post('/add/:id', async (req, res) => {
             return res.redirect(redirectUrl);
         }
 
-        const itemPrice = product.prezzo_scontato || product.prezzo;
-        cart.items[productId] = { item: product, qty: 1, price: itemPrice };
-        cart.totalQty++;
-        cart.totalPrice += itemPrice;
-
-        req.flash('success', `"${product.nome}" è stato aggiunto al carrello!`);
+        if (req.isAuthenticated()) {
+            // Utente loggato: aggiungi al DB
+            const changes = await cartDao.addToCart(req.user.id, productId);
+            if (changes === 0) {
+                req.flash('error', 'Questo articolo è già presente nel carrello.');
+            } else {
+                req.flash('success', `"${product.nome}" è stato aggiunto al carrello!`);
+            }
+        } else {
+            // Utente ospite: aggiungi alla sessione
+            const cart = req.session.cart;
+            if (cart.items[productId]) {
+                req.flash('error', 'Questo articolo è già presente nel carrello.');
+            } else {
+                const itemPrice = product.prezzo_scontato || product.prezzo;
+                cart.items[productId] = { item: product, qty: 1, price: itemPrice };
+                cart.totalQty++;
+                cart.totalPrice += itemPrice;
+                req.flash('success', `"${product.nome}" è stato aggiunto al carrello!`);
+            }
+        }
         res.redirect(redirectUrl);
 
     } catch (error) {
@@ -51,22 +64,30 @@ router.post('/add/:id', async (req, res) => {
     }
 });
 
-router.post('/remove/:id', (req, res) => {
+router.post('/remove/:id', async (req, res) => {
     const productId = req.params.id;
-    const cart = req.session.cart;
 
-    if (cart.items[productId]) {
-        const itemToRemove = cart.items[productId];
-        cart.totalQty -= itemToRemove.qty;
-        cart.totalPrice -= itemToRemove.price;
-        delete cart.items[productId];
+    try {
+        if (req.isAuthenticated()) {
+            // Utente loggato: rimuovi dal DB
+            await cartDao.removeFromCart(req.user.id, productId);
+        } else {
+            // Utente ospite: rimuovi dalla sessione
+            const cart = req.session.cart;
+            if (cart.items[productId]) {
+                const itemToRemove = cart.items[productId];
+                cart.totalQty -= itemToRemove.qty;
+                cart.totalPrice -= itemToRemove.price;
+                delete cart.items[productId];
+            }
+        }
         req.flash('success', 'Prodotto rimosso dal carrello.');
-    } else {
+    } catch (error) {
+        console.error("Errore durante la rimozione dal carrello:", error);
         req.flash('error', 'Si è verificato un errore durante la rimozione del prodotto.');
     }
     res.redirect('/carrello');
 });
-
 
 router.get('/', (req, res) => {
     const cart = req.session.cart;
@@ -106,7 +127,7 @@ router.get('/checkout', async (req, res) => {
         metodiPagamento: metodiPagamento
     });
 });
-// Rotta POST /checkout (MODIFICATA)
+
 router.post('/checkout', async (req, res) => {
     const cart = req.session.cart;
 
@@ -138,6 +159,9 @@ router.post('/checkout', async (req, res) => {
             purchasedItems.push(product);
         }
 
+        // Svuota il carrello persistente
+        await cartDao.clearCart(userId);
+
         await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
 
         const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
@@ -149,14 +173,12 @@ router.post('/checkout', async (req, res) => {
             address: formData,
             payment: formData,
             date: new Date(),
-            reviewLink: reviewLink // Salviamo il link per la pagina di riepilogo
+            reviewLink: reviewLink
         };
         
+        // Svuota il carrello della sessione
         req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
         
-        // --- MODIFICA: Chiamata reale all'invio dell'email ---
-        // Usiamo "await" per assicurarci che l'invio parta prima di continuare,
-        // ma non blocchiamo la risposta all'utente se l'invio fallisce.
         sendOrderConfirmationEmail(buyerEmail, req.session.latestOrder).catch(console.error);
 
         res.redirect('/ordine/riepilogo');
@@ -168,7 +190,6 @@ router.post('/checkout', async (req, res) => {
         res.redirect('/carrello');
     }
 });
-
 
 router.get('/api/data', (req, res) => {
     res.json(req.session.cart);

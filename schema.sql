@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS prodotti (
     prezzo REAL,
     prezzo_asta REAL,
     prezzo_scontato REAL,
-    stato TEXT DEFAULT 'disponibile', -- 'disponibile', 'venduto'
+    stato TEXT DEFAULT 'disponibile', -- 'disponibile', 'venduto', 'eliminato'
     data_inserimento DATETIME DEFAULT CURRENT_TIMESTAMP,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS venditori (
 CREATE TABLE IF NOT EXISTS accountinfos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL UNIQUE,
-    immagine_profilo TEXT, 
+    immagine_profilo TEXT,
     descrizione TEXT,
     follower INTEGER DEFAULT 0,
     recensioni INTEGER DEFAULT 0,
@@ -84,15 +84,25 @@ CREATE TABLE IF NOT EXISTS metodi_pagamento (
     nome_titolare TEXT NOT NULL,
     numero_carta TEXT NOT NULL,
     data_scadenza TEXT NOT NULL,
-    cvv TEXT NOT NULL, 
+    cvv TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS observed_products (
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
-    prezzo_osservato REAL, -- NUOVA COLONNA: Prezzo al momento dell'aggiunta
-    notifica_letta INTEGER DEFAULT 1, -- NUOVA COLONNA: 1 = letta, 0 = non letta
+    prezzo_osservato REAL,
+    notifica_letta INTEGER DEFAULT 1,
+    PRIMARY KEY (user_id, product_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES prodotti (id) ON DELETE CASCADE
+);
+
+-- NUOVA TABELLA PER IL CARRELLO PERSISTENTE
+CREATE TABLE IF NOT EXISTS cart_items (
+    user_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
     PRIMARY KEY (user_id, product_id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES prodotti (id) ON DELETE CASCADE

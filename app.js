@@ -8,7 +8,6 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const morgan = require('morgan');
 
-// --- CORREZIONE: Assicurati che tutti i percorsi partano da './' ---
 const passportConfig = require('./middleware/passport-config');
 const authRoutes = require('./route/auth');
 const mainRoutes = require('./route/home');
@@ -49,11 +48,14 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Middleware per variabili locali
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     res.locals.isAuthenticated = req.isAuthenticated();
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
+    // Il carrello viene ora gestito dal middleware di cartRoutes
+    // ma lo lasciamo qui per renderlo disponibile a tutte le viste (es. navbar)
     res.locals.session = req.session; 
     res.locals.originalUrl = req.originalUrl;
     next();
