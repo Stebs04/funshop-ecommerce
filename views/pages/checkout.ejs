@@ -40,10 +40,8 @@
         <div class="col-md-7 col-lg-8">
             <form class="needs-validation" action="/carrello/checkout" method="POST" novalidate>
                 
-                <%# --- INIZIO BLOCCO INDIRIZZO CORRETTO --- %>
                 <h4 class="mb-3">Indirizzo di spedizione</h4>
                 <% if (isAuthenticated) { %>
-                    <%# Mostra gli indirizzi salvati solo se ce ne sono %>
                     <% if (indirizzi && indirizzi.length > 0) { %>
                         <% indirizzi.forEach((indirizzo, index) => { %>
                             <div class="form-check">
@@ -56,7 +54,6 @@
                             </div>
                         <% }) %>
                     <% } %>
-                    <%# Mostra sempre l'opzione per un nuovo indirizzo per gli utenti loggati %>
                     <div class="form-check mt-2">
                         <input type="radio" name="addressSelection" class="form-check-input" id="newAddress" value="new" <%= !indirizzi || indirizzi.length === 0 ? 'checked' : '' %>>
                         <label class="form-check-label" for="newAddress">Aggiungi un nuovo indirizzo</label>
@@ -64,9 +61,10 @@
                 <% } %>
 
                 <div class="row g-3 mt-2" id="new-address-form" style="<%= (isAuthenticated && indirizzi && indirizzi.length > 0) ? 'display: none;' : '' %>">
-                    <%# Per gli ospiti, i campi sono sempre visibili e viene inviato un campo nascosto %>
                     <% if (!isAuthenticated) { %>
+                         <%# --- INIZIO MODIFICA --- %>
                          <input type="hidden" name="addressSelection" value="new">
+                         <%# --- FINE MODIFICA --- %>
                          <div class="col-sm-6"><label for="firstName" class="form-label">Nome</label><input type="text" class="form-control" id="firstName" name="nome" required></div>
                          <div class="col-sm-6"><label for="lastName" class="form-label">Cognome</label><input type="text" class="form-control" id="lastName" name="cognome" required></div>
                          <div class="col-12"><label for="email" class="form-label">Email</label><input type="email" class="form-control" id="email" name="email" placeholder="tu@esempio.com" required></div>
@@ -75,11 +73,9 @@
                     <div class="col-md-4"><label for="city" class="form-label">Città</label><input type="text" class="form-control" id="city" name="citta" required></div>
                     <div class="col-md-3"><label for="zip" class="form-label">CAP</label><input type="text" class="form-control" id="zip" name="cap" required></div>
                 </div>
-                <%# --- FINE BLOCCO INDIRIZZO CORRETTO --- %>
                 
                 <hr class="my-4">
 
-                <%# --- INIZIO BLOCCO PAGAMENTO CORRETTO --- %>
                 <h4 class="mb-3">Pagamento</h4>
                 <% if (isAuthenticated) { %>
                     <% if (metodiPagamento && metodiPagamento.length > 0) { %>
@@ -95,7 +91,9 @@
                         <label class="form-check-label" for="new-card">Usa una nuova carta</label>
                     </div>
                 <% } else { %>
+                    <%# --- INIZIO MODIFICA --- %>
                     <input type="hidden" name="paymentMethod" value="new">
+                    <%# --- FINE MODIFICA --- %>
                 <% } %>
                 
                 <div class="row gy-3 mt-2" id="new-card-form" style="<%= (isAuthenticated && metodiPagamento && metodiPagamento.length > 0) ? 'display: none;' : '' %>">
@@ -104,7 +102,6 @@
                     <div class="col-md-3"><label for="cc-expiration" class="form-label">Scadenza</label><input type="text" class="form-control" id="cc-expiration" name="data_scadenza" placeholder="MM/YY" required></div>
                     <div class="col-md-3"><label for="cc-cvv" class="form-label">CVV</label><input type="text" class="form-control" id="cc-cvv" name="cvv" required></div>
                 </div>
-                <%# --- FINE BLOCCO PAGAMENTO CORRETTO --- %>
 
                 <hr class="my-4">
                 <button class="w-100 btn btn-primary btn-lg" type="submit">Paga e completa l'ordine</button>
@@ -119,7 +116,6 @@
         const newAddressForm = document.getElementById('new-address-form');
         const newCardForm = document.getElementById('new-card-form');
         
-        // Listener per la selezione dell'indirizzo
         document.querySelectorAll('input[name="addressSelection"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const isNewAddress = document.getElementById('newAddress')?.checked;
@@ -129,7 +125,6 @@
             });
         });
         
-        // Listener per la selezione del pagamento
         document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const isNewCard = document.getElementById('new-card')?.checked;

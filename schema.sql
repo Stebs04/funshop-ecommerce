@@ -56,12 +56,14 @@ CREATE TABLE IF NOT EXISTS indirizzi (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
+-- --- MODIFICA QUI ---
+-- Il campo user_id ora non è più obbligatorio (permette ordini da ospiti)
 CREATE TABLE IF NOT EXISTS storico_ordini (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     data_ordine DATETIME DEFAULT CURRENT_TIMESTAMP,
     totale REAL NOT NULL,
     stato TEXT DEFAULT 'In elaborazione',
-    user_id INTEGER NOT NULL,
+    user_id INTEGER, -- RIMOSSO "NOT NULL"
     prodotto_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE SET NULL

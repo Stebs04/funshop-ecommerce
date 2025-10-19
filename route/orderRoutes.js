@@ -15,7 +15,9 @@ router.get('/riepilogo', (req, res) => {
         return res.redirect('/');
     }
     const orderDetails = req.session.latestOrder;
-    delete req.session.latestOrder;
+    // Pulisce la sessione dopo l'uso per evitare che la pagina sia accessibile di nuovo
+    delete req.session.latestOrder; 
+    
     res.render('pages/ordine-riepilogo', {
         title: 'Ordine Completato!',
         order: orderDetails

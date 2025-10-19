@@ -19,7 +19,18 @@ const transporter = nodemailer.createTransport({
  * @param {object} orderDetails - I dettagli dell'ordine salvati in sessione.
  */
 const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
-    const reviewLink = orderDetails.reviewLink;
+    
+    // --- INIZIO MODIFICA QUI ---
+    // Definiamo il blocco HTML per la recensione in una variabile
+    const reviewSectionHtml = !orderDetails.isGuest ? `
+        <div style="text-align: center; margin-top: 20px;">
+            <p>La tua opinione è importante! Aiuta la community lasciando una recensione al venditore.</p>
+            <a href="${orderDetails.reviewLink}" style="background-color: #4F46E5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                Lascia una Recensione
+            </a>
+        </div>
+    ` : ''; // Se è un ospite, la stringa è vuota
+    // --- FINE MODIFICA QUI ---
 
     const mailOptions = {
         from: `"FunShop" <${process.env.EMAIL_USER}>`,
@@ -71,12 +82,7 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
 
                     <hr>
                     
-                    <div style="text-align: center; margin-top: 20px;">
-                        <p>La tua opinione è importante! Aiuta la community lasciando una recensione al venditore.</p>
-                        <a href="${reviewLink}" style="background-color: #4F46E5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                            Lascia una Recensione
-                        </a>
-                    </div>
+                    ${reviewSectionHtml}
                     
                     <p style="margin-top: 30px; font-size: 0.9em; text-align: center; color: #777;">Grazie,<br>Il Team di FunShop</p>
                 </div>
