@@ -15,7 +15,7 @@ class ProdottiDAO {
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       WHERE p.stato = 'disponibile'
-    `; // <-- MODIFICA: Mostra solo prodotti disponibili
+    `;
     const params = [];
     const whereClauses = [];
 
@@ -67,7 +67,7 @@ class ProdottiDAO {
   }
 
   async getProductsByUserId(userId) {
-    const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato = 'disponibile' ORDER BY data_inserimento DESC";
+    const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato != 'eliminato' ORDER BY data_inserimento DESC";
     return new Promise((resolve, reject) => {
       this.db.all(sql, [userId], (err, rows) => {
         if (err) reject(err);
@@ -91,7 +91,7 @@ class ProdottiDAO {
   }
 
   async deleteProduct(productId, userId) {
-      const sql = 'DELETE FROM prodotti WHERE id = ? AND user_id = ?';
+      const sql = "UPDATE prodotti SET stato = 'eliminato' WHERE id = ? AND user_id = ?";
       return new Promise((resolve, reject) => {
           this.db.run(sql, [productId, userId], function(err) {
               if (err) reject(err);
@@ -122,9 +122,6 @@ class ProdottiDAO {
     });
   }
 
-  /**
-   * NUOVA FUNZIONE: Aggiorna lo stato di un prodotto.
-   */
   updateProductStatus(productId, status) {
     const sql = 'UPDATE prodotti SET stato = ? WHERE id = ?';
     return new Promise((resolve, reject) => {

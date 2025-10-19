@@ -20,42 +20,88 @@
             <% if (prodotti && prodotti.length > 0) { %>
                 <div class="list-group list-group-flush">
                     <% prodotti.forEach((prodotto, index) => { %>
-                        <div class="list-group-item px-0 py-3">
-                            <div class="row align-items-center g-3">
+                        <%
+                            const currentPrice = (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) ? prodotto.prezzo_scontato : prodotto.prezzo;
+                            const observedPrice = prodotto.prezzo_osservato;
+                            const hasUnreadNotification = prodotto.notifica_letta === 0;
+
+                            let notification = null;
+                            if (hasUnreadNotification) {
+                                if (prodotto.stato === 'eliminato') {
+                                    notification = { type: 'deleted', message: 'Questo prodotto è stato rimosso dalla vendita.' };
+                                } else if (typeof currentPrice === 'number' && typeof observedPrice === 'number' && currentPrice !== observedPrice) {
+                                    if (currentPrice < observedPrice) {
+                                        notification = { type: 'decrease', message: `Prezzo scontato! Da <strong>€${observedPrice.toFixed(2)}</strong> a <strong>€${currentPrice.toFixed(2)}</strong>` };
+                                    } else {
+                                        notification = { type: 'increase', message: `Attenzione, il prezzo è aumentato! Da <strong>€${observedPrice.toFixed(2)}</strong> a <strong>€${currentPrice.toFixed(2)}</strong>` };
+                                    }
+                                }
+                            }
+                        %>
+                        <div class="list-group-item px-0 py-3 
+                            <% if (notification && notification.type === 'decrease') { %>list-group-item-success<% } %>
+                            <% if (notification && notification.type === 'increase') { %>list-group-item-warning<% } %>
+                            <% if (notification && notification.type === 'deleted') { %>list-group-item-danger bg-opacity-10<% } %>
+                        ">
+                            
+                            <% if (notification) { %>
+                                <div class="alert mx-3 d-flex align-items-center
+                                    <% if (notification.type === 'decrease') { %>alert-success<% } %>
+                                    <% if (notification.type === 'increase') { %>alert-warning<% } %>
+                                    <% if (notification.type === 'deleted') { %>alert-danger<% } %>
+                                " role="alert">
+                                    
+                                    <% if (notification.type === 'decrease') { %><i class="bi bi-tags-fill me-2"></i><% } %>
+                                    <% if (notification.type === 'increase') { %><i class="bi bi-graph-up-arrow me-2"></i><% } %>
+                                    <% if (notification.type === 'deleted') { %><i class="bi bi-x-circle-fill me-2"></i><% } %>
+
+                                    <div><%- notification.message %></div>
+                                </div>
+                            <% } %>
+
+                            <div class="row align-items-center g-3 <%= prodotto.stato === 'eliminato' ? 'opacity-50' : '' %>">
                                 <div class="col-12 col-md-2 text-center">
-                                    <a href="/products/<%= prodotto.id %>">
+                                    <a href="/products/<%= prodotto.id %>" class="<%= prodotto.stato === 'eliminato' ? 'pe-none' : '' %>">
                                         <img src="<%= prodotto.percorso_immagine %>" alt="<%= prodotto.nome %>" class="img-fluid rounded" style="max-height: 100px; max-width: 100px; object-fit: cover;">
                                     </a>
                                 </div>
 
                                 <div class="col-12 col-md-4">
                                     <h5 class="mb-1">
-                                        <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark"><%= prodotto.nome %></a>
+                                        <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark <%= prodotto.stato === 'eliminato' ? 'pe-none' : '' %>"><%= prodotto.nome %></a>
                                     </h5>
-                                    <p class="mb-1 text-muted small">
-                                        Venduto da <a href="/member/<%= prodotto.user_id %>" class="text-primary"><%= prodotto.nome_venditore %></a>
-                                    </p>
-                                    <span class="badge bg-secondary"><%= prodotto.parola_chiave %></span>
+                                    <% if (prodotto.stato === 'eliminato') { %>
+                                        <p class="mb-1 text-danger fw-bold small">Non più disponibile</p>
+                                    <% } else { %>
+                                        <p class="mb-1 text-muted small">
+                                            Venduto da <a href="/member/<%= prodotto.user_id %>" class="text-primary"><%= prodotto.nome_venditore %></a>
+                                        </p>
+                                        <span class="badge bg-secondary"><%= prodotto.parola_chiave %></span>
+                                    <% } %>
                                 </div>
 
                                 <div class="col-6 col-md-2 text-md-center">
-                                    <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
-                                        <div>
-                                            <span class="text-muted text-decoration-line-through me-2">€<%= prodotto.prezzo.toFixed(2) %></span>
-                                            <span class="fw-bold fs-5 text-danger">€<%= prodotto.prezzo_scontato.toFixed(2) %></span>
-                                        </div>
-                                    <% } else { %>
-                                        <span class="fw-bold fs-5">€<%= (prodotto.prezzo || prodotto.prezzo_asta).toFixed(2) %></span>
+                                     <% if (prodotto.stato !== 'eliminato') { %>
+                                        <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
+                                            <div>
+                                                <span class="text-muted text-decoration-line-through me-2">€<%= prodotto.prezzo.toFixed(2) %></span>
+                                                <span class="fw-bold fs-5 text-danger">€<%= prodotto.prezzo_scontato.toFixed(2) %></span>
+                                            </div>
+                                        <% } else { %>
+                                            <span class="fw-bold fs-5">€<%= (prodotto.prezzo || prodotto.prezzo_asta || 0).toFixed(2) %></span>
+                                        <% } %>
                                     <% } %>
                                 </div>
 
                                 <div class="col-6 col-md-4 text-end">
-                                    <form action="/carrello/add/<%= prodotto.id %>" method="POST" class="d-inline-block me-2">
-                                        <input type="hidden" name="redirectUrl" value="/observed">
-                                        <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
-                                            <i class="bi bi-cart-plus-fill"></i> Aggiungi
-                                        </button>
-                                    </form>
+                                    <% if (prodotto.stato !== 'eliminato') { %>
+                                        <form action="/carrello/add/<%= prodotto.id %>" method="POST" class="d-inline-block me-2">
+                                            <input type="hidden" name="redirectUrl" value="/observed">
+                                            <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
+                                                <i class="bi bi-cart-plus-fill"></i> Aggiungi
+                                            </button>
+                                        </form>
+                                    <% } %>
 
                                     <form action="/observed/remove/<%= prodotto.id %>" method="POST" class="d-inline-block">
                                         <input type="hidden" name="redirectUrl" value="/observed">

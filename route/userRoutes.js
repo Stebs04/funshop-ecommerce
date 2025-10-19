@@ -1,3 +1,4 @@
+// File: route/userRoutes.js
 'use strict';
 
 const express = require('express');
@@ -12,7 +13,8 @@ const prodottiDao = require('../models/dao/prodotti-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 const informazioniDao = require('../models/dao/informazioni-dao');
 const indirizziDao = require('../models/dao/indirizzi-dao');
-const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao'); // <-- NUOVO
+const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao');
+const observedDao = require('../models/dao/observed-dao');
 
 // Middleware di autenticazione
 const ensureAuthenticated = (req, res, next) => {
@@ -27,7 +29,7 @@ router.use(ensureAuthenticated);
 // Rotta per la dashboard utente
 router.get(['/', '/:section'], async (req, res) => {
     const section = req.params.section || req.query.section || 'dati';
-    const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche', 'pagamento']; // <-- AGGIUNTO 'pagamento'
+    const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche', 'pagamento'];
 
     if (!validSections.includes(section)) {
         return res.redirect('/utente');
@@ -42,7 +44,7 @@ router.get(['/', '/:section'], async (req, res) => {
             ordiniDao.getOrdersByUserId(req.user.id),
             indirizziDao.getIndirizziByUserId(req.user.id),
             informazioniDao.getAccountInfoByUserId(req.user.id),
-            metodiPagamentoDao.getMetodiPagamentoByUserId(req.user.id) // <-- NUOVO
+            metodiPagamentoDao.getMetodiPagamentoByUserId(req.user.id)
         ]);
        const accountInfo = accountInfoResult || {};
 
@@ -54,7 +56,7 @@ router.get(['/', '/:section'], async (req, res) => {
             prodotti: prodottiUtente,
             ordini: storicoOrdini,
             indirizzi: indirizziUtente,
-            metodiPagamento: metodiPagamento, // <-- NUOVO
+            metodiPagamento: metodiPagamento,
         });
     } catch (error) {
         console.error(`Errore nel caricare la dashboard utente:`, error);
@@ -63,11 +65,6 @@ router.get(['/', '/:section'], async (req, res) => {
     }
 });
 
-// ... (ROTTA /profilo/aggiorna E CONFIGURAZIONE MULTER INVARIATE) ...
-
-/**
- * ROTTA UNIFICATA PER AGGIORNARE IL PROFILO UTENTE
- */
 router.post('/profilo/aggiorna', [
     check('nome').notEmpty().withMessage('Il nome è obbligatorio'),
     check('cognome').notEmpty().withMessage('Il cognome è obbligatorio'),
@@ -237,14 +234,18 @@ router.post('/pagamento/elimina/:id', async (req, res) => {
 });
 
 
-// --- ROTTE PRODOTTI (INVARIATE) ---
+// --- ROTTE PRODOTTI ---
 router.post('/prodotti/:id/delete', async (req, res) => {
     try {
-        const result = await prodottiDao.deleteProduct(req.params.id, req.user.id);
+        const productId = req.params.id;
+        const result = await prodottiDao.deleteProduct(productId, req.user.id);
+        
         if (result === 0) {
             req.flash('error', 'Azione non permessa o prodotto non trovato.');
         } else {
             req.flash('success', 'Prodotto eliminato con successo.');
+            // Attiva la notifica per gli utenti che osservano il prodotto
+            await observedDao.flagPriceChange(productId);
         }
     } catch (err) {
         req.flash('error', 'Errore durante l\'eliminazione del prodotto.');
@@ -272,17 +273,39 @@ router.get('/prodotti/:id/edit', async (req, res) => {
 
 router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
     try {
+        const productId = req.params.id;
+        const userId = req.user.id;
+        
+        const oldProduct = await prodottiDao.getProductById(productId);
+        if (!oldProduct || oldProduct.user_id !== userId) {
+            req.flash('error', 'Azione non permessa.');
+            return res.redirect('/utente?section=prodotti');
+        }
+        const oldPrice = oldProduct.prezzo_scontato || oldProduct.prezzo;
+
         const updatedData = { ...req.body };
         if (req.file) {
             updatedData.percorso_immagine = '/uploads/' + req.file.filename;
         }
-        const result = await prodottiDao.updateProduct(req.params.id, updatedData, req.user.id);
-        if (result === 0) {
-            req.flash('error', 'Azione non permessa o prodotto non trovato.');
-        } else {
+        
+        const result = await prodottiDao.updateProduct(productId, updatedData, userId);
+        
+        if (result > 0) {
             req.flash('success', 'Prodotto aggiornato con successo.');
+            
+            const newPriceRaw = updatedData.prezzo_scontato || updatedData.prezzo;
+            if (newPriceRaw) {
+                const newPrice = parseFloat(newPriceRaw);
+                // Attiva la notifica se il prezzo è cambiato (aumentato o diminuito)
+                if (newPrice !== oldPrice) {
+                    await observedDao.flagPriceChange(productId);
+                }
+            }
+        } else {
+            req.flash('error', 'Nessuna modifica effettuata o prodotto non trovato.');
         }
     } catch (err) {
+        console.error("Errore durante l'aggiornamento del prodotto:", err);
         req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
     }
     res.redirect('/utente?section=prodotti');

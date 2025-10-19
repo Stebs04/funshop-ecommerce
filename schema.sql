@@ -91,6 +91,8 @@ CREATE TABLE IF NOT EXISTS metodi_pagamento (
 CREATE TABLE IF NOT EXISTS observed_products (
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,
+    prezzo_osservato REAL, -- NUOVA COLONNA: Prezzo al momento dell'aggiunta
+    notifica_letta INTEGER DEFAULT 1, -- NUOVA COLONNA: 1 = letta, 0 = non letta
     PRIMARY KEY (user_id, product_id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES prodotti (id) ON DELETE CASCADE
