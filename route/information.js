@@ -5,8 +5,14 @@ const express = require('express');
 const router = express.Router();
 
 /**
- * GET /information
- * Mostra la pagina statica con le informazioni (Chi Siamo, Contatti, ecc.)
+ * ROTTA: GET /information
+ * * Questa rotta gestisce la visualizzazione di una pagina statica di informazioni
+ * (es. "Chi Siamo", "Contatti", "Privacy Policy").
+ * * Logica:
+ * 1. Renderizza semplicemente il template `pages/information.ejs`.
+ * 2. Passa le variabili standard (`title`, `user`, `isAuthenticated`) che sono
+ * necessarie per il corretto funzionamento dei partials, come la navbar,
+ * anche se la pagina non ha una logica complessa.
  */
 router.get('/', (req, res) => {
     res.render('pages/information', {

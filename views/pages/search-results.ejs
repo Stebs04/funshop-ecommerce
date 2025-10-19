@@ -1,4 +1,6 @@
 <%# views/pages/search-results.ejs %>
+<%# Pagina che mostra i risultati di una ricerca, suddivisi tra prodotti e utenti. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -9,13 +11,17 @@
   <main class="container my-5">
     <%- include('../partials/messages') %>
     
+    <%# Mostra il termine di ricerca (`query`) nel titolo. %>
     <h2 class="mb-4">Risultati della ricerca per: "<%= query %>"</h2>
 
+    <%# Sezione per i risultati dei prodotti. %>
     <section id="product-results" class="mb-5">
       <h3 class="border-bottom pb-2 mb-3">Prodotti (<%= prodotti.length %>)</h3>
+      <%# Se sono stati trovati dei prodotti, li visualizza in una griglia. %>
       <% if (prodotti && prodotti.length > 0) { %>
         <div class="row g-4">
           <% prodotti.forEach(prodotto => { %>
+            <%# La card del prodotto è identica a quella usata nella homepage per mantenere la coerenza visiva. %>
             <div class="col-12 col-md-4 col-lg-3 mb-4">
               <div class="card h-100 shadow-sm product-card">
                 <a href="/products/<%= prodotto.id %>" class="text-decoration-none">
@@ -56,22 +62,27 @@
             </div>
           <% }) %>
         </div>
+      <%# Se non sono stati trovati prodotti, mostra un messaggio. %>
       <% } else { %>
         <p class="text-center text-muted">Nessun prodotto trovato per questa ricerca.</p>
       <% } %>
     </section>
 
+    <%# Sezione per i risultati degli utenti. %>
     <section id="user-results">
       <h3 class="border-bottom pb-2 mb-3">Utenti (<%= utenti.length %>)</h3>
+      <%# Se sono stati trovati utenti, li visualizza in una lista. %>
       <% if (utenti && utenti.length > 0) { %>
         <div class="list-group">
           <% utenti.forEach(utente => { %>
+            <%# Ogni elemento della lista è un link al profilo pubblico dell'utente. %>
             <a href="/member/<%= utente.id %>" class="list-group-item list-group-item-action d-flex align-items-center">
               <img src="<%= utente.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Avatar di <%= utente.username %>" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
               <span class="fw-bold"><%= utente.username %></span>
             </a>
           <% }) %>
         </div>
+      <%# Se non sono stati trovati utenti, mostra un messaggio. %>
       <% } else { %>
         <p class="text-center text-muted">Nessun utente trovato per questa ricerca.</p>
       <% } %>

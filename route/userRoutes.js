@@ -7,7 +7,7 @@ const { check, validationResult } = require('express-validator');
 const multer = require('multer');
 const path = require('path');
 
-// Importa i DAO
+// Import di tutti i DAO necessari per la dashboard utente
 const utentiDao = require('../models/dao/utenti-dao');
 const prodottiDao = require('../models/dao/prodotti-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
@@ -16,7 +16,15 @@ const indirizziDao = require('../models/dao/indirizzi-dao');
 const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao');
 const observedDao = require('../models/dao/observed-dao');
 
-// Middleware di autenticazione
+/**
+ * Middleware `ensureAuthenticated`
+ * * Questo middleware "protegge" tutte le rotte definite in questo file.
+ * * Logica:
+ * 1. `req.isAuthenticated()`: Controlla se l'utente ha una sessione di login attiva.
+ * 2. Se l'utente è loggato, `next()` permette alla richiesta di proseguire verso la rotta desiderata.
+ * 3. Se l'utente non è loggato, viene mostrato un messaggio di errore e l'utente viene reindirizzato
+ * alla pagina di login.
+ */
 const ensureAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
@@ -24,9 +32,23 @@ const ensureAuthenticated = (req, res, next) => {
     req.flash('error', 'Devi effettuare il login per accedere a questa pagina.');
     res.redirect('/auth/login');
 };
+// Applica il middleware a tutte le rotte definite in questo file.
 router.use(ensureAuthenticated);
 
-// Rotta per la dashboard utente
+/**
+ * ROTTA: GET /utente/ e GET /utente/:section
+ * * Gestisce la visualizzazione della dashboard utente e delle sue varie sezioni
+ * (dati personali, ordini, indirizzi, etc.).
+ * * Logica:
+ * 1. Determina la sezione richiesta dall'URL (es. `/utente/ordini`) o da un parametro query.
+ * Se nessuna sezione è specificata, usa 'dati' come default.
+ * 2. Valida la sezione richiesta per assicurarsi che sia una delle sezioni consentite.
+ * 3. Utilizza `Promise.all` per caricare in parallelo tutti i dati necessari per popolare
+ * le varie sezioni della dashboard, ottimizzando i tempi di caricamento.
+ * - Se l'utente è un venditore, carica anche le sue statistiche di vendita.
+ * 4. Renderizza la pagina `utente.ejs`, passando tutti i dati recuperati.
+ * Il template userà la variabile `currentSection` per mostrare la tab corretta.
+ */
 router.get(['/', '/:section'], async (req, res) => {
     const section = req.params.section || req.query.section || 'dati';
     const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche', 'pagamento'];
@@ -76,6 +98,15 @@ router.get(['/', '/:section'], async (req, res) => {
     }
 });
 
+/**
+ * ROTTA: POST /utente/profilo/aggiorna
+ * * Gestisce l'aggiornamento dei dati personali dell'utente (nome, username, descrizione, etc.).
+ * * Logica:
+ * 1. Esegue la validazione dei campi inviati tramite il form.
+ * 2. Se ci sono errori, li mostra all'utente.
+ * 3. Se i dati sono validi, chiama il DAO `updateUserProfile` che esegue una transazione per
+ * aggiornare sia la tabella `users` che `accountinfos` in modo atomico.
+ */
 router.post('/profilo/aggiorna', [
     check('nome').notEmpty().withMessage('Il nome è obbligatorio'),
     check('cognome').notEmpty().withMessage('Il cognome è obbligatorio'),
@@ -98,6 +129,10 @@ router.post('/profilo/aggiorna', [
     }
     res.redirect('/utente?section=dati');
 });
+
+// --- CONFIGURAZIONE MULTER PER CARICAMENTO FILE ---
+// Vengono definite due configurazioni separate di Multer: una per le immagini del profilo
+// e una per le immagini dei prodotti, per mantenere il codice organizzato.
 
 const storage = multer.diskStorage({
     destination: './public/uploads/',
@@ -136,6 +171,10 @@ const uploadProductImage = multer({
     }
 }).single('percorso_immagine');
 
+/**
+ * ROTTA: POST /utente/dati/upload-immagine
+ * * Gestisce il caricamento di una nuova immagine del profilo.
+ */
 router.post('/dati/upload-immagine', upload, async (req, res) => {
     if (!req.file) {
         req.flash('error', 'Nessun file selezionato o formato non valido.');
@@ -153,7 +192,9 @@ router.post('/dati/upload-immagine', upload, async (req, res) => {
 });
 
 
-// --- ROTTE INDIRIZZI ---
+// --- ROTTE PER LA GESTIONE DEGLI INDIRIZZI ---
+// Seguono uno schema CRUD (Create, Read, Update, Delete) standard.
+
 router.post('/indirizzi/aggiungi', [
     check('indirizzo').notEmpty().withMessage('L\'indirizzo è obbligatorio.'),
     check('citta').notEmpty().withMessage('La città è obbligatoria.'),
@@ -213,12 +254,29 @@ router.post('/indirizzi/elimina/:id', async (req, res) => {
 });
 
 
-// --- NUOVE ROTTE PER I METODI DI PAGAMENTO ---
+// --- ROTTE PER I METODI DI PAGAMENTO ---
 
+/**
+ * ROTTA: POST /utente/pagamento/aggiungi
+ * * Gestisce l'aggiunta di una nuova carta di credito.
+ * * LOGICA CORRETTA:
+ * 1. Viene eseguita una validazione completa su tutti i campi necessari:
+ * - `nome_titolare`: non deve essere vuoto.
+ * - `numero_carta`: deve essere un numero di carta di credito valido.
+ * - `data_scadenza`: deve essere nel formato MM/YY.
+ * - `cvv`: **(CORREZIONE)** deve essere un numero di 3 o 4 cifre. Questo controllo era mancante.
+ * 2. Se la validazione fallisce, vengono mostrati gli errori.
+ * 3. Se la validazione ha successo, viene chiamato il DAO per creare il nuovo metodo di pagamento,
+ * associandolo all'ID dell'utente loggato.
+ */
 router.post('/pagamento/aggiungi', [
     check('nome_titolare').notEmpty().withMessage('Il nome del titolare è obbligatorio.'),
     check('numero_carta').isCreditCard().withMessage('Numero di carta non valido.'),
-    check('data_scadenza').matches(/^(0[1-9]|1[0-2])\/?([0-9]{2})$/).withMessage('Data di scadenza non valida (MM/YY).')
+    check('data_scadenza').matches(/^(0[1-9]|1[0-2])\/?([0-9]{2})$/).withMessage('Data di scadenza non valida (MM/YY).'),
+    // --- INIZIO CORREZIONE ---
+    // Aggiunta della validazione per il campo CVV, che prima mancava.
+    check('cvv').notEmpty().withMessage('Il CVV è obbligatorio.').isNumeric().withMessage('Il CVV deve essere un numero.').isLength({ min: 3, max: 4 }).withMessage('Il CVV deve avere 3 o 4 cifre.')
+    // --- FINE CORREZIONE ---
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -226,13 +284,16 @@ router.post('/pagamento/aggiungi', [
         return res.redirect('/utente?section=pagamento');
     }
     try {
+        // Ora tutti i dati, incluso il CVV, vengono passati correttamente al DAO.
         await metodiPagamentoDao.createMetodoPagamento({ ...req.body, user_id: req.user.id });
         req.flash('success', 'Metodo di pagamento aggiunto con successo!');
     } catch (err) {
+        console.error("Errore durante l'aggiunta del metodo di pagamento:", err);
         req.flash('error', "Errore durante l'aggiunta del metodo di pagamento.");
     }
     res.redirect('/utente?section=pagamento');
 });
+
 
 router.post('/pagamento/elimina/:id', async (req, res) => {
     try {
@@ -245,7 +306,8 @@ router.post('/pagamento/elimina/:id', async (req, res) => {
 });
 
 
-// --- ROTTE PRODOTTI ---
+// --- ROTTE PER LA GESTIONE DEI PRODOTTI DEL VENDITORE ---
+
 router.post('/prodotti/:id/delete', async (req, res) => {
     try {
         const productId = req.params.id;
@@ -255,6 +317,7 @@ router.post('/prodotti/:id/delete', async (req, res) => {
             req.flash('error', 'Azione non permessa o prodotto non trovato.');
         } else {
             req.flash('success', 'Prodotto eliminato con successo.');
+            // Notifica gli utenti che osservavano il prodotto che è stato rimosso.
             await observedDao.flagPriceChange(productId);
         }
     } catch (err) {
@@ -262,10 +325,6 @@ router.post('/prodotti/:id/delete', async (req, res) => {
     }
     res.redirect('/utente?section=prodotti');
 });
-
-// --- INIZIO MODIFICA: La rotta GET per la pagina di modifica è stata rimossa ---
-// router.get('/prodotti/:id/edit', ...); // QUESTA ROTTA NON ESISTE PIÙ
-// --- FINE MODIFICA ---
 
 router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
     try {
@@ -289,6 +348,7 @@ router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
         if (result > 0) {
             req.flash('success', 'Prodotto aggiornato con successo.');
             
+            // Logica di notifica: se il prezzo è cambiato, aggiorna lo stato per gli osservatori.
             const newPriceRaw = updatedData.prezzo_scontato || updatedData.prezzo;
             if (newPriceRaw) {
                 const newPrice = parseFloat(newPriceRaw);

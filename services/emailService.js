@@ -1,9 +1,12 @@
-// File: services/emailService.js
 'use strict';
 
+// Importazione di Nodemailer per l'invio di email
 const nodemailer = require('nodemailer');
+// Caricamento delle variabili d'ambiente
 require('dotenv').config();
 
+// Configurazione del "trasportatore" di email, utilizzando Gmail come servizio.
+// Le credenziali (utente e password) sono caricate in modo sicuro dalle variabili d'ambiente.
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -12,7 +15,14 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+/**
+ * Invia un'email di conferma dopo che un ordine è stato completato.
+ * @param {string} buyerEmail - L'indirizzo email del cliente.
+ * @param {object} orderDetails - Un oggetto contenente tutti i dettagli dell'ordine.
+ */
 const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
+    // Costruisce dinamicamente la sezione per lasciare una recensione,
+    // mostrandola solo se l'utente non è un ospite (isGuest è false).
     const reviewSectionHtml = !orderDetails.isGuest ? `
         <div style="text-align: center; margin-top: 20px;">
             <p>La tua opinione è importante! Aiuta la community lasciando una recensione al venditore.</p>
@@ -22,6 +32,7 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
         </div>
     ` : '';
 
+    // Opzioni dell'email, inclusi mittente, destinatario, oggetto e corpo HTML.
     const mailOptions = {
         from: `"FunShop" <${process.env.EMAIL_USER}>`,
         to: buyerEmail,
@@ -73,6 +84,7 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
         `
     };
 
+    // Tenta di inviare l'email e gestisce eventuali errori.
     try {
         await transporter.sendMail(mailOptions);
         console.log(`Email di conferma inviata con successo a ${buyerEmail}`);
@@ -81,7 +93,11 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
     }
 };
 
-// --- NUOVA FUNZIONE PER L'EMAIL DI RESET ---
+/**
+ * Invia un'email contenente un link per il reset della password.
+ * @param {string} userEmail - L'indirizzo email dell'utente che ha richiesto il reset.
+ * @param {string} resetLink - L'URL univoco per la pagina di reset della password.
+ */
 const sendPasswordResetEmail = async (userEmail, resetLink) => {
     const mailOptions = {
         from: `"FunShop" <${process.env.EMAIL_USER}>`,
@@ -105,14 +121,15 @@ const sendPasswordResetEmail = async (userEmail, resetLink) => {
         `
     };
 
+    // Tenta di inviare l'email e, in caso di errore, lo rilancia per gestirlo nella rotta chiamante.
     try {
         await transporter.sendMail(mailOptions);
         console.log(`Email di reset password inviata a ${userEmail}`);
     } catch (error) {
         console.error(`Errore durante l'invio dell'email di reset a ${userEmail}:`, error);
-        throw error; // Rilancia l'errore per gestirlo nella rotta
+        throw error;
     }
 };
 
-
+// Esporta le funzioni per renderle disponibili in altre parti dell'applicazione.
 module.exports = { sendOrderConfirmationEmail, sendPasswordResetEmail };

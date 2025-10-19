@@ -5,11 +5,13 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+
+// Import dei DAO e del middleware di autenticazione
 const prodottiDao = require('../models/dao/prodotti-dao');
-// const recensioniDao = require('../models/dao/recensioni-dao'); // <-- Rimosso
-const observedDao = require('../models/dao/observed-dao'); // <-- MODIFICA: Aggiunto import
+const observedDao = require('../models/dao/observed-dao'); 
 const { isLoggedIn } = require('../middleware/passport-config');
 
+// Array di categorie predefinite per popolare il form di aggiunta prodotto.
 const categorie = [
     "Anime & Manga",
     "Carte da gioco collezionabili",
@@ -19,7 +21,16 @@ const categorie = [
     "LEGO / Brick compatibili"
 ];
 
-// Configurazione di Multer (invariata)
+/**
+ * Configurazione di Multer per il caricamento delle immagini
+ * * Multer gestisce il caricamento dei file. Qui viene configurato per:
+ * - `storage`: Salvare i file su disco (`diskStorage`).
+ * - `destination`: Nella cartella `./public/uploads/`.
+ * - `filename`: Con un nome univoco basato sul timestamp per evitare sovrascritture.
+ * - `limits`: Imposta un limite di dimensione del file a 1MB.
+ * - `fileFilter`: Definisce una funzione per accettare solo file di tipo immagine
+ * (jpeg, jpg, png, gif), controllando sia l'estensione (`extname`) sia il tipo MIME (`mimetype`).
+ */
 const storage = multer.diskStorage({
     destination: './public/uploads/',
     filename: function(req, file, cb){
@@ -33,7 +44,7 @@ const upload = multer({
     fileFilter: function(req, file, cb){
         checkFileType(file, cb);
     }
-}).single('percorso_immagine');
+}).single('percorso_immagine'); // Accetta un singolo file dal campo 'percorso_immagine' del form
 
 function checkFileType(file, cb){
     const filetypes = /jpeg|jpg|png|gif/;
@@ -47,7 +58,16 @@ function checkFileType(file, cb){
     }
 }
 
-// Rotta per visualizzare il form di aggiunta prodotto (invariata)
+/**
+ * ROTTA: GET /products/new
+ * * Mostra la pagina con il form per aggiungere un nuovo prodotto.
+ * * Logica:
+ * 1. `isLoggedIn`: Assicura che solo gli utenti loggati possano accedere.
+ * 2. Controlla che il `tipo_account` dell'utente sia 'venditore'. Se non lo è,
+ * mostra un errore e reindirizza.
+ * 3. Renderizza la pagina `nuovo-prodotto.ejs`, passando il titolo, i dati dell'utente
+ * e l'array delle categorie per popolare il menu a tendina.
+ */
 router.get('/new', isLoggedIn, (req, res) => {
     if (req.user.tipo_account !== 'venditore') {
         req.flash('error', 'Solo i venditori possono aggiungere prodotti.');
@@ -60,7 +80,21 @@ router.get('/new', isLoggedIn, (req, res) => {
     });
 });
 
-// Rotta per creare un nuovo prodotto (invariata)
+/**
+ * ROTTA: POST /products/
+ * * Gestisce la creazione di un nuovo prodotto.
+ * * Logica:
+ * 1. `isLoggedIn`: Protegge la rotta.
+ * 2. `upload`: Middleware di Multer che processa il caricamento dell'immagine.
+ * 3. Controlla che l'utente sia un 'venditore'.
+ * 4. Verifica che un file sia stato effettivamente caricato.
+ * 5. Estrae tutti i dati del prodotto dal corpo della richiesta (`req.body`).
+ * 6. Determina il prezzo in base alla modalità di vendita scelta ('Vendi ora' o 'Asta').
+ * 7. Crea un oggetto `newProduct` con tutti i dati pronti per essere inseriti nel database,
+ * incluso il percorso dell'immagine caricata e l'ID del venditore.
+ * 8. Chiama `prodottiDao.createProduct()` per salvare il nuovo prodotto.
+ * 9. Invia un messaggio di successo e reindirizza alla homepage.
+ */
 router.post('/', isLoggedIn, upload, async (req, res) => {
     if (req.user.tipo_account !== 'venditore') {
         req.flash('error', 'Azione non permessa.');
@@ -99,7 +133,21 @@ router.post('/', isLoggedIn, upload, async (req, res) => {
     }
 });
 
-// Rotta per visualizzare un singolo prodotto (MODIFICATA)
+/**
+ * ROTTA: GET /products/:id
+ * * Mostra la pagina di dettaglio di un singolo prodotto.
+ * * Logica:
+ * 1. Recupera l'ID del prodotto dall'URL.
+ * 2. Chiama `prodottiDao.getProductById()` per ottenere tutti i dettagli del prodotto,
+ * inclusi i dati del venditore.
+ * 3. Se il prodotto non viene trovato, invia una risposta 404.
+ * 4. Se l'utente è loggato, controlla se sta già osservando questo prodotto
+ * chiamando `observedDao.isObserved()`. Il risultato (true/false) viene salvato
+ * in `isObserved`.
+ * 5. Renderizza la pagina `prodotto.ejs`, passando tutti i dettagli del prodotto,
+ * i dati dell'utente e il booleano `isObserved`, che il template userà per
+ * mostrare il pulsante "Osserva" o "Rimuovi dagli Osservati".
+ */
 router.get('/:id', async (req, res) => {
     try {
         const prodotto = await prodottiDao.getProductById(req.params.id);

@@ -1,3 +1,6 @@
+<%# views/pages/carrello.ejs %>
+<%# Pagina che mostra il riepilogo completo del carrello dell'utente. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -7,16 +10,23 @@
 <main class="container my-5">
     <h2 class="text-center mb-5">Il Tuo Carrello</h2>
     
+    <%# Inclusione del partial per mostrare messaggi di feedback (es. "Prodotto aggiunto!"). %>
     <%- include('../partials/messages') %>
 
+    <%# Condizione principale: controlla se il carrello (`cart`) esiste e se contiene almeno un articolo. %>
     <% if (cart && Object.keys(cart.items).length > 0) { %>
     <div class="row">
+        <%# Colonna sinistra: elenco dei prodotti. %>
         <div class="col-lg-8">
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
+                    <%# Cicla su ogni prodotto (`product`) presente in `cart.items`. %>
                     <% for(let id in cart.items) { const product = cart.items[id]; %>
                         
-                        <%# --- INIZIO MODIFICA --- %>
+                        <%# Logica per visualizzare diversamente i prodotti disponibili e quelli non più disponibili. %>
+                        <%# Il DAO del carrello (`cart-dao.js`) carica sempre tutti i prodotti, ma calcola il totale solo su quelli disponibili. %>
+                        
+                        <%# SE IL PRODOTTO È DISPONIBILE %>
                         <% if (product.item.stato === 'disponibile') { %>
                             <div class="row align-items-center mb-3">
                                 <div class="col-md-2">
@@ -27,20 +37,24 @@
                                     <p class="text-muted small mb-0">Venduto da <%= product.item.nome_venditore %></p>
                                 </div>
                                 <div class="col-md-2">
+                                    <%# La quantità non è modificabile direttamente dal carrello in questa versione. %>
                                     <input type="number" class="form-control text-center" value="<%= product.qty %>" min="1" disabled>
                                 </div>
                                 <div class="col-md-2 text-end">
                                     <span class="fw-bold fs-5">€<%= product.price.toFixed(2) %></span>
                                 </div>
                                 <div class="col-md-2 text-end">
+                                    <%# Form per rimuovere il prodotto dal carrello. Invia una richiesta POST alla rotta di rimozione. %>
                                     <form action="/carrello/remove/<%= product.item.id %>" method="POST">
                                         <button type="submit" class="btn btn-outline-danger btn-sm" title="Rimuovi"><i class="bi bi-trash"></i></button>
                                     </form>
                                 </div>
                             </div>
+                        <%# SE IL PRODOTTO NON È PIÙ DISPONIBILE (venduto o eliminato) %>
                         <% } else { %>
                             <div class="row align-items-center mb-3 p-3 bg-light rounded border">
                                 <div class="col-md-2">
+                                    <%# L'immagine viene mostrata con opacità ridotta per indicare lo stato non disponibile. %>
                                     <img src="<%= product.item.percorso_immagine %>" class="img-fluid rounded opacity-50" alt="<%= product.item.nome %>">
                                 </div>
                                 <div class="col-md-7">
@@ -51,6 +65,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3 text-end">
+                                    <%# Il pulsante di rimozione è più evidente per invitare l'utente a pulire il carrello. %>
                                     <form action="/carrello/remove/<%= product.item.id %>" method="POST">
                                         <button type="submit" class="btn btn-danger" title="Rimuovi dal carrello">
                                             <i class="bi bi-trash-fill me-2"></i>Rimuovi
@@ -59,8 +74,8 @@
                                 </div>
                             </div>
                         <% } %>
-                        <%# --- FINE MODIFICA --- %>
 
+                        <%# Aggiunge una linea di separazione tra i prodotti, tranne che per l'ultimo. %>
                         <% if (Object.keys(cart.items).indexOf(id) < Object.keys(cart.items).length - 1) { %>
                             <hr>
                         <% } %>
@@ -70,34 +85,40 @@
             <a href="/" class="btn btn-outline-primary"><i class="bi bi-arrow-left"></i> Continua lo shopping</a>
         </div>
 
+        <%# Colonna destra: riepilogo dell'ordine. %>
         <div class="col-lg-4">
             <div class="card shadow-sm">
                 <div class="card-header"><h5 class="mb-0">Riepilogo Ordine</h5></div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
+                        <%# `cart.totalPrice` contiene già il subtotale dei soli articoli disponibili. %>
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 pb-0">
                             Subtotale articoli disponibili<span>€<%= cart.totalPrice.toFixed(2) %></span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                            Spedizione<span>€5.00</span> 
+                            Spedizione<span>€5.00</span> <%# Costo di spedizione fisso in questa versione. %>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 mb-3">
                             <div><strong>Totale</strong></div>
                             <span><strong>€<%= (cart.totalPrice + 5).toFixed(2) %></strong></span>
                         </li>
                     </ul>
-                    <%# --- INIZIO MODIFICA --- %>
+                    
+                    <%# Logica per il pulsante di checkout. %>
+                    <%# `cart.totalQty` rappresenta la quantità totale di SOLI articoli disponibili. %>
                     <% if (cart.totalQty > 0) { %>
+                        <%# Se ci sono articoli disponibili, il pulsante è attivo. %>
                         <a href="/carrello/checkout" class="btn btn-primary btn-lg w-100" role="button">Procedi al checkout</a>
                     <% } else { %>
+                        <%# Se tutti gli articoli nel carrello sono diventati non disponibili, il pulsante è disabilitato. %>
                         <button class="btn btn-primary btn-lg w-100" disabled>Procedi al checkout</button>
                         <small class="form-text text-muted text-center d-block mt-2">Aggiungi articoli disponibili per procedere.</small>
                     <% } %>
-                    <%# --- FINE MODIFICA --- %>
                 </div>
             </div>
         </div>
     </div>
+    <%# SE IL CARRELLO È COMPLETAMENTE VUOTO %>
     <% } else { %>
         <div class="text-center">
             <p class="lead">Il tuo carrello è vuoto.</p>

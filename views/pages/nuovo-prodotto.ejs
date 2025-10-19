@@ -1,3 +1,6 @@
+<%# views/pages/nuovo-prodotto.ejs %>
+<%# Pagina con il form per l'inserimento di un nuovo prodotto da parte di un venditore. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -13,23 +16,24 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4 p-md-5">
                 <h2 class="text-center mb-4">Aggiungi un nuovo prodotto</h2>
+                <%# Il form invia i dati con metodo POST alla rotta /products. %>
+                <%# `enctype="multipart/form-data"` è FONDAMENTALE per permettere il caricamento di file (l'immagine). %>
                 <form id="new-product-form" action="/products" method="POST" enctype="multipart/form-data">
-                    <!-- Titolo Prodotto -->
                     <div class="mb-3">
-                    <label for="productTitle" class="form-label">Titolo del prodotto</label>
-                    <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action Figure Son Goku SSJ" required>
+                        <label for="productTitle" class="form-label">Titolo del prodotto</label>
+                        <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action Figure Son Goku SSJ" required>
                     </div>
 
-                    <!-- Descrizione -->
                     <div class="mb-3">
-                    <label for="productDescription" class="form-label">Descrizione</label>
-                    <textarea name="descrizione" class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
+                        <label for="productDescription" class="form-label">Descrizione</label>
+                        <textarea name="descrizione" class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
                     </div>
 
-                  <div class="mb-3">
+                    <div class="mb-3">
                         <label for="productCategory" class="form-label">Categoria</label>
                         <select name="categoria" class="form-select" id="productCategory" required>
                             <option value="" disabled selected>Seleziona una categoria</option>
+                            <%# Popola dinamicamente le opzioni del menu a tendina usando l'array `categorie` passato dalla rotta. %>
                             <% if (locals.categorie) { %>
                                 <% categorie.forEach(cat => { %>
                                     <option value="<%= cat %>"><%= cat %></option>
@@ -38,7 +42,6 @@
                         </select>
                     </div>
 
-                    <!-- Condizione -->
                     <div class="mb-3">
                         <label for="productCondition" class="form-label">Condizione</label>
                         <select name="condizione" class="form-select" id="productCondition" required>
@@ -49,13 +52,11 @@
                         </select>
                     </div>
 
-                    <!-- Immagini -->
                     <div class="mb-4">
-                    <label for="productImages" class="form-label">Immagine del prodotto</label>
-                    <input name="percorso_immagine" class="form-control" type="file" id="productImages" accept="image/*" required>
+                        <label for="productImages" class="form-label">Immagine del prodotto</label>
+                        <input name="percorso_immagine" class="form-control" type="file" id="productImages" accept="image/*" required>
                     </div>
 
-                    <!-- Modalità di vendita -->
                     <div class="mb-3">
                         <label for="sellingType" class="form-label">Modalità di vendita</label>
                         <select class="form-select" id="sellingType" name="sellingType">
@@ -64,7 +65,6 @@
                         </select>
                     </div>
 
-                    <!-- Prezzo per "Vendi ora" -->
                     <div id="price-section" class="mb-3">
                         <label for="productPrice" class="form-label">Prezzo</label>
                         <div class="input-group">
@@ -73,7 +73,6 @@
                         </div>
                     </div>
 
-                    <!-- Prezzo per "Metti all'asta" -->
                     <div id="auction-price-section" class="mb-3 d-none">
                         <label for="auctionStartPrice" class="form-label">Prezzo di partenza asta</label>
                         <div class="input-group">
@@ -82,10 +81,9 @@
                         </div>
                     </div>
 
-                    <!-- Pulsanti -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">Annulla</button>
-                    <button type="submit" class="btn btn-primary">Metti in vendita</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">Annulla</button>
+                        <button type="submit" class="btn btn-primary">Metti in vendita</button>
                     </div>
                 </form>
                 </div>
@@ -96,27 +94,33 @@
 
     <%- include('../partials/footer') %>
 
+    <%# Script JavaScript per la logica del form. %>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Seleziona gli elementi del DOM necessari.
             const sellingType = document.getElementById('sellingType');
             const priceSection = document.getElementById('price-section');
             const auctionPriceSection = document.getElementById('auction-price-section');
             const productPriceInput = document.getElementById('productPrice');
             const auctionStartPriceInput = document.getElementById('auctionStartPrice');
 
+            // Aggiunge un listener che si attiva quando l'utente cambia la modalità di vendita.
             sellingType.addEventListener('change', function () {
+                // Se l'utente seleziona "Metti all'asta":
                 if (this.value === 'auction') {
-                    priceSection.classList.add('d-none');
-                    productPriceInput.required = false;
-                    productPriceInput.value = ''; // Svuota il campo
-                    auctionPriceSection.classList.remove('d-none');
-                    auctionStartPriceInput.required = true;
-                } else { // 'sell_now'
-                    priceSection.classList.remove('d-none');
-                    productPriceInput.required = true;
-                    auctionPriceSection.classList.add('d-none');
-                    auctionStartPriceInput.required = false;
-                    auctionStartPriceInput.value = ''; // Svuota il campo
+                    priceSection.classList.add('d-none'); // Nasconde la sezione del prezzo fisso.
+                    productPriceInput.required = false; // Rimuove l'obbligatorietà dal campo prezzo fisso.
+                    productPriceInput.value = ''; // Svuota il campo.
+                    
+                    auctionPriceSection.classList.remove('d-none'); // Mostra la sezione del prezzo d'asta.
+                    auctionStartPriceInput.required = true; // Rende obbligatorio il campo prezzo d'asta.
+                } else { // Se l'utente seleziona "Vendi ora":
+                    priceSection.classList.remove('d-none'); // Mostra la sezione del prezzo fisso.
+                    productPriceInput.required = true; // Rende obbligatorio il campo prezzo fisso.
+                    
+                    auctionPriceSection.classList.add('d-none'); // Nasconde la sezione del prezzo d'asta.
+                    auctionStartPriceInput.required = false; // Rimuove l'obbligatorietà.
+                    auctionStartPriceInput.value = ''; // Svuota il campo.
                 }
             });
         });

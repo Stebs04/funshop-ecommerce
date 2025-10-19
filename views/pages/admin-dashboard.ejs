@@ -1,3 +1,6 @@
+<%# views/pages/admin-dashboard.ejs %>
+<%# Questa pagina rappresenta il pannello di controllo per gli amministratori. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -9,10 +12,13 @@
         <h1 class="mb-0">Pannello di Amministrazione</h1>
     </div>
 
+    <%# Inclusione del partial per mostrare messaggi di successo o errore (es. "Utente eliminato con successo"). %>
     <%- include('../partials/messages') %>
 
+    <%# Sezione delle statistiche principali. %>
     <section class="mb-5">
         <div class="row">
+            <%# Card per il conteggio totale degli utenti. I dati provengono dall'oggetto `stats` passato dalla rotta. %>
             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
@@ -22,6 +28,7 @@
                     </div>
                 </div>
             </div>
+            <%# Card per il conteggio dei prodotti in vendita (disponibili). %>
             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
@@ -31,6 +38,7 @@
                     </div>
                 </div>
             </div>
+            <%# Card per il totale dei guadagni. `.toFixed(2)` formatta il numero con due cifre decimali. %>
             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
@@ -43,6 +51,7 @@
         </div>
     </section>
 
+    <%# Sistema di navigazione a tab (schede) per separare la gestione utenti da quella dei prodotti. %>
     <ul class="nav nav-tabs" id="adminTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab">Gestione Utenti</button>
@@ -52,7 +61,10 @@
         </li>
     </ul>
 
+    <%# Contenuto delle tab. %>
     <div class="tab-content bg-white p-3 border border-top-0 rounded-bottom" id="adminTabContent">
+        
+        <%# PANNELLO GESTIONE UTENTI %>
         <div class="tab-pane fade show active" id="users-tab-pane" role="tabpanel">
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
@@ -66,6 +78,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <%# Cicla sull'array `users` passato dalla rotta e crea una riga della tabella per ogni utente. %>
                         <% users.forEach(u => { %>
                             <tr>
                                 <td><%= u.id %></td>
@@ -73,6 +86,8 @@
                                 <td><%= u.email %></td>
                                 <td><span class="badge bg-secondary"><%= u.tipo_account %></span></td>
                                 <td>
+                                    <%# Logica condizionale: mostra il pulsante "Elimina" solo se l'utente NON è un altro admin. %>
+                                    <%# Questo impedisce a un admin di eliminarne un altro. %>
                                     <% if (u.tipo_account !== 'admin') { %>
                                         <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.');">
                                             <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
@@ -86,6 +101,7 @@
             </div>
         </div>
 
+        <%# PANNELLO GESTIONE PRODOTTI %>
         <div class="tab-pane fade" id="products-tab-pane" role="tabpanel">
              <div class="table-responsive">
                 <table class="table table-striped table-hover">
@@ -101,14 +117,17 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <%# Cicla sull'array `products` e crea una riga per ogni prodotto. %>
                         <% products.forEach(p => { %>
                             <tr>
                                 <td><%= p.id %></td>
                                 <td><img src="<%= p.percorso_immagine %>" alt="<%= p.nome %>" style="width: 50px; height: 50px; object-fit: cover;"></td>
                                 <td><%= p.nome %></td>
                                 <td><%= p.nome_venditore %></td>
+                                <%# Mostra il prezzo scontato se esiste, altrimenti il prezzo base. %>
                                 <td>€<%= (p.prezzo_scontato || p.prezzo || 0).toFixed(2) %></td>
                                 <td>
+                                    <%# Mostra un badge colorato diverso in base allo stato del prodotto ('disponibile', 'venduto', 'eliminato'). %>
                                     <% if (p.stato === 'disponibile') { %>
                                         <span class="badge bg-success">Disponibile</span>
                                     <% } else if (p.stato === 'venduto') { %>
@@ -118,10 +137,12 @@
                                     <% } %>
                                 </td>
                                 <td>
+                                    <%# Pulsante "Modifica" che apre un modale (popup). %>
+                                    <%# I `data-*` attributes vengono usati da JavaScript per pre-compilare il form del modale con i dati del prodotto. %>
                                     <button class="btn btn-sm btn-primary"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editProductModal"
-                                            data-context="admin"
+                                            data-context="admin" <%# Indica che il modale è usato in contesto admin %>
                                             data-product-id="<%= p.id %>"
                                             data-product-nome="<%= p.nome %>"
                                             data-product-descrizione="<%= p.descrizione %>"
@@ -131,6 +152,7 @@
                                             data-product-condizione="<%= p.condizione %>">
                                         Modifica
                                     </button>
+                                    <%# Form per l'eliminazione del prodotto. %>
                                     <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
                                     </form>
@@ -144,6 +166,9 @@
     </div>
 </main>
 
+<%# MODALE PER LA MODIFICA DEL PRODOTTO %>
+<%# Questo modale è nascosto di default e viene mostrato quando si clicca su "Modifica". %>
+<%# Lo stesso modale è riutilizzato anche nella pagina utente, ma lo script JS imposta l'action del form dinamicamente. %>
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -152,6 +177,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <%# Il form è vuoto; verrà popolato da JavaScript quando il modale si apre. L'attributo `action` sarà impostato dinamicamente. %>
                 <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="edit_nome" class="form-label">Nome Prodotto</label>
@@ -196,11 +222,14 @@
         </div>
     </div>
 </div>
+
 <%- include('../partials/footer') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Script per mantenere attiva la tab corretta dopo un redirect
+    // Script per gestire la navigazione tra le tab e il popolamento del modale.
     document.addEventListener('DOMContentLoaded', function() {
+        // Logica per mantenere la tab attiva dopo un reindirizzamento (es. dopo aver eliminato un prodotto).
+        // Legge l'hash dall'URL (es. #prodotti) e attiva la tab corrispondente.
         if(window.location.hash) {
             const tabTrigger = document.querySelector('button[data-bs-target="' + window.location.hash + '-tab-pane"]');
             if (tabTrigger) {
@@ -209,12 +238,14 @@
             }
         }
 
-        // --- INIZIO MODIFICA: Script per il modale di modifica prodotto ---
+        // Logica per il modale di modifica prodotto.
         const editProductModal = document.getElementById('editProductModal');
         if (editProductModal) {
+            // Aggiunge un listener che si attiva quando il modale sta per essere mostrato.
             editProductModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
+                const button = event.relatedTarget; // Il pulsante "Modifica" che ha attivato il modale
                 
+                // Estrae tutti i dati del prodotto dai `data-*` attributes del pulsante.
                 const productId = button.getAttribute('data-product-id');
                 const nome = button.getAttribute('data-product-nome');
                 const descrizione = button.getAttribute('data-product-descrizione');
@@ -222,12 +253,12 @@
                 const prezzoScontato = button.getAttribute('data-product-prezzo-scontato');
                 const parolaChiave = button.getAttribute('data-product-parola-chiave');
                 const condizione = button.getAttribute('data-product-condizione');
-                const context = button.getAttribute('data-context'); // 'user' o 'admin'
+                const context = button.getAttribute('data-context'); // Contesto (es. 'admin' o 'user')
 
                 const form = editProductModal.querySelector('#editProductForm');
                 const modalTitle = editProductModal.querySelector('#editProductModalLabel');
 
-                // Imposta dinamicamente l'action del form
+                // Imposta dinamicamente l'URL `action` del form in base al contesto.
                 if (context === 'admin') {
                     form.action = `/admin/products/edit/${productId}`;
                     modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
@@ -236,7 +267,7 @@
                     modalTitle.textContent = `Modifica Prodotto: ${nome}`;
                 }
 
-                // Popola i campi del form
+                // Popola dinamicamente i campi del form con i dati estratti.
                 form.querySelector('#edit_nome').value = nome;
                 form.querySelector('#edit_descrizione').value = descrizione;
                 form.querySelector('#edit_prezzo').value = prezzo;
@@ -245,7 +276,6 @@
                 form.querySelector('#edit_condizione').value = condizione;
             });
         }
-        // --- FINE MODIFICA ---
     });
 </script>
 </body>

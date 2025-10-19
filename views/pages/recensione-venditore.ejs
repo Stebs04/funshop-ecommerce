@@ -1,3 +1,6 @@
+<%# views/pages/recensione-venditore.ejs %>
+<%# Pagina con il form per lasciare una recensione a un venditore dopo un acquisto. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -10,10 +13,14 @@
             <div class="card shadow-sm">
                 <div class="card-body p-lg-5">
                     <h3 class="card-title text-center mb-2">Recensisci il Venditore</h3>
+                    <%# Il testo è dinamico e mostra il nome del prodotto e del venditore, passati dalla rotta. %>
                     <p class="text-muted text-center mb-4">La tua opinione sull'acquisto del prodotto "<%= prodotto.nome %>" dal venditore <strong><%= prodotto.nome_venditore %></strong>.</p>
                     <hr>
+                    <%# Il form invia i dati alla rotta /recensioni con metodo POST. %>
                     <form action="/recensioni" method="POST">
+                        <%# Campo nascosto per passare l'ID del prodotto a cui si riferisce la recensione. %>
                         <input type="hidden" name="prodotto_id" value="<%= prodotto.id %>">
+                        <%# Campo nascosto per specificare a quale pagina tornare dopo aver inviato la recensione (in questo caso, il profilo del venditore). %>
                         <input type="hidden" name="redirectUrl" value="/member/<%= prodotto.user_id %>">
                         
                         <div class="mb-3">

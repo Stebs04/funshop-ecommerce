@@ -1,3 +1,7 @@
+<%# views/pages/redirect-message.ejs %>
+<%# Pagina di transizione che mostra un messaggio all'utente e poi lo reindirizza a un'altra pagina. %>
+<%# In questa versione del progetto, viene usata ma il messaggio è mostrato come un alert JavaScript. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -5,6 +9,7 @@
     <%- include('../partials/navbar', { user: user, isAuthenticated: isAuthenticated }) %>
 
     <main class="container my-5 text-center">
+        <%# Titolo e messaggio passati dalla rotta che effettua il reindirizzamento. %>
         <h1><%= title %></h1>
         <p><%= message %></p>
         <div class="spinner-border" role="status">
@@ -16,9 +21,9 @@
     <%- include('../partials/footer') %>
 
     <script>
-        // Mostra il pop-up con il messaggio
+        // Mostra un pop-up nativo del browser con il messaggio.
         alert('<%= message %>');
-        // Reindirizza alla pagina specificata dopo che l'utente ha chiuso il pop-up
+        // Dopo che l'utente ha chiuso il pop-up, reindirizza alla pagina specificata in `redirectUrl`.
         window.location.href = '<%= redirectUrl %>';
     </script>
 </body>

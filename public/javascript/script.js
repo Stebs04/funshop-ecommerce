@@ -1,17 +1,19 @@
-// File: public/javascript/script.js
+// Esegue lo script solo dopo che l'intero contenuto della pagina è stato caricato.
 document.addEventListener('DOMContentLoaded', async () => {
 
     /**
-     * Gestisce la logica per il popup del profilo utente.
+     * Gestisce la creazione e l'interazione del popup del profilo utente
+     * che appare al passaggio del mouse sull'icona del profilo.
      */
     const updateUserProfileLogic = async () => {
         const profileButton = document.getElementById('profile-button');
-        if (!profileButton) return;
+        if (!profileButton) return; // Interrompe se il pulsante del profilo non è presente
 
         let profilePreview;
         let hideProfileTimeout;
-        const HIDE_DELAY = 300;
+        const HIDE_DELAY = 300; // Millisecondi di ritardo prima di nascondere il popup
 
+        // Funzione per interrogare un'API e verificare se l'utente è loggato
         const getAuthData = async () => {
             try {
                 const response = await fetch('/api/auth/status');
@@ -25,12 +27,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const authData = await getAuthData();
 
+        // Se l'utente è autenticato, crea il popup del profilo
         if (authData && authData.isAuthenticated) {
             profilePreview = document.createElement('div');
             profilePreview.id = 'profile-preview';
             const isSeller = authData.user.tipo_account === 'venditore';
             const isAdmin = authData.user.tipo_account === 'admin';
 
+            // Popola il popup con i link appropriati in base al tipo di account
             profilePreview.innerHTML = `
                 <a href="/utente?section=dati" class="profile-link">Il mio account</a>
                 <a href="/observed" class="profile-link">Prodotti Osservati</a>
@@ -42,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             document.body.appendChild(profilePreview);
 
+            // Funzione per mostrare il popup, posizionandolo correttamente rispetto al pulsante
             const showProfilePreview = () => {
                 clearTimeout(hideProfileTimeout);
                 const buttonRect = profileButton.getBoundingClientRect();
@@ -55,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 profilePreview.style.transform = 'translateY(0)';
             };
 
+            // Funzione per nascondere il popup con una transizione
             const hideProfilePreview = () => {
                 if (!profilePreview) return;
                 profilePreview.style.opacity = '0';
@@ -62,10 +68,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 profilePreview.style.transform = 'translateY(10px)';
             };
 
+            // Funzione per avviare un timer prima di nascondere il popup
             const startProfileHideTimer = () => {
                 hideProfileTimeout = setTimeout(hideProfilePreview, HIDE_DELAY);
             };
 
+            // Aggiunge gli event listener per mostrare/nascondere il popup al passaggio del mouse
             [profileButton, profilePreview].forEach(element => {
                 element.addEventListener('mouseenter', showProfilePreview);
                 element.addEventListener('mouseleave', startProfileHideTimer);
@@ -74,7 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     /**
-     * Gestisce la logica per il popup del carrello.
+     * Gestisce la logica per il popup del carrello, che mostra un'anteprima
+     * del contenuto al passaggio del mouse sull'icona del carrello.
      */
     const updateCartPopupLogic = () => {
         const cartButton = document.getElementById('cart-button');
@@ -84,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let hideCartTimeout;
         const HIDE_DELAY = 300;
 
+        // Crea l'elemento del popup se non esiste già
         const createCartPopup = () => {
             if (document.getElementById('cart-preview')) {
                 cartPreview = document.getElementById('cart-preview');
@@ -96,11 +106,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             cartPreview.addEventListener('mouseleave', startCartHideTimer);
         };
 
+        // Aggiorna il contenuto del popup interrogando l'API del carrello
         const updatePopupContent = async () => {
             try {
                 const response = await fetch('/carrello/api/data');
                 const cart = await response.json();
                 const cartCounter = document.getElementById('cart-counter');
+
+                // Aggiorna il contatore numerico sull'icona del carrello
                 if (cart && cart.totalQty > 0) {
                     cartCounter.innerText = cart.totalQty;
                     cartCounter.style.display = 'block';
@@ -108,12 +121,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     cartCounter.innerText = '';
                     cartCounter.style.display = 'none';
                 }
+
                 if (!cartPreview) createCartPopup();
+
+                // Mostra un messaggio se il carrello è vuoto
                 if (!cart || Object.keys(cart.items).length === 0) {
                     cartPreview.innerHTML = `<p class="text-center text-muted m-0">Il tuo carrello è vuoto.</p>`;
                 } else {
-                    // --- INIZIO MODIFICA ---
+                    // Costruisce l'HTML per ogni articolo nel carrello
                     let itemsHtml = Object.values(cart.items).map(product => {
+                        // Stile diverso se il prodotto non è più disponibile
                         if (product.item.stato === 'disponibile') {
                             return `
                                 <div class="d-flex mb-3">
@@ -138,13 +155,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }).join('');
                     
-                    let checkoutButtonHtml = '';
-                    if (cart.totalQty > 0) {
-                        checkoutButtonHtml = `<a href="/carrello/checkout" class="btn btn-primary btn-sm">Vai al Checkout</a>`;
-                    } else {
-                        checkoutButtonHtml = `<button class="btn btn-primary btn-sm" disabled>Checkout non disponibile</button>`;
-                    }
+                    // Abilita o disabilita il pulsante di checkout
+                    let checkoutButtonHtml = (cart.totalQty > 0)
+                        ? `<a href="/carrello/checkout" class="btn btn-primary btn-sm">Vai al Checkout</a>`
+                        : `<button class="btn btn-primary btn-sm" disabled>Checkout non disponibile</button>`;
 
+                    // Assembla il contenuto finale del popup
                     cartPreview.innerHTML = `
                         ${itemsHtml}
                         <hr class="my-2">
@@ -157,7 +173,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             ${checkoutButtonHtml}
                         </div>
                     `;
-                    // --- FINE MODIFICA ---
                 }
             } catch (error) {
                 console.error('Errore nel recuperare i dati del carrello:', error);
@@ -165,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
 
+        // Funzione per mostrare il popup del carrello
         const showCartPreview = () => {
             if (!cartPreview) createCartPopup();
             clearTimeout(hideCartTimeout);
@@ -178,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cartPreview.style.transform = 'translateY(0)';
         };
 
+        // Funzione per avviare il timer per nascondere il popup del carrello
         const startCartHideTimer = () => {
             hideCartTimeout = setTimeout(() => {
                 if (!cartPreview) return;
@@ -187,13 +204,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, HIDE_DELAY);
         };
 
+        // Aggiunge gli event listener e aggiorna il contenuto all'avvio
         cartButton.addEventListener('mouseenter', showCartPreview);
         cartButton.addEventListener('mouseleave', startCartHideTimer);
         updatePopupContent();
     };
 
     /**
-     * Gestisce il pop-up per il caricamento dell'immagine del profilo.
+     * Gestisce l'apertura del modale per il caricamento dell'immagine del profilo.
      */
     const handleProfileImageUpload = () => {
         const imageContainer = document.querySelector('.profile-image-container');
@@ -208,7 +226,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     /**
-     * Gestisce la logica per il popup "Chiedi Informazioni".
+     * Gestisce la logica del modale "Chiedi Informazioni" nella pagina prodotto,
+     * che apre il client di posta dell'utente con un'email precompilata.
      */
     const handleInfoModalLogic = () => {
         const infoModal = document.getElementById('infoModal');
@@ -217,29 +236,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         let sellerEmail = '';
         let productName = '';
 
+        // Recupera i dati del venditore e del prodotto quando il modale viene aperto
         infoModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             sellerEmail = button.getAttribute('data-seller-email');
             productName = button.getAttribute('data-product-name');
         });
 
+        // Gestisce l'invio del form del modale
         const infoForm = document.getElementById('infoForm');
         infoForm.addEventListener('submit', function(event) {
-            event.preventDefault(); 
+            event.preventDefault(); // Impedisce l'invio tradizionale del form
 
             const message = document.getElementById('infoMessage').value;
             const subject = `Richiesta informazioni per il prodotto: ${productName}`;
             const body = `${message}\n\n---\nMessaggio inviato tramite FunShop per il prodotto: ${window.location.href}`;
             
+            // Crea e apre un link `mailto:` per avviare il client di posta
             const mailtoLink = `mailto:${sellerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
 
+            // Chiude il modale dopo aver aperto il link
             const modalInstance = bootstrap.Modal.getInstance(infoModal);
             modalInstance.hide();
         });
     };
 
-    // Inizializza tutte le funzioni
+    // Inizializza tutte le funzionalità al caricamento della pagina
     await updateUserProfileLogic();
     updateCartPopupLogic();
     handleProfileImageUpload();

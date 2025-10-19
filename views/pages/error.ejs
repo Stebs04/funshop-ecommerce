@@ -1,3 +1,6 @@
+<%# views/pages/error.ejs %>
+<%# Pagina di errore generica, tipicamente usata per errori 404 (Pagina Non Trovata). %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -14,6 +17,8 @@
           Oops! Sembra che la pagina che stai cercando non esista o sia stata spostata.
         </p>
 
+        <%# Questo blocco opzionale può mostrare un messaggio di errore specifico se viene passato dalla rotta. %>
+        <%# `locals.error` controlla se la variabile `error` esiste nel contesto della vista. %>
         <% if (locals.error && error.length > 0) { %>
             <div class="alert alert-danger" role="alert">
                 <%= error %>

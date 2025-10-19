@@ -1,4 +1,7 @@
 <%# views/pages/ordine-riepilogo.ejs %>
+<%# Pagina di conferma e riepilogo mostrata all'utente subito dopo un acquisto. %>
+<%# Questa pagina è "usa e getta": i dati dell'ordine vengono letti dalla sessione e poi cancellati. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -16,6 +19,7 @@
                         <p class="text-muted">Il tuo ordine è stato confermato con successo.</p>
                     </div>
                     
+                    <%# Messaggio di conferma invio email, che mostra l'email dell'acquirente. %>
                     <div class="alert alert-light text-center" role="alert">
                         Invio mail di conferma a <strong><%= order.buyer.email %></strong>.
                     </div>
@@ -24,15 +28,18 @@
 
                     <h5 class="mb-3">Riepilogo Prodotti</h5>
                     <ul class="list-group list-group-flush mb-4">
+                        <%# Cicla sull'array `order.items` per mostrare ogni prodotto acquistato. %>
                         <% order.items.forEach(item => { %>
                              <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div class="d-flex align-items-center">
                                     <img src="<%= item.percorso_immagine %>" alt="<%= item.nome %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3">
                                     <span><%= item.nome %></span>
                                 </div>
+                                <%# Mostra il prezzo pagato per l'articolo (potrebbe essere quello scontato). %>
                                 <span class="fw-bold">€<%= (item.prezzo_scontato || item.prezzo).toFixed(2) %></span>
                              </li>
                         <% }) %>
+                        <%# Mostra il totale dell'ordine. %>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 fw-bold fs-5 border-top pt-3">
                             <span>Totale</span>
                             <span>€<%= order.total.toFixed(2) %></span>
@@ -40,6 +47,7 @@
                     </ul>
 
                     <div class="row g-4">
+                        <%# Sezione Indirizzo di Spedizione. %>
                         <div class="col-md-6">
                             <h5 class="mb-3">Indirizzo di Spedizione</h5>
                             <div class="card bg-light border">
@@ -51,6 +59,7 @@
                             </div>
                         </div>
 
+                        <%# Sezione Metodo di Pagamento. %>
                         <div class="col-md-6">
                             <h5 class="mb-3">Metodo di Pagamento</h5>
                             <div class="card bg-light border">
@@ -66,14 +75,15 @@
                     </div>
                 
                     <div class="text-center mt-5">
-                        <%# --- INIZIO MODIFICA --- %>
-                        <%# Mostra il blocco recensione solo se l'utente NON è un ospite %>
+                        <%# Logica condizionale per il pulsante "Lascia una recensione". %>
+                        <%# Viene mostrato solo se l'acquisto è stato fatto da un utente loggato (`!order.isGuest`). %>
+                        <%# Un utente ospite non può lasciare recensioni. %>
                         <% if (!order.isGuest) { %>
                             <p class="mb-2">La tua opinione è importante! Aiuta la community lasciando una recensione.</p>
+                            <%# Il link `order.reviewLink` punta direttamente alla pagina per recensire il prodotto acquistato. %>
                             <a href="<%= order.reviewLink %>" class="btn btn-info mb-3">Lascia una recensione ora</a>
                             <br>
                         <% } %>
-                        <%# --- FINE MODIFICA --- %>
                         <a href="/" class="btn btn-primary">Continua lo Shopping</a>
                     </div>
                 </div>

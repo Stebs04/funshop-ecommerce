@@ -1,15 +1,19 @@
 'use strict';
 
+// Importiamo la connessione al database.
 const { db } = require('../../managedb');
 
 /**
- * Recupera le informazioni account (non indirizzo) associate a un ID utente.
+ * Recupera le informazioni aggiuntive dell'account (come immagine profilo e descrizione)
+ * associate a un ID utente dalla tabella 'accountinfos'.
  * @param {number} userId - L'ID dell'utente.
- * @returns {Promise<Object>} Una promessa che risolve in un oggetto informazione.
+ * @returns {Promise<Object|undefined>} Una promessa che risolve in un oggetto contenente le informazioni
+ * o 'undefined' se non viene trovato nessun record.
  */
 exports.getAccountInfoByUserId = (userId) => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT * FROM accountinfos WHERE user_id = ?';
+        // Usiamo db.get perché ci aspettiamo al massimo una riga per utente (dato che user_id è UNIQUE).
         db.get(sql, [userId], (err, row) => {
             if (err) {
                 console.error("Errore nel recuperare le informazioni dell'account:", err.message);
@@ -22,30 +26,35 @@ exports.getAccountInfoByUserId = (userId) => {
 };
 
 /**
- * Aggiorna l'immagine del profilo di un utente.
- * Se non esiste un record in accountinfos, ne crea uno nuovo.
+ * Aggiorna o imposta per la prima volta l'immagine del profilo di un utente.
+ * Se non esiste già un record per l'utente nella tabella 'accountinfos', ne crea uno nuovo.
  * @param {number} userId - L'ID dell'utente.
- * @param {string} imagePath - Il percorso della nuova immagine.
- * @returns {Promise<number>} Il numero di righe modificate o l'ID del nuovo record.
+ * @param {string} imagePath - Il percorso del file della nuova immagine.
+ * @returns {Promise<number>} Una promessa che risolve nel numero di righe modificate (se l'update ha successo)
+ * o nell'ID del nuovo record (se viene creato).
  */
 exports.updateProfileImage = (userId, imagePath) => {
     return new Promise((resolve, reject) => {
+        // 1. Tentiamo di aggiornare un record esistente.
         const sql = 'UPDATE accountinfos SET immagine_profilo = ? WHERE user_id = ?';
         db.run(sql, [imagePath, userId], function (err) {
             if (err) {
                 reject(err);
             } else {
+                // 2. Se 'this.changes' è 0, significa che non c'era nessun record da aggiornare.
                 if (this.changes === 0) {
-                    // Se non ci sono righe modificate, crea un nuovo record.
+                    // 3. In questo caso, creiamo un nuovo record.
                     const insertSql = 'INSERT INTO accountinfos (user_id, immagine_profilo) VALUES (?, ?)';
                     db.run(insertSql, [userId, imagePath], function(err) {
                         if (err) {
                             reject(err);
                         } else {
+                            // Risolviamo con l'ID della nuova riga creata.
                             resolve(this.lastID);
                         }
                     });
                 } else {
+                    // 4. Se l'aggiornamento è andato a buon fine, risolviamo con il numero di righe modificate.
                     resolve(this.changes);
                 }
             }
@@ -54,26 +63,31 @@ exports.updateProfileImage = (userId, imagePath) => {
 };
 
 /**
- * Aggiorna la descrizione del profilo e altre informazioni non di indirizzo.
+ * Aggiorna o imposta per la prima volta la descrizione del profilo e altre informazioni.
+ * Logica simile a 'updateProfileImage': aggiorna se esiste, altrimenti crea.
  * @param {number} userId - L'ID dell'utente.
- * @param {Object} infoData - Dati da aggiornare (es. descrizione).
+ * @param {Object} infoData - Un oggetto contenente i dati da aggiornare (es. { descrizione: '...' }).
  * @returns {Promise<number>} Numero di righe modificate o ID del nuovo record.
  */
 exports.updateProfileInfo = (userId, infoData) => {
     return new Promise((resolve, reject) => {
         const { descrizione } = infoData;
+        // 1. Tentiamo l'aggiornamento.
         const sql = 'UPDATE accountinfos SET descrizione = ? WHERE user_id = ?';
         db.run(sql, [descrizione, userId], function(err) {
             if (err) {
                 reject(err);
             } else {
+                 // 2. Se non è stato modificato nulla, il record non esiste.
                  if (this.changes === 0) {
+                    // 3. Creiamo un nuovo record.
                     const insertSql = 'INSERT INTO accountinfos (user_id, descrizione) VALUES (?, ?)';
                     db.run(insertSql, [userId, descrizione], function(err) {
                         if (err) reject(err);
-                        else resolve(this.lastID);
+                        else resolve(this.lastID); // Risolviamo con il nuovo ID.
                     });
                  } else {
+                    // 4. Se l'aggiornamento ha avuto successo, risolviamo.
                     resolve(this.changes);
                  }
             }

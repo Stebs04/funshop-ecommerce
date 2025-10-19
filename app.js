@@ -1,6 +1,6 @@
-// File: app.js
 'use strict';
 
+// Importazione dei moduli necessari
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
@@ -8,6 +8,7 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const morgan = require('morgan');
 
+// Importazione delle configurazioni e delle rotte
 const passportConfig = require('./middleware/passport-config');
 const authRoutes = require('./route/auth');
 const mainRoutes = require('./route/home');
@@ -21,49 +22,56 @@ const cartRoutes = require('./route/cartRoutes');
 const observedRoutes = require('./route/observedRoutes');
 const orderRoutes = require('./route/orderRoutes');
 const searchRoutes = require('./route/search');
-const adminRoutes = require('./route/adminRoutes'); // <-- NUOVA RIGA
+const adminRoutes = require('./route/adminRoutes');
 
+// Inizializzazione dell'applicazione Express
 const app = express();
 
+// Impostazione del motore di template EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware per il logging delle richieste HTTP in fase di sviluppo
 app.use(morgan('dev'));
+// Middleware per servire file statici (CSS, JS, immagini) dalla cartella 'public'
 app.use(express.static(path.join(__dirname, 'public')));
+// Middleware per il parsing dei dati inviati da form HTML
 app.use(express.urlencoded({ extended: true }));
+// Middleware per il parsing di JSON
 app.use(express.json());
 
+// Configurazione della gestione delle sessioni
 app.use(
   session({
-    secret: process.env.SECRET_SESSION,
-    resave: false,
-    saveUninitialized: false,
+    secret: process.env.SECRET_SESSION, // Chiave segreta per firmare il cookie di sessione
+    resave: false,                      // Non salva la sessione se non modificata
+    saveUninitialized: false,           // Non crea sessioni per utenti non autenticati
     cookie: {
-      httpOnly: true,
-      secure: false, 
-      maxAge: 24 * 60 * 60 * 1000,
+      httpOnly: true,                   // Il cookie non è accessibile da JavaScript lato client
+      secure: false,                    // Impostare a true in produzione con HTTPS
+      maxAge: 24 * 60 * 60 * 1000,      // Durata della sessione: 24 ore
     },
   }),
 );
 
+// Inizializzazione e utilizzo di connect-flash per i messaggi temporanei
 app.use(flash());
+// Inizializzazione di Passport per l'autenticazione
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware per variabili locali
+// Middleware globale per rendere disponibili alcune variabili a tutte le viste (template EJS)
 app.use((req, res, next) => {
-    res.locals.user = req.user || null;
-    res.locals.isAuthenticated = req.isAuthenticated();
-    res.locals.success = req.flash('success');
-    res.locals.error = req.flash('error');
-    // Il carrello viene ora gestito dal middleware di cartRoutes
-    // ma lo lasciamo qui per renderlo disponibile a tutte le viste (es. navbar)
-    res.locals.session = req.session; 
-    res.locals.originalUrl = req.originalUrl;
+    res.locals.user = req.user || null;                 // Dati dell'utente autenticato
+    res.locals.isAuthenticated = req.isAuthenticated(); // Flag booleano per verificare l'autenticazione
+    res.locals.success = req.flash('success');          // Messaggi di successo
+    res.locals.error = req.flash('error');              // Messaggi di errore
+    res.locals.session = req.session;                   // Oggetto sessione, utile per il carrello
+    res.locals.originalUrl = req.originalUrl;           // URL corrente, utile per reindirizzamenti
     next();
 });
 
-// Utilizzo dei router
+// Registrazione dei router per le diverse sezioni dell'applicazione
 app.use('/', mainRoutes);
 app.use('/auth', authRoutes);
 app.use('/utente', userRoutes);
@@ -76,8 +84,9 @@ app.use('/carrello', cartRoutes);
 app.use('/observed', observedRoutes);
 app.use('/ordine', orderRoutes);
 app.use('/search', searchRoutes);
-app.use('/admin', adminRoutes); // <-- NUOVA RIGA
+app.use('/admin', adminRoutes);
 
+// Endpoint API per verificare lo stato di autenticazione dell'utente (usato da script.js)
 app.get('/api/auth/status', (req, res) => {
   if (req.isAuthenticated()) {
     res.json({
@@ -93,9 +102,11 @@ app.get('/api/auth/status', (req, res) => {
   }
 });
 
+// Middleware per la gestione delle pagine non trovate (404)
 app.use((req, res) => {
   req.flash('error', 'La pagina richiesta non è stata trovata.');
   res.status(404).render('pages/error', { title: 'Pagina non Trovata' });
 });
 
+// Esportazione dell'applicazione configurata
 module.exports = app;

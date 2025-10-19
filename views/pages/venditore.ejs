@@ -1,3 +1,6 @@
+<%# views/pages/venditore.ejs %>
+<%# Pagina che permette a un utente di registrarsi come venditore. %>
+
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -9,16 +12,20 @@
   <main class="container my-5">
     <div class="row justify-content-center">
       <div class="col-lg-8">
+        <%# Logica condizionale: controlla se l'utente è già un venditore. %>
         <% if (user && user.tipo_account === 'venditore') { %>
+          <%# Se è già venditore, mostra un messaggio di conferma e un link alla sua dashboard. %>
           <div class="text-center">
             <h1>Sei già un Venditore!</h1>
             <p class="lead">Puoi iniziare a vendere i tuoi prodotti dalla tua area personale.</p>
             <a href="/utente?section=prodotti" class="btn btn-primary btn-lg mt-3">Vai ai Miei Prodotti</a>
           </div>
+        <%# Altrimenti, se non è un venditore, mostra il form di registrazione. %>
         <% } else { %>
           <h1 class="text-center mb-4">Diventa un Venditore su FunShop</h1>
           <p class="lead text-center mb-5">Unisciti alla nostra community e inizia a vendere i tuoi prodotti a migliaia di appassionati. Compila il modulo sottostante per inviare la tua richiesta.</p>
 
+          <%# Il form invia i dati alla rotta /venditore. %>
           <form action="/venditore" method="POST">
             <div class="mb-3">
               <label for="nome_negozio" class="form-label">Nome del Negozio</label>
