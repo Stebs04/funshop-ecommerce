@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
         const filters = { view, category, condition, sortBy };
 
         // Aggiorna il titolo della pagina in base ai filtri
-        if (view === 'novita') title = 'Novità del Giorno';
+        if (view === 'novita') title = 'Novità degli ultimi 2 giorni';
         if (view === 'offerte') title = 'Prodotti in Offerta';
         if (category) title = `Categoria: ${category}`;
 

@@ -28,10 +28,12 @@ class ProdottiDAO {
     const whereClauses = []; // Array per costruire dinamicamente la clausola WHERE.
 
     // Aggiungiamo condizioni in base ai filtri ricevuti.
-    if (view === 'new') {
-      whereClauses.push("DATE(p.data_inserimento) = DATE('now')"); // Solo prodotti inseriti oggi.
-    } else if (view === 'offers') {
-      whereClauses.push('p.prezzo_scontato IS NOT NULL AND p.prezzo_scontato > 0'); // Solo prodotti in offerta.
+    if (view === 'novita') {
+      // Filtra per i prodotti inseriti negli ultimi 2 giorni.
+      whereClauses.push("p.data_inserimento >= date('now', '-2 days')");
+    } else if (view === 'offerte') {
+      // Solo prodotti in offerta.
+      whereClauses.push('p.prezzo_scontato IS NOT NULL AND p.prezzo_scontato > 0');
     }
     if (category) {
       whereClauses.push('p.parola_chiave = ?');
