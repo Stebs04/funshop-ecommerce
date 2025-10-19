@@ -1,13 +1,26 @@
+<%# views/partials/messages.ejs %>
+<%# Questo file gestisce la visualizzazione di messaggi di feedback (flash messages). %>
+<%# Viene incluso nelle pagine dove è necessario mostrare notifiche all'utente (es. dopo un login, un errore, ecc.). %>
+
+<%# Controlla se esiste un messaggio di successo e se non è vuoto. %>
 <% if (success && success.length > 0) { %>
+    <%# Crea un "alert" di Bootstrap con stile "success" (verde). %>
+    <%# "alert-dismissible" e "fade show" aggiungono l'animazione e il pulsante di chiusura. %>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%# Stampa il contenuto del messaggio di successo. %>
         <%= success %>
+        <%# Pulsante per chiudere l'alert. %>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <% } %>
 
+<%# Controlla se esiste un messaggio di errore e se non è vuoto. %>
 <% if (error && error.length > 0) { %>
+    <%# Crea un "alert" di Bootstrap con stile "danger" (rosso). %>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%# Stampa il contenuto del messaggio di errore. %>
         <%= error %>
+        <%# Pulsante per chiudere l'alert. %>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <% } %>

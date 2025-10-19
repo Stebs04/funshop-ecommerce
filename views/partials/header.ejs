@@ -1,18 +1,30 @@
+<%# views/partials/header.ejs %>
+<%# Questo file definisce la sezione <head> del documento HTML. %>
+<%# Viene incluso all'inizio di ogni pagina per caricare le risorse comuni. %>
+
 <head>
+    <%# Imposta la codifica dei caratteri su UTF-8 per supportare tutti i caratteri speciali. %>
     <meta charset="utf-8">
+    <%# Configura la viewport per garantire che la pagina sia responsive e si adatti a tutti i dispositivi. %>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%# Il titolo della pagina, visualizzato nella scheda del browser. %>
     <title>FunShop - Tutto ciò che vuoi a portata di click</title>
 
+    <%# Preconnessione ai server di Google Fonts per velocizzare il caricamento dei caratteri. %>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <%# Importa il font 'Poppins' da Google Fonts con diversi spessori (weights). %>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
 
+    <%# Link al foglio di stile di Bootstrap 5, caricato da una CDN per performance ottimali. %>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
+    <%# Link alla libreria di icone di Bootstrap, per usare icone come il carrello, il profilo, ecc. %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <%# Link al foglio di stile personalizzato del sito, dove vengono definiti gli stili specifici del progetto. %>
     <link rel="stylesheet" href="/stylesheet/style.css">
 
+    <%# Carica lo script JavaScript principale del sito. %>
     <script src="/javascript/script.js"></script>
 </head>
-

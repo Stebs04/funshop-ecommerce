@@ -1,14 +1,25 @@
+<%# views/partials/footer.ejs %>
+<%# Questo file definisce il piè di pagina (footer) del sito. %>
+<%# Viene incluso in tutte le pagine principali per garantire coerenza. %>
+
+<%# L'elemento <footer> viene posizionato in fondo alla pagina grazie alla classe "mt-auto" di Bootstrap sul body. %>
 <footer class="mt-auto bg-body-tertiary py-4">
     <div class="container">
+      <%# Lista di link di navigazione veloci, centrati nel footer. %>
       <ul class="nav justify-content-center pb-3 mb-3">
+        <%# Ogni link punta a una sezione specifica della pagina /information usando gli hash (#). %>
         <li class="nav-item"><a href="/information#chi-siamo" class="nav-link px-2 text-muted header-nav-link">Chi Siamo</a></li>
         <li class="nav-item"><a href="/information#spedizioni" class="nav-link px-2 text-muted header-nav-link">Spedizioni</a></li>
         <li class="nav-item"><a href="/information#privacy-policy" class="nav-link px-2 text-muted header-nav-link">Privacy Policy</a></li>
         <li class="nav-item"><a href="/information#contatti" class="nav-link px-2 text-muted header-nav-link">Contatti</a></li>
       </ul>
       <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center">
-        <p class="mb-3 mb-sm-0 text-muted">© 2025 FunShop. Tutti i diritti riservati.</p>
+       
+        <%# Testo del copyright. %>
+ <p class="mb-3 mb-sm-0 text-muted">© 2025 FunShop. Tutti i diritti riservati.</p>
+        <%# Lista non ordinata che contiene i link ai social media. %>
         <ul class="list-unstyled d-flex mb-0">
+          <%# Ogni elemento della lista contiene un'icona di Bootstrap (es. bi-twitter-x) che funge da link. %>
           <li class="ms-3"><a class="link-dark" href="#"><i class="bi bi-twitter-x fs-4 footer-icon"></i></a></li>
           <li class="ms-3"><a class="link-dark" href="#"><i class="bi bi-instagram fs-4 footer-icon"></i></a></li>
           <li class="ms-3"><a class="link-dark" href="#"><i class="bi bi-facebook fs-4 footer-icon"></i></a></li>
