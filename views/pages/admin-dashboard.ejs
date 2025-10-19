@@ -1,8 +1,3 @@
-<%# views/pages/admin-dashboard.ejs %>
-<%# Questa pagina rappresenta il pannello di controllo per gli amministratori. %>
-
-<!doctype html>
-<html lang="it">
 <%- include('../partials/header') %>
 <body class="d-flex flex-column min-vh-100 bg-light">
 <%- include('../partials/navbar') %>
@@ -12,38 +7,33 @@
         <h1 class="mb-0">Pannello di Amministrazione</h1>
     </div>
 
-    <%# Inclusione del partial per mostrare messaggi di successo o errore (es. "Utente eliminato con successo"). %>
     <%- include('../partials/messages') %>
 
-    <%# Sezione delle statistiche principali. %>
     <section class="mb-5">
         <div class="row">
-            <%# Card per il conteggio totale degli utenti. I dati provengono dall'oggetto `stats` passato dalla rotta. %>
             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
                         <i class="bi bi-people-fill fs-1 text-primary"></i>
-                        <h5 class="card-title mt-2">Utenti Registrati</h5>
+                         <h5 class="card-title mt-2">Utenti Registrati</h5>
                         <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
                     </div>
                 </div>
             </div>
-            <%# Card per il conteggio dei prodotti in vendita (disponibili). %>
-            <div class="col-md-4">
+             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
                         <i class="bi bi-box-seam-fill fs-1 text-success"></i>
-                        <h5 class="card-title mt-2">Prodotti in Vendita</h5>
+                         <h5 class="card-title mt-2">Prodotti in Vendita</h5>
                         <p class="card-text display-4 fw-bold"><%= stats.productCount %></p>
                     </div>
                 </div>
             </div>
-            <%# Card per il totale dei guadagni. `.toFixed(2)` formatta il numero con due cifre decimali. %>
             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
                         <i class="bi bi-currency-euro fs-1 text-warning"></i>
-                        <h5 class="card-title mt-2">Guadagni Totali</h5>
+                         <h5 class="card-title mt-2">Guadagni Totali</h5>
                         <p class="card-text display-4 fw-bold"><%= stats.revenue.toFixed(2) %></p>
                     </div>
                 </div>
@@ -51,7 +41,6 @@
         </div>
     </section>
 
-    <%# Sistema di navigazione a tab (schede) per separare la gestione utenti da quella dei prodotti. %>
     <ul class="nav nav-tabs" id="adminTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab">Gestione Utenti</button>
@@ -61,104 +50,93 @@
         </li>
     </ul>
 
-    <%# Contenuto delle tab. %>
     <div class="tab-content bg-white p-3 border border-top-0 rounded-bottom" id="adminTabContent">
         
-        <%# PANNELLO GESTIONE UTENTI %>
         <div class="tab-pane fade show active" id="users-tab-pane" role="tabpanel">
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead>
-                        <tr>
+                         <tr>
                             <th>ID</th>
                             <th>Username</th>
-                            <th>Email</th>
+                             <th>Email</th>
                             <th>Tipo Account</th>
                             <th>Azioni</th>
                         </tr>
-                    </thead>
+                     </thead>
                     <tbody>
-                        <%# Cicla sull'array `users` passato dalla rotta e crea una riga della tabella per ogni utente. %>
                         <% users.forEach(u => { %>
                             <tr>
                                 <td><%= u.id %></td>
-                                <td><%= u.username %></td>
+                                 <td><%= u.username %></td>
                                 <td><%= u.email %></td>
                                 <td><span class="badge bg-secondary"><%= u.tipo_account %></span></td>
-                                <td>
-                                    <%# Logica condizionale: mostra il pulsante "Elimina" solo se l'utente NON è un altro admin. %>
-                                    <%# Questo impedisce a un admin di eliminarne un altro. %>
+                                 <td>
                                     <% if (u.tipo_account !== 'admin') { %>
-                                        <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.');">
+                                         <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.');">
                                             <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
-                                        </form>
+                                         </form>
                                     <% } %>
                                 </td>
-                            </tr>
+                             </tr>
                         <% }) %>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <%# PANNELLO GESTIONE PRODOTTI %>
         <div class="tab-pane fade" id="products-tab-pane" role="tabpanel">
              <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                             <th>ID</th>
                             <th>Immagine</th>
                             <th>Nome Prodotto</th>
-                            <th>Venditore</th>
+                             <th>Venditore</th>
                             <th>Prezzo</th>
                             <th>Stato</th>
                             <th>Azioni</th>
-                        </tr>
+                         </tr>
                     </thead>
                     <tbody>
-                        <%# Cicla sull'array `products` e crea una riga per ogni prodotto. %>
                         <% products.forEach(p => { %>
                             <tr>
                                 <td><%= p.id %></td>
-                                <td><img src="<%= p.percorso_immagine %>" alt="<%= p.nome %>" style="width: 50px; height: 50px; object-fit: cover;"></td>
+                                 <td><img src="<%= p.percorso_immagine %>" alt="<%= p.nome %>" style="width: 50px; height: 50px; object-fit: cover;"></td>
                                 <td><%= p.nome %></td>
-                                <td><%= p.nome_venditore %></td>
-                                <%# Mostra il prezzo scontato se esiste, altrimenti il prezzo base. %>
+                                
+                                 <td><%= p.nome_venditore %></td>
                                 <td>€<%= (p.prezzo_scontato || p.prezzo || 0).toFixed(2) %></td>
-                                <td>
-                                    <%# Mostra un badge colorato diverso in base allo stato del prodotto ('disponibile', 'venduto', 'eliminato'). %>
-                                    <% if (p.stato === 'disponibile') { %>
+                                 <td>
+                                      <% if (p.stato === 'disponibile') { %>
                                         <span class="badge bg-success">Disponibile</span>
                                     <% } else if (p.stato === 'venduto') { %>
-                                        <span class="badge bg-warning">Venduto</span>
+                                         <span class="badge bg-warning">Venduto</span>
                                     <% } else { %>
-                                        <span class="badge bg-danger">Eliminato</span>
+                                         <span class="badge bg-danger">Eliminato</span>
                                     <% } %>
                                 </td>
-                                <td>
-                                    <%# Pulsante "Modifica" che apre un modale (popup). %>
-                                    <%# I `data-*` attributes vengono usati da JavaScript per pre-compilare il form del modale con i dati del prodotto. %>
+                                 <td>
                                     <button class="btn btn-sm btn-primary"
                                             data-bs-toggle="modal"
-                                            data-bs-target="#editProductModal"
-                                            data-context="admin" <%# Indica che il modale è usato in contesto admin %>
-                                            data-product-id="<%= p.id %>"
+                                             data-bs-target="#editProductModal"
+                                            data-context="admin" 
+                                             data-product-id="<%= p.id %>"
                                             data-product-nome="<%= p.nome %>"
-                                            data-product-descrizione="<%= p.descrizione %>"
+                                             data-product-descrizione="<%= p.descrizione %>"
                                             data-product-prezzo="<%= p.prezzo %>"
-                                            data-product-prezzo-scontato="<%= p.prezzo_scontato || '' %>"
+                                             data-product-prezzo-scontato="<%= p.prezzo_scontato || '' %>"
                                             data-product-parola-chiave="<%= p.parola_chiave %>"
-                                            data-product-condizione="<%= p.condizione %>">
+                                             data-product-condizione="<%= p.condizione %>">
                                         Modifica
                                     </button>
-                                    <%# Form per l'eliminazione del prodotto. %>
-                                    <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
+                                     <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
-                                    </form>
+                                     </form>
                                 </td>
                             </tr>
-                        <% }) %>
+                         <% }) %>
                     </tbody>
                 </table>
             </div>
@@ -166,9 +144,6 @@
     </div>
 </main>
 
-<%# MODALE PER LA MODIFICA DEL PRODOTTO %>
-<%# Questo modale è nascosto di default e viene mostrato quando si clicca su "Modifica". %>
-<%# Lo stesso modale è riutilizzato anche nella pagina utente, ma lo script JS imposta l'action del form dinamicamente. %>
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -177,46 +152,52 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <%# Il form è vuoto; verrà popolato da JavaScript quando il modale si apre. L'attributo `action` sarà impostato dinamicamente. %>
-                <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
+                 <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="edit_nome" class="form-label">Nome Prodotto</label>
                         <input type="text" class="form-control" id="edit_nome" name="nome" required>
-                    </div>
+                     </div>
                     <div class="mb-3">
                         <label for="edit_descrizione" class="form-label">Descrizione</label>
                         <textarea class="form-control" id="edit_descrizione" name="descrizione" rows="3" required></textarea>
-                    </div>
+                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_prezzo" class="form-label">Prezzo Originale (€)</label>
-                            <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
+                             <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
+                             <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
                             <input type="number" class="form-control" id="edit_prezzo_scontato" name="prezzo_scontato" step="0.01">
                             <small class="form-text text-muted">Lascia vuoto se non c'è sconto.</small>
-                        </div>
+                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_parola_chiave" class="form-label">Categoria</label>
-                            <input type="text" class="form-control" id="edit_parola_chiave" name="parola_chiave">
+                             <select class="form-select" id="edit_parola_chiave" name="parola_chiave" required>
+                                <option value="" disabled>Seleziona una categoria</option>
+                                <% if (locals.categorie) { %>
+                                    <% categorie.forEach(cat => { %>
+                                        <option value="<%= cat %>"><%= cat %></option>
+                                    <% }) %>
+                                <% } %>
+                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                             <label for="edit_condizione" class="form-label">Condizione</label>
+                              <label for="edit_condizione" class="form-label">Condizione</label>
                              <input type="text" class="form-control" id="edit_condizione" name="condizione">
                         </div>
                     </div>
-                    <div class="mb-3">
+                     <div class="mb-3">
                         <label for="edit_percorso_immagine" class="form-label">Immagine Prodotto</label>
                         <input class="form-control" type="file" id="edit_percorso_immagine" name="percorso_immagine">
                         <small class="form-text text-muted">Lascia vuoto per non modificare l'immagine attuale.</small>
-                    </div>
+                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                         <button type="submit" class="btn btn-primary">Salva Modifiche</button>
-                    </div>
+                     </div>
                 </form>
             </div>
         </div>
@@ -226,26 +207,20 @@
 <%- include('../partials/footer') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Script per gestire la navigazione tra le tab e il popolamento del modale.
     document.addEventListener('DOMContentLoaded', function() {
-        // Logica per mantenere la tab attiva dopo un reindirizzamento (es. dopo aver eliminato un prodotto).
-        // Legge l'hash dall'URL (es. #prodotti) e attiva la tab corrispondente.
         if(window.location.hash) {
             const tabTrigger = document.querySelector('button[data-bs-target="' + window.location.hash + '-tab-pane"]');
             if (tabTrigger) {
-                const tab = new bootstrap.Tab(tabTrigger);
+                 const tab = new bootstrap.Tab(tabTrigger);
                 tab.show();
             }
         }
 
-        // Logica per il modale di modifica prodotto.
         const editProductModal = document.getElementById('editProductModal');
         if (editProductModal) {
-            // Aggiunge un listener che si attiva quando il modale sta per essere mostrato.
             editProductModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget; // Il pulsante "Modifica" che ha attivato il modale
+                const button = event.relatedTarget; 
                 
-                // Estrae tutti i dati del prodotto dai `data-*` attributes del pulsante.
                 const productId = button.getAttribute('data-product-id');
                 const nome = button.getAttribute('data-product-nome');
                 const descrizione = button.getAttribute('data-product-descrizione');
@@ -253,12 +228,11 @@
                 const prezzoScontato = button.getAttribute('data-product-prezzo-scontato');
                 const parolaChiave = button.getAttribute('data-product-parola-chiave');
                 const condizione = button.getAttribute('data-product-condizione');
-                const context = button.getAttribute('data-context'); // Contesto (es. 'admin' o 'user')
+                const context = button.getAttribute('data-context');
 
                 const form = editProductModal.querySelector('#editProductForm');
                 const modalTitle = editProductModal.querySelector('#editProductModalLabel');
 
-                // Imposta dinamicamente l'URL `action` del form in base al contesto.
                 if (context === 'admin') {
                     form.action = `/admin/products/edit/${productId}`;
                     modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
@@ -267,7 +241,6 @@
                     modalTitle.textContent = `Modifica Prodotto: ${nome}`;
                 }
 
-                // Popola dinamicamente i campi del form con i dati estratti.
                 form.querySelector('#edit_nome').value = nome;
                 form.querySelector('#edit_descrizione').value = descrizione;
                 form.querySelector('#edit_prezzo').value = prezzo;

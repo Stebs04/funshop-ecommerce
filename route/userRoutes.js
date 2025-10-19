@@ -155,16 +155,18 @@ router.post('/profilo/elimina', async (req, res) => {
         req.logout((err) => {
             if (err) {
                 console.error("Errore durante il logout dopo l'eliminazione dell'account:", err);
-                req.flash('error', 'Il tuo account è stato eliminato, ma si è verificato un problema durante il logout.');
-                return res.redirect('/');
+                // Anche se c'è un errore nel logout, l'account è stato eliminato.
+                // Reindirizziamo comunque alla homepage con un messaggio di errore.
+                return res.redirect('/?delete_error=true');
             }
-            req.flash('success', 'Il tuo account è stato eliminato con successo.');
-            res.redirect('/');
+            // Reindirizza alla homepage con un parametro query per mostrare il messaggio di successo.
+            // Il messaggio flash non funzionerebbe perché la sessione viene distrutta con il logout.
+            res.redirect('/?deleted=true');
         });
     } catch (error) {
         console.error("Errore durante l'eliminazione dell'account:", error);
-        req.flash('error', 'Si è verificato un errore durante l\'eliminazione del tuo account.');
-        res.redirect('/utente?section=dati');
+        // Reindirizza alla pagina utente con un parametro di errore se l'eliminazione fallisce.
+        res.redirect('/utente?section=dati&delete_error=true');
     }
 });
 
@@ -287,7 +289,7 @@ router.post('/indirizzi/elimina/:id', async (req, res) => {
             req.flash('error', 'Azione non permessa.');
         }
     } catch (err) {
-        req.flash('error', "Errore durante l'eliminazione dell'indirizzo.");
+        req.flash('error', "Errore during l'eliminazione dell'indirizzo.");
     }
     res.redirect('/utente?section=indirizzi');
 });

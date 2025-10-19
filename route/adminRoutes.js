@@ -11,6 +11,16 @@ const utentiDao = require('../models/dao/utenti-dao');
 const prodottiDao = require('../models/dao/prodotti-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 
+// Array di categorie per popolare il menu a tendina nel modale di modifica prodotto.
+const categorie = [
+    "Anime & Manga",
+    "Carte da gioco collezionabili",
+    "Action Figure & Statue",
+    "Videogiochi",
+    "Modellismo & Replica",
+    "LEGO / Brick compatibili"
+];
+
 /**
  * Middleware `isAdmin`
  * * Questo middleware è un "guardiano" per le rotte di amministrazione.
@@ -83,7 +93,8 @@ router.get('/dashboard', async (req, res) => {
                 userCount: allUsers.length,
                 productCount: totalProductsInStock,
                 revenue: totalRevenue
-            }
+            },
+            categorie: categorie // Passa l'array delle categorie al template
         });
     } catch (error) {
         console.error("Errore nel caricare la dashboard admin:", error);
