@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS storico_ordini (
     totale REAL NOT NULL,                      -- Importo totale dell'ordine.
     stato TEXT DEFAULT 'In elaborazione',      -- Stato dell'ordine (es. 'In elaborazione', 'Spedito').
     user_id INTEGER,                           -- ID dell'acquirente (può essere NULL per acquisti da ospite).
-    prodotto_id INTEGER NOT NULL,              -- ID del prodotto acquistato.
+    prodotto_id INTEGER,                       -- ID del prodotto acquistato (può diventare NULL se il prodotto viene eliminato).
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE SET NULL -- Se il prodotto viene eliminato, l'ordine lo ricorda ma il riferimento viene annullato.
 );

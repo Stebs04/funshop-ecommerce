@@ -68,6 +68,7 @@ app.use((req, res, next) => {
     res.locals.error = req.flash('error');              // Messaggi di errore
     res.locals.session = req.session;                   // Oggetto sessione, utile per il carrello
     res.locals.originalUrl = req.originalUrl;           // URL corrente, utile per reindirizzamenti
+    res.locals.query = req.query;                       // Rende disponibili i parametri query a tutte le viste
     next();
 });
 

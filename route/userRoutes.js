@@ -132,39 +132,31 @@ router.post('/profilo/aggiorna', [
 
 /**
  * ROTTA: POST /utente/profilo/elimina
- * Gestisce la richiesta di eliminazione dell'account utente in modo sicuro.
+ * * Gestisce l'eliminazione dell'account dell'utente.
  * * Logica:
- * 1. Salva l'ID dell'utente in una variabile, poiché `req.user` non sarà più disponibile dopo il logout.
- * 2. Esegue il logout dell'utente (`req.logout()`). Questo distrugge la sessione.
- * 3. Se il logout ha successo, procede con l'eliminazione dell'utente dal database usando l'ID salvato.
- * 4. Se l'eliminazione dal database ha successo, mostra un messaggio di conferma e reindirizza alla homepage.
- * 5. Se una qualsiasi delle operazioni fallisce (logout o cancellazione DB), cattura l'errore,
- * logga i dettagli e mostra un messaggio di errore generico all'utente, reindirizzandolo
- * in un luogo sicuro (homepage o pagina di login).
+ * 1. Chiama il DAO per eliminare l'utente dal database.
+ * 2. Esegue il logout dell'utente per terminare la sessione.
+ * 3. Mostra un messaggio di conferma e reindirizza alla homepage.
  */
-router.post('/profilo/elimina', (req, res, next) => {
-    const userIdToDelete = req.user.id;
-
-    req.logout((err) => {
-        if (err) {
-            console.error("Errore durante il logout prima dell'eliminazione dell'account:", err);
-            req.flash('error', 'Si è verificato un errore durante il logout. Riprova.');
-            return res.redirect('/utente?section=dati');
-        }
-
-        // Dopo che il logout è stato completato con successo, procediamo con l'eliminazione dal DB
-        utentiDao.deleteUser(userIdToDelete)
-            .then(() => {
+router.post('/profilo/elimina', async (req, res) => {
+    try {
+        await utentiDao.deleteUser(req.user.id);
+        req.logout((err) => {
+            if (err) {
+                console.error("Errore durante il logout dopo l'eliminazione dell'account:", err);
+                // Anche se c'è un errore nel logout, l'account è già stato eliminato.
+                // Reindirizziamo comunque mostrando il successo dell'eliminazione.
                 req.flash('success', 'Il tuo account è stato eliminato con successo.');
-                res.redirect('/');
-            })
-            .catch(dbErr => {
-                console.error("Errore durante l'eliminazione dell'account dal database:", dbErr);
-                req.flash('error', "Si è verificato un errore durante l'eliminazione definitiva del tuo account.");
-                // L'utente è già sloggato, quindi lo reindirizziamo alla homepage
-                res.redirect('/');
-            });
-    });
+                return res.redirect('/');
+            }
+            req.flash('success', 'Il tuo account è stato eliminato con successo.');
+            res.redirect('/');
+        });
+    } catch (error) {
+        console.error("Errore durante l'eliminazione dell'account:", error);
+        req.flash('error', 'Si è verificato un errore durante l\'eliminazione del tuo account.');
+        res.redirect('/utente?section=dati');
+    }
 });
 
 
