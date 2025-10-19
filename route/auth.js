@@ -43,7 +43,7 @@ router.post('/login',
       // Questa condizione si attiva se l'email non esiste o se la password è sbagliata.
       // In entrambi i casi, mostriamo lo stesso messaggio.
       if (!user) {
-        req.flash('error', 'password errata');
+        req.flash('error', info.message);
         return res.redirect('/auth/login');
       }
 

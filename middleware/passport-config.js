@@ -23,7 +23,7 @@ passport.use(
 
         // 2. Se l'utente non viene trovato, l'autenticazione fallisce
         if (!user) {
-          return done(null, false, { message: 'Nessun utente trovato con questa email.' });
+          return done(null, false, { message: 'Email o password errate.' });
         }
 
         // 3. Se l'utente esiste, confronta la password inviata con quella salvata (hash)
@@ -34,7 +34,7 @@ passport.use(
           return done(null, user);
         } else {
           // Se le password non corrispondono, l'autenticazione fallisce
-          return done(null, false, { message: 'Password errata.' });
+          return done(null, false, { message: 'Email o password errate.' });
         }
       } catch (err) {
         // In caso di errore del server (es. database non raggiungibile)
