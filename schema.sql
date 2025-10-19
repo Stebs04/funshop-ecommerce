@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   data_nascita DATE,
-  tipo_account TEXT DEFAULT 'cliente'
+  tipo_account TEXT DEFAULT 'cliente',
+  -- NUOVI CAMPI PER RESET PASSWORD --
+  password_reset_token TEXT,
+  password_reset_expires INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS prodotti (
@@ -56,14 +59,12 @@ CREATE TABLE IF NOT EXISTS indirizzi (
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
--- --- MODIFICA QUI ---
--- Il campo user_id ora non è più obbligatorio (permette ordini da ospiti)
 CREATE TABLE IF NOT EXISTS storico_ordini (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     data_ordine DATETIME DEFAULT CURRENT_TIMESTAMP,
     totale REAL NOT NULL,
     stato TEXT DEFAULT 'In elaborazione',
-    user_id INTEGER, -- RIMOSSO "NOT NULL"
+    user_id INTEGER, 
     prodotto_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (prodotto_id) REFERENCES prodotti (id) ON DELETE SET NULL
@@ -100,7 +101,6 @@ CREATE TABLE IF NOT EXISTS observed_products (
     FOREIGN KEY (product_id) REFERENCES prodotti (id) ON DELETE CASCADE
 );
 
--- NUOVA TABELLA PER IL CARRELLO PERSISTENTE
 CREATE TABLE IF NOT EXISTS cart_items (
     user_id INTEGER NOT NULL,
     product_id INTEGER NOT NULL,

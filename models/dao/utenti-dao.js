@@ -92,8 +92,7 @@ class UtentiDAO {
           });
       });
   }
-
-  // --- NUOVA FUNZIONE ---
+  
   getAllUsers() {
     const sql = 'SELECT id, username, email, tipo_account FROM users ORDER BY id ASC';
     return new Promise((resolve, reject) => {
@@ -102,6 +101,49 @@ class UtentiDAO {
             else resolve(rows);
         });
     });
+  }
+
+  // --- NUOVE FUNZIONI PER RESET PASSWORD ---
+
+  setUserResetToken(userId, token, expires) {
+    const sql = 'UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?';
+    return new Promise((resolve, reject) => {
+        this.db.run(sql, [token, expires, userId], function(err) {
+            if (err) reject(err);
+            else resolve(this.changes);
+        });
+    });
+  }
+
+  getUserByResetToken(token) {
+    const sql = 'SELECT * FROM users WHERE password_reset_token = ? AND password_reset_expires > ?';
+    return new Promise((resolve, reject) => {
+        this.db.get(sql, [token, Date.now()], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+  }
+
+  async updateUserPassword(userId, newPassword) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const sql = 'UPDATE users SET password_hash = ? WHERE id = ?';
+    return new Promise((resolve, reject) => {
+        this.db.run(sql, [hashedPassword, userId], function(err) {
+            if (err) reject(err);
+            else resolve(this.changes);
+        });
+    });
+  }
+
+  clearUserResetToken(userId) {
+      const sql = 'UPDATE users SET password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?';
+      return new Promise((resolve, reject) => {
+          this.db.run(sql, [userId], function(err) {
+              if (err) reject(err);
+              else resolve(this.changes);
+          });
+      });
   }
 }
 

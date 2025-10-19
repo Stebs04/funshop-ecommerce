@@ -1,3 +1,4 @@
+<%# views/pages/login.ejs %>
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -11,20 +12,26 @@
         <div class="card shadow-sm">
           <div class="card-body p-4">
             <h3 class="card-title text-center mb-4">Accedi a FunShop</h3>
+            
+            <%- include('../partials/messages') %>
+
             <form action="/auth/login" method="POST">
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <input type="email" class="form-control" id="email" name="email" required>
               </div>
-              <div class="mb-4">
+              <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" name="password" required>
               </div>
-              <button type="submit" class="btn btn-primary">Accedi</button>
-            </form>
+              
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <button type="submit" class="btn btn-primary">Accedi</button>
+                <a href="/auth/reset" class="small">Password dimenticata?</a>
+              </div>
+              </form>
             <p class="text-center mt-4 text-muted">
-                Non hai ancora un account? 
-                <a href="/auth/registrazione">Registrati ora</a>
+                Non hai ancora un account? <a href="/auth/registrazione">Registrati ora</a>
             </p>
           </div>
         </div>

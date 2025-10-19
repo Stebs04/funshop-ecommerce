@@ -4,24 +4,15 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// 1. Configura il "trasportatore" (il servizio che invierà l'email)
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Usiamo Gmail
+    service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER, // La tua email dal file .env
-        pass: process.env.EMAIL_PASS  // La tua password per le app dal file .env
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
-/**
- * Invia un'email di conferma ordine all'acquirente.
- * @param {string} buyerEmail - L'indirizzo email dell'acquirente.
- * @param {object} orderDetails - I dettagli dell'ordine salvati in sessione.
- */
 const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
-    
-    // --- INIZIO MODIFICA QUI ---
-    // Definiamo il blocco HTML per la recensione in una variabile
     const reviewSectionHtml = !orderDetails.isGuest ? `
         <div style="text-align: center; margin-top: 20px;">
             <p>La tua opinione è importante! Aiuta la community lasciando una recensione al venditore.</p>
@@ -29,8 +20,7 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
                 Lascia una Recensione
             </a>
         </div>
-    ` : ''; // Se è un ospite, la stringa è vuota
-    // --- FINE MODIFICA QUI ---
+    ` : '';
 
     const mailOptions = {
         from: `"FunShop" <${process.env.EMAIL_USER}>`,
@@ -41,9 +31,7 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
                 <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
                     <h2 style="text-align: center; color: #4F46E5;">Grazie per il tuo acquisto, ${orderDetails.buyer.nome}!</h2>
                     <p>Il tuo ordine è stato confermato con successo e verrà elaborato a breve. Ecco un riepilogo dei dettagli.</p>
-                    
                     <hr>
-                    
                     <h3 style="color: #4F46E5;">Riepilogo Prodotti</h3>
                     <table style="width: 100%; border-collapse: collapse;">
                         ${orderDetails.items.map(item => `
@@ -57,9 +45,7 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
                             <td style="padding: 15px 0; font-size: 1.2em; text-align: right;"><strong>€${orderDetails.total.toFixed(2)}</strong></td>
                         </tr>
                     </table>
-
                     <hr>
-
                     <table style="width: 100%;">
                         <tr>
                             <td style="vertical-align: top; padding-right: 10px; width: 50%;">
@@ -79,11 +65,8 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
                             </td>
                         </tr>
                     </table>
-
                     <hr>
-                    
                     ${reviewSectionHtml}
-                    
                     <p style="margin-top: 30px; font-size: 0.9em; text-align: center; color: #777;">Grazie,<br>Il Team di FunShop</p>
                 </div>
             </div>
@@ -98,4 +81,38 @@ const sendOrderConfirmationEmail = async (buyerEmail, orderDetails) => {
     }
 };
 
-module.exports = { sendOrderConfirmationEmail };
+// --- NUOVA FUNZIONE PER L'EMAIL DI RESET ---
+const sendPasswordResetEmail = async (userEmail, resetLink) => {
+    const mailOptions = {
+        from: `"FunShop" <${process.env.EMAIL_USER}>`,
+        to: userEmail,
+        subject: 'Resetta la tua password per FunShop',
+        html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                    <h2 style="text-align: center; color: #4F46E5;">Richiesta di Reset Password</h2>
+                    <p>Ciao,</p>
+                    <p>Abbiamo ricevuto una richiesta per resettare la password del tuo account. Clicca sul pulsante qui sotto per impostare una nuova password.</p>
+                    <div style="text-align: center; margin: 20px 0;">
+                        <a href="${resetLink}" style="background-color: #4F46E5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Resetta Password
+                        </a>
+                    </div>
+                    <p>Se non hai richiesto tu il reset, puoi tranquillamente ignorare questa email. Il link scadrà tra un'ora.</p>
+                    <p style="margin-top: 30px; font-size: 0.9em; text-align: center; color: #777;">Grazie,<br>Il Team di FunShop</p>
+                </div>
+            </div>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Email di reset password inviata a ${userEmail}`);
+    } catch (error) {
+        console.error(`Errore durante l'invio dell'email di reset a ${userEmail}:`, error);
+        throw error; // Rilancia l'errore per gestirlo nella rotta
+    }
+};
+
+
+module.exports = { sendOrderConfirmationEmail, sendPasswordResetEmail };
