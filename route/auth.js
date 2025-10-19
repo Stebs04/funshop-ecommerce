@@ -12,16 +12,13 @@ const { sendPasswordResetEmail } = require('../services/emailService');
 
 router.get('/login', (req, res) => {
     res.render('pages/login', {
-        title: 'Login',
-        error: req.flash('error'),
-        success: req.flash('success')
+        title: 'Login'
     });
 });
 
 router.get('/registrazione', (req, res) => {
     res.render('pages/registrazione', {
-        title: 'Registrazione',
-        error: req.flash('error')
+        title: 'Registrazione'
     });
 });
 
@@ -40,8 +37,6 @@ router.post('/login',
     passport.authenticate('local', (err, user, info) => {
       if (err) { return next(err); }
       
-      // Questa condizione si attiva se l'email non esiste o se la password è sbagliata.
-      // In entrambi i casi, mostriamo lo stesso messaggio.
       if (!user) {
         req.flash('error', info.message);
         return res.redirect('/auth/login');
@@ -113,9 +108,7 @@ router.get('/logout', (req, res, next) => {
 // GET /auth/reset - Mostra la pagina per richiedere il reset
 router.get('/reset', (req, res) => {
     res.render('pages/reset-password-request', {
-        title: 'Resetta Password',
-        error: req.flash('error'),
-        success: req.flash('success')
+        title: 'Resetta Password'
     });
 });
 
@@ -162,8 +155,7 @@ router.get('/reset/:token', async (req, res) => {
 
         res.render('pages/reset-password-form', {
             title: 'Imposta Nuova Password',
-            token: token,
-            error: req.flash('error')
+            token: token
         });
 
     } catch (error) {
