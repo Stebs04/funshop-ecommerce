@@ -14,10 +14,8 @@ const cartDao = require('../models/dao/cart-dao');
 // Middleware per caricare/inizializzare il carrello
 router.use(async (req, res, next) => {
     if (req.isAuthenticated()) {
-        // Utente loggato: carica il carrello dal DB
         req.session.cart = await cartDao.getCartByUserId(req.user.id);
     } else if (!req.session.cart) {
-        // Utente ospite: inizializza un carrello vuoto nella sessione
         req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
     }
     next();
@@ -35,7 +33,6 @@ router.post('/add/:id', async (req, res) => {
         }
 
         if (req.isAuthenticated()) {
-            // Utente loggato: aggiungi al DB
             const changes = await cartDao.addToCart(req.user.id, productId);
             if (changes === 0) {
                 req.flash('error', 'Questo articolo è già presente nel carrello.');
@@ -43,7 +40,6 @@ router.post('/add/:id', async (req, res) => {
                 req.flash('success', `"${product.nome}" è stato aggiunto al carrello!`);
             }
         } else {
-            // Utente ospite: aggiungi alla sessione
             const cart = req.session.cart;
             if (cart.items[productId]) {
                 req.flash('error', 'Questo articolo è già presente nel carrello.');
@@ -69,10 +65,8 @@ router.post('/remove/:id', async (req, res) => {
 
     try {
         if (req.isAuthenticated()) {
-            // Utente loggato: rimuovi dal DB
             await cartDao.removeFromCart(req.user.id, productId);
         } else {
-            // Utente ospite: rimuovi dalla sessione
             const cart = req.session.cart;
             if (cart.items[productId]) {
                 const itemToRemove = cart.items[productId];
@@ -144,11 +138,29 @@ router.post('/checkout', async (req, res) => {
     const userId = req.user.id;
     const buyerEmail = req.user.email;
 
+    // Validazione robusta
+    if (!addressSelection) {
+        req.flash('error', 'Per favore, seleziona o inserisci un indirizzo di spedizione.');
+        return res.redirect('/carrello/checkout');
+    }
+    if (addressSelection === 'new' && (!formData.indirizzo || !formData.citta || !formData.cap)) {
+        req.flash('error', 'Per favore, compila tutti i campi per il nuovo indirizzo.');
+        return res.redirect('/carrello/checkout');
+    }
+    if (!paymentMethod) {
+        req.flash('error', 'Per favore, seleziona o inserisci un metodo di pagamento.');
+        return res.redirect('/carrello/checkout');
+    }
+    if (paymentMethod === 'new' && (!formData.nome_titolare || !formData.numero_carta || !formData.data_scadenza || !formData.cvv)) {
+        req.flash('error', 'Per favore, compila tutti i campi per la nuova carta di pagamento.');
+        return res.redirect('/carrello/checkout');
+    }
+
     let finalAddress;
     let finalPaymentMethod;
+    let transactionStarted = false;
 
     try {
-        // --- LOGICA MIGLIORATA PER INDIRIZZO E PAGAMENTO ---
         if (addressSelection === 'new') {
             finalAddress = {
                 nome: req.user.nome,
@@ -157,6 +169,7 @@ router.post('/checkout', async (req, res) => {
                 citta: formData.citta,
                 cap: formData.cap,
             };
+            await indirizziDao.createIndirizzo({ ...finalAddress, user_id: userId });
         } else {
             const savedAddress = await indirizziDao.getIndirizzoById(addressSelection);
             if (savedAddress && savedAddress.user_id === userId) {
@@ -172,6 +185,7 @@ router.post('/checkout', async (req, res) => {
                 last4: formData.numero_carta.slice(-4),
                 data_scadenza: formData.data_scadenza,
             };
+            await metodiPagamentoDao.createMetodoPagamento({ ...formData, user_id: userId });
         } else {
             const savedPayment = await metodiPagamentoDao.getMetodiPagamentoByUserId(userId);
             const selectedPayment = savedPayment.find(p => p.id == paymentMethod);
@@ -181,10 +195,12 @@ router.post('/checkout', async (req, res) => {
                 throw new Error('Metodo di pagamento selezionato non valido.');
             }
         }
-        // --- FINE LOGICA MIGLIORATA ---
-
-
-        await new Promise((resolve, reject) => db.run('BEGIN TRANSACTION', err => err ? reject(err) : resolve()));
+        
+        await new Promise((resolve, reject) => db.run('BEGIN TRANSACTION', err => {
+            if (err) return reject(err);
+            transactionStarted = true;
+            resolve();
+        }));
 
         const purchasedItems = [];
         for (const id in cart.items) {
@@ -201,16 +217,16 @@ router.post('/checkout', async (req, res) => {
         await cartDao.clearCart(userId);
 
         await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
+        transactionStarted = false;
 
         const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
         
-        // Crea l'oggetto per la sessione con i dati strutturati
         req.session.latestOrder = {
             buyer: req.user,
             items: purchasedItems,
             total: cart.totalPrice,
-            address: finalAddress,          // <-- Dati indirizzo aggiornati
-            payment: finalPaymentMethod,    // <-- Dati pagamento aggiornati
+            address: finalAddress,
+            payment: finalPaymentMethod,
             date: new Date(),
             reviewLink: reviewLink
         };
@@ -222,10 +238,12 @@ router.post('/checkout', async (req, res) => {
         res.redirect('/ordine/riepilogo');
 
     } catch (error) {
-        await new Promise((resolve, reject) => db.run('ROLLBACK', err => err ? reject(err) : resolve()));
+        if (transactionStarted) {
+            await new Promise((resolve) => db.run('ROLLBACK', () => resolve()));
+        }
         console.error("Errore durante il checkout:", error);
         req.flash('error', 'Si è verificato un errore durante la finalizzazione dell\'ordine. ' + error.message);
-        res.redirect('/carrello');
+        res.redirect('/carrello/checkout');
     }
 });
 
