@@ -18,16 +18,8 @@ const { db } = require('../managedb'); // Import diretto del database per le tra
 
 /**
  * Middleware: Inizializzazione del Carrello
- * * Questo middleware viene eseguito per ogni richiesta che arriva a `/carrello/*`.
+ * Questo middleware viene eseguito per ogni richiesta che arriva a `/carrello/*`.
  * La sua funzione è assicurarsi che ci sia sempre un carrello (`req.session.cart`) disponibile.
- * * Logica:
- * - Se l'utente è autenticato (`req.isAuthenticated()`):
- * - Carica il carrello dal database usando `cartDao.getCartByUserId()`.
- * - Questo garantisce che il carrello sia persistente tra diverse sessioni e dispositivi.
- * - Se l'utente non è autenticato (ospite):
- * - Controlla se `req.session.cart` esiste già.
- * - Se non esiste, ne crea uno nuovo, vuoto, nella sessione.
- * - Il carrello dell'ospite vive solo all'interno della sessione corrente.
  */
 router.use(async (req, res, next) => {
     if (req.isAuthenticated()) {
@@ -40,16 +32,7 @@ router.use(async (req, res, next) => {
 
 /**
  * ROTTA: POST /carrello/add/:id
- * * Aggiunge un prodotto al carrello.
- * * Logica:
- * 1. Recupera l'ID del prodotto dall'URL e l'URL di reindirizzamento dal corpo della richiesta.
- * 2. Recupera i dettagli del prodotto dal database per verificarne l'esistenza e la disponibilità.
- * 3. Se il prodotto non è disponibile, mostra un errore.
- * 4. Se l'utente è loggato:
- * - Chiama `cartDao.addToCart()` per aggiungere/aggiornare il prodotto nel carrello del database.
- * 5. Se l'utente è un ospite:
- * - Aggiunge/aggiorna il prodotto direttamente nell'oggetto `req.session.cart`.
- * 6. Mostra un messaggio di successo e reindirizza l'utente.
+ * Aggiunge un prodotto al carrello.
  */
 router.post('/add/:id', async (req, res) => {
     const productId = req.params.id;
@@ -71,6 +54,7 @@ router.post('/add/:id', async (req, res) => {
             }
         } else {
             const cart = req.session.cart;
+            // Controlla se l'articolo è già nel carrello dell'utente ospite.
             if (cart.items[productId]) {
                 req.flash('error', 'Questo articolo è già presente nel carrello.');
             } else {
@@ -92,11 +76,7 @@ router.post('/add/:id', async (req, res) => {
 
 /**
  * ROTTA: POST /carrello/remove/:id
- * * Rimuove un prodotto dal carrello.
- * * Logica:
- * 1. Se l'utente è loggato, chiama `cartDao.removeFromCart()` per rimuoverlo dal database.
- * 2. Se l'utente è un ospite, lo rimuove dall'oggetto `req.session.cart` e aggiorna i totali.
- * 3. Mostra un messaggio di successo e reindirizza alla pagina del carrello.
+ * Rimuove un prodotto dal carrello.
  */
 router.post('/remove/:id', async (req, res) => {
     const productId = req.params.id;
@@ -123,10 +103,7 @@ router.post('/remove/:id', async (req, res) => {
 
 /**
  * ROTTA: GET /carrello/
- * * Mostra la pagina di riepilogo del carrello.
- * * Logica:
- * 1. Prende il carrello (già caricato dal middleware) dalla sessione.
- * 2. Renderizza la pagina `carrello.ejs`, passandole i dati del carrello.
+ * Mostra la pagina di riepilogo del carrello.
  */
 router.get('/', (req, res) => {
     const cart = req.session.cart;
@@ -138,12 +115,7 @@ router.get('/', (req, res) => {
 
 /**
  * ROTTA: GET /carrello/checkout
- * * Mostra la pagina di checkout.
- * * Logica:
- * 1. Controlla se il carrello è vuoto; in caso affermativo, reindirizza indietro.
- * 2. Se l'utente è loggato, recupera i suoi indirizzi e metodi di pagamento salvati dal database.
- * 3. Renderizza la pagina `checkout.ejs`, passando i dati del carrello e, se disponibili,
- * gli indirizzi e i metodi di pagamento dell'utente.
+ * Mostra la pagina di checkout.
  */
 router.get('/checkout', async (req, res) => {
     const cart = req.session.cart;
@@ -178,27 +150,7 @@ router.get('/checkout', async (req, res) => {
 
 /**
  * ROTTA: POST /carrello/checkout
- * * Gestisce la logica di finalizzazione dell'ordine. È una delle rotte più complesse.
- * * Logica Generale:
- * 1. Verifica che il carrello non sia vuoto.
- * 2. Utilizza una transazione del database (`BEGIN TRANSACTION`...`COMMIT`/`ROLLBACK`) per garantire
- * l'integrità dei dati: se una qualsiasi operazione fallisce, tutte le modifiche vengono annullate.
- * 3. Per ogni articolo nel carrello:
- * - Crea un record in `storico_ordini`.
- * - Aggiorna lo stato del prodotto in `prodotti` a 'venduto'.
- * - Aggiorna lo stato dei prodotti osservati per notificare gli altri utenti.
- * 4. Svuota il carrello dell'utente.
- * 5. Salva i dettagli dell'ordine nella sessione per mostrarli nella pagina di riepilogo.
- * 6. Invia un'email di conferma all'acquirente.
- * 7. Reindirizza alla pagina di riepilogo ordine.
- * * Logica Specifica (Utente Loggato vs Ospite):
- * - **Utente Loggato**:
- * - Valida i dati di indirizzo/pagamento selezionati o inseriti.
- * - Se vengono inseriti nuovi dati, li salva nel database per usi futuri.
- * - Usa i dati dell'utente (nome, email) per l'ordine.
- * - **Utente Ospite**:
- * - Valida tutti i dati inseriti manualmente (nome, email, indirizzo, pagamento).
- * - I dati non vengono salvati per usi futuri.
+ * Gestisce la logica di finalizzazione dell'ordine.
  */
 router.post('/checkout', async (req, res) => {
     const cart = req.session.cart;
@@ -310,7 +262,7 @@ router.post('/checkout', async (req, res) => {
         if (transactionStarted) {
             await new Promise((resolve) => db.run('ROLLBACK', () => resolve()));
         }
-        console.error("Errore durante il checkout:", error);
+        console.error("Errore during il checkout:", error);
         req.flash('error', error.message || 'Si è verificato un errore durante la finalizzazione dell\'ordine.');
         res.redirect('/carrello/checkout');
     }
@@ -318,9 +270,7 @@ router.post('/checkout', async (req, res) => {
 
 /**
  * ROTTA: GET /carrello/api/data
- * * Un endpoint API che restituisce i dati del carrello in formato JSON.
- * Utilizzato dallo script `script.js` nel frontend per aggiornare dinamicamente
- * l'anteprima del carrello senza ricaricare la pagina.
+ * Un endpoint API che restituisce i dati del carrello in formato JSON.
  */
 router.get('/api/data', (req, res) => {
     res.json(req.session.cart);
