@@ -1,3 +1,4 @@
+// File: models/dao/cart-dao.js
 'use strict';
 
 // Importazione del database e del DAO dei prodotti
@@ -18,27 +19,38 @@ class CartDAO {
     async getCartByUserId(userId) {
         const sql = 'SELECT * FROM cart_items WHERE user_id = ?';
         return new Promise((resolve, reject) => {
-            db.all(sql, [userId], async (err, rows) => {
+            db.all(sql, [userId], async (err, cartItems) => {
                 if (err) return reject(err);
 
                 const cart = { items: {}, totalQty: 0, totalPrice: 0 };
-                if (!rows) return resolve(cart);
+                if (!cartItems || cartItems.length === 0) {
+                    return resolve(cart);
+                }
+                
+                // Estrae tutti gli ID dei prodotti dal carrello.
+                const productIds = cartItems.map(item => item.product_id);
 
-                // Itera su ogni articolo trovato nel carrello del database
-                for (const row of rows) {
-                    const product = await prodottiDao.getProductById(row.product_id);
-                    // Controlla se il prodotto esiste ancora nel database
+                // Recupera tutti i dettagli dei prodotti in una singola query.
+                const products = await prodottiDao.getProductsByIds(productIds);
+                const productsMap = products.reduce((map, product) => {
+                    map[product.id] = product;
+                    return map;
+                }, {});
+
+                // Costruisce l'oggetto carrello.
+                for (const item of cartItems) {
+                    const product = productsMap[item.product_id];
                     if (product) {
                         const itemPrice = product.prezzo_scontato || product.prezzo;
                         cart.items[product.id] = {
-                            item: product, // Include l'oggetto completo del prodotto con il suo stato
-                            qty: row.quantity,
-                            price: itemPrice * row.quantity
+                            item: product,
+                            qty: item.quantity,
+                            price: itemPrice * item.quantity
                         };
-                        // Aggiunge al totale solo se il prodotto è effettivamente disponibile
+                        // Aggiunge al totale solo se il prodotto è effettivamente disponibile.
                         if (product.stato === 'disponibile') {
-                            cart.totalQty += row.quantity;
-                            cart.totalPrice += itemPrice * row.quantity;
+                            cart.totalQty += item.quantity;
+                            cart.totalPrice += itemPrice * item.quantity;
                         }
                     }
                 }
@@ -46,6 +58,7 @@ class CartDAO {
             });
         });
     }
+
 
     /**
      * Aggiunge un prodotto al carrello di un utente.

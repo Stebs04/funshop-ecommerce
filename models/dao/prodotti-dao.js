@@ -88,6 +88,32 @@ class ProdottiDAO {
   }
 
   /**
+   * Recupera più prodotti in una sola query dato un array di ID.
+   * @param {Array<number>} ids - Un array di ID di prodotti.
+   * @returns {Promise<Array<Object>>} Una lista di oggetti prodotto.
+   */
+  async getProductsByIds(ids) {
+    if (!ids || ids.length === 0) {
+        return [];
+    }
+    // Crea una serie di placeholder '?' per la clausola IN.
+    const placeholders = ids.map(() => '?').join(',');
+    const sql = `
+        SELECT p.*, u.username as nome_venditore 
+        FROM prodotti p 
+        JOIN users u ON p.user_id = u.id 
+        WHERE p.id IN (${placeholders})
+    `;
+    return new Promise((resolve, reject) => {
+        this.db.all(sql, ids, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+  }
+
+
+  /**
    * Recupera tutti i prodotti 'disponibili' di un utente specifico.
    * @param {number} userId - L'ID dell'utente (venditore).
    * @returns {Promise<Array<Object>>} Una lista dei suoi prodotti.
