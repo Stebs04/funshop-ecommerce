@@ -16,6 +16,16 @@ const indirizziDao = require('../models/dao/indirizzi-dao');
 const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao');
 const observedDao = require('../models/dao/observed-dao');
 
+// Array delle categorie da passare al template
+const categorie = [
+    "Anime & Manga",
+    "Carte da gioco collezionabili",
+    "Action Figure & Statue",
+    "Videogiochi",
+    "Modellismo & Replica",
+    "LEGO / Brick compatibili"
+];
+
 /**
  * Middleware `ensureAuthenticated`
  * * Questo middleware "protegge" tutte le rotte definite in questo file.
@@ -90,6 +100,7 @@ router.get(['/', '/:section'], async (req, res) => {
             indirizzi: indirizziUtente,
             metodiPagamento: metodiPagamento,
             sellerStats: sellerStats,
+            categorie: categorie, // Passa l'array delle categorie al template
         });
     } catch (error) {
         console.error(`Errore nel caricare la dashboard utente:`, error);
@@ -144,9 +155,7 @@ router.post('/profilo/elimina', async (req, res) => {
         req.logout((err) => {
             if (err) {
                 console.error("Errore durante il logout dopo l'eliminazione dell'account:", err);
-                // Anche se c'è un errore nel logout, l'account è già stato eliminato.
-                // Reindirizziamo comunque mostrando il successo dell'eliminazione.
-                req.flash('success', 'Il tuo account è stato eliminato con successo.');
+                req.flash('error', 'Il tuo account è stato eliminato, ma si è verificato un problema durante il logout.');
                 return res.redirect('/');
             }
             req.flash('success', 'Il tuo account è stato eliminato con successo.');
