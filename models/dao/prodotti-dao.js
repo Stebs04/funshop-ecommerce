@@ -108,12 +108,12 @@ class ProdottiDAO {
    * @returns {Promise<number>} L'ID del nuovo prodotto.
    */
   async createProduct(product) {
-    const { nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_asta, user_id } = product;
+    const { nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, user_id } = product;
     const sql = `
-      INSERT INTO prodotti (nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_asta, prezzo_scontato, user_id) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)`;
-    // Usiamo '|| null' per assicurarci che se prezzo o prezzo_asta non sono definiti, venga inserito NULL nel DB.
-    const params = [nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo || null, prezzo_asta || null, user_id];
+      INSERT INTO prodotti (nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_scontato, user_id) 
+      VALUES (?, ?, ?, ?, ?, ?, NULL, ?)`;
+    // Usiamo '|| null' per assicurarci che se prezzo non è definito, venga inserito NULL nel DB.
+    const params = [nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo || null, user_id];
     return new Promise((resolve, reject) => {
       this.db.run(sql, params, function (err) {
         if (err) reject(err);

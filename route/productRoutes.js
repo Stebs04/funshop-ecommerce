@@ -78,8 +78,7 @@ router.post('/', isLoggedIn, upload, [
     check('descrizione').notEmpty().withMessage('La descrizione è obbligatoria.'),
     check('categoria').notEmpty().withMessage('La categoria è obbligatoria.'),
     check('condizione').notEmpty().withMessage('La condizione è obbligatoria.'),
-    check('prezzo').optional({ checkFalsy: true }).isFloat({ gt: 0 }).withMessage('Il prezzo deve essere un numero valido.'),
-    check('prezzo_asta').optional({ checkFalsy: true }).isFloat({ gt: 0 }).withMessage('Il prezzo di partenza dell\'asta deve essere un numero valido.')
+    check('prezzo').optional({ checkFalsy: true }).isFloat({ gt: 0 }).withMessage('Il prezzo deve essere un numero valido.')
 ], async (req, res) => {
     if (req.user.tipo_account !== 'venditore') {
         req.flash('error', 'Azione non permessa.');
@@ -97,22 +96,12 @@ router.post('/', isLoggedIn, upload, [
         return res.redirect('/products/new');
     }
 
-    const { sellingType, nome, descrizione, categoria, condizione } = req.body;
-    let prezzo = null;
-    let prezzo_asta = null;
+    const { nome, descrizione, categoria, condizione } = req.body;
+    let prezzo = parseFloat(req.body.prezzo);
     
-    if (sellingType === 'sell_now') {
-        prezzo = parseFloat(req.body.prezzo);
-        if (isNaN(prezzo) || prezzo <= 0) {
-            req.flash('error', 'Il prezzo specificato non è valido.');
-            return res.redirect('/products/new');
-        }
-    } else {
-        prezzo_asta = parseFloat(req.body.prezzo_asta);
-         if (isNaN(prezzo_asta) || prezzo_asta <= 0) {
-            req.flash('error', 'Il prezzo di partenza dell\'asta non è valido.');
-            return res.redirect('/products/new');
-        }
+    if (isNaN(prezzo) || prezzo <= 0) {
+        req.flash('error', 'Il prezzo specificato non è valido.');
+        return res.redirect('/products/new');
     }
 
     const newProduct = {
@@ -121,7 +110,6 @@ router.post('/', isLoggedIn, upload, [
         condizione,
         parola_chiave: categoria,
         prezzo,
-        prezzo_asta,
         percorso_immagine: '/uploads/' + req.file.filename,
         user_id: req.user.id
     };

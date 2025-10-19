@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS prodotti (
     parola_chiave TEXT NOT NULL,               -- Categoria o parola chiave principale per la ricerca.
     percorso_immagine TEXT,                    -- Path dell'immagine del prodotto sul server.
     prezzo REAL,                               -- Prezzo per la vendita immediata.
-    prezzo_asta REAL,                          -- Prezzo di partenza per un'eventuale asta.
     prezzo_scontato REAL,                      -- Prezzo scontato, se in offerta.
     stato TEXT DEFAULT 'disponibile',          -- Stato attuale del prodotto ('disponibile', 'venduto', 'eliminato').
     data_inserimento DATETIME DEFAULT CURRENT_TIMESTAMP, -- Data e ora di creazione del prodotto.

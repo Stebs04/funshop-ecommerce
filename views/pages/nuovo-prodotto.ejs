@@ -1,5 +1,6 @@
 <%# views/pages/nuovo-prodotto.ejs %>
-<%# Pagina con il form per l'inserimento di un nuovo prodotto da parte di un venditore. %>
+<%# Pagina con il form per l'inserimento di un nuovo prodotto da parte di un venditore.
+%>
 
 <!doctype html>
 <html lang="it">
@@ -16,75 +17,74 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4 p-md-5">
                 <h2 class="text-center mb-4">Aggiungi un nuovo prodotto</h2>
-                <%# Il form invia i dati con metodo POST alla rotta /products. %>
-                <%# `enctype="multipart/form-data"` è FONDAMENTALE per permettere il caricamento di file (l'immagine). %>
+                <%# Il form invia i dati con metodo POST alla rotta /products.
+%>
+                <%# `enctype="multipart/form-data"` è FONDAMENTALE per permettere il caricamento di file (l'immagine).
+%>
                 <form id="new-product-form" action="/products" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="productTitle" class="form-label">Titolo del prodotto</label>
-                        <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action Figure Son Goku SSJ" required>
+                        <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action 
+Figure Son Goku SSJ" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="productDescription" class="form-label">Descrizione</label>
-                        <textarea name="descrizione" class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
+                        <textarea name="descrizione" class="form-control" id="productDescription" rows="5" 
+placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc."
+required></textarea>
                     </div>
 
                     <div class="mb-3">
                         <label for="productCategory" class="form-label">Categoria</label>
                         <select name="categoria" class="form-select" id="productCategory" required>
-                            <option value="" disabled selected>Seleziona una categoria</option>
-                            <%# Popola dinamicamente le opzioni del menu a tendina usando l'array `categorie` passato dalla rotta. %>
+     
+                        <option value="" disabled selected>Seleziona una categoria</option>
+                            <%# Popola dinamicamente le opzioni del menu a tendina usando l'array `categorie` passato dalla rotta.
+%>
                             <% if (locals.categorie) { %>
                                 <% categorie.forEach(cat => { %>
-                                    <option value="<%= cat %>"><%= cat %></option>
+                                
+    <option value="<%= cat %>"><%= cat %></option>
                                 <% }) %>
                             <% } %>
                         </select>
-                    </div>
+   
+                 </div>
 
                     <div class="mb-3">
                         <label for="productCondition" class="form-label">Condizione</label>
                         <select name="condizione" class="form-select" id="productCondition" required>
-                            <option value="" disabled selected>Seleziona una condizione</option>
+        
+                    <option value="" disabled selected>Seleziona una condizione</option>
                             <option value="Come nuovo">Come nuovo</option>
                             <option value="Ottimo stato">Ottimo stato</option>
-                            <option value="Tanto usato">Tanto usato</option>
+             
+               <option value="Tanto usato">Tanto usato</option>
                         </select>
                     </div>
 
                     <div class="mb-4">
-                        <label for="productImages" class="form-label">Immagine del prodotto</label>
+                 
+       <label for="productImages" class="form-label">Immagine del prodotto</label>
                         <input name="percorso_immagine" class="form-control" type="file" id="productImages" accept="image/*" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="sellingType" class="form-label">Modalità di vendita</label>
-                        <select class="form-select" id="sellingType" name="sellingType">
-                            <option value="sell_now" selected>Vendi ora</option>
-                            <option value="auction">Metti all'asta</option>
-                        </select>
                     </div>
 
                     <div id="price-section" class="mb-3">
                         <label for="productPrice" class="form-label">Prezzo</label>
-                        <div class="input-group">
+          
+               <div class="input-group">
                             <span class="input-group-text">€</span>
                             <input name="prezzo" type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0" required>
-                        </div>
-                    </div>
-
-                    <div id="auction-price-section" class="mb-3 d-none">
-                        <label for="auctionStartPrice" class="form-label">Prezzo di partenza asta</label>
-                        <div class="input-group">
-                            <span class="input-group-text">€</span>
-                            <input name="prezzo_asta" type="number" class="form-control" id="auctionStartPrice" placeholder="9.99" step="0.01" min="0">
-                        </div>
+                    
+     </div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                         <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">Annulla</button>
                         <button type="submit" class="btn btn-primary">Metti in vendita</button>
-                    </div>
+         
+           </div>
                 </form>
                 </div>
             </div>
@@ -93,38 +93,6 @@
     </main>
 
     <%- include('../partials/footer') %>
-
-    <%# Script JavaScript per la logica del form. %>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Seleziona gli elementi del DOM necessari.
-            const sellingType = document.getElementById('sellingType');
-            const priceSection = document.getElementById('price-section');
-            const auctionPriceSection = document.getElementById('auction-price-section');
-            const productPriceInput = document.getElementById('productPrice');
-            const auctionStartPriceInput = document.getElementById('auctionStartPrice');
-
-            // Aggiunge un listener che si attiva quando l'utente cambia la modalità di vendita.
-            sellingType.addEventListener('change', function () {
-                // Se l'utente seleziona "Metti all'asta":
-                if (this.value === 'auction') {
-                    priceSection.classList.add('d-none'); // Nasconde la sezione del prezzo fisso.
-                    productPriceInput.required = false; // Rimuove l'obbligatorietà dal campo prezzo fisso.
-                    productPriceInput.value = ''; // Svuota il campo.
-                    
-                    auctionPriceSection.classList.remove('d-none'); // Mostra la sezione del prezzo d'asta.
-                    auctionStartPriceInput.required = true; // Rende obbligatorio il campo prezzo d'asta.
-                } else { // Se l'utente seleziona "Vendi ora":
-                    priceSection.classList.remove('d-none'); // Mostra la sezione del prezzo fisso.
-                    productPriceInput.required = true; // Rende obbligatorio il campo prezzo fisso.
-                    
-                    auctionPriceSection.classList.add('d-none'); // Nasconde la sezione del prezzo d'asta.
-                    auctionStartPriceInput.required = false; // Rimuove l'obbligatorietà.
-                    auctionStartPriceInput.value = ''; // Svuota il campo.
-                }
-            });
-        });
-    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
