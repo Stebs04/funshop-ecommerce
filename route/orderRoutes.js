@@ -3,10 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { isLoggedIn } = require('../middleware/passport-config');
 
-// Proteggi tutte le rotte in questo file
-router.use(isLoggedIn);
 
 router.get('/riepilogo', (req, res) => {
     // Se non ci sono dati di un ordine recente nella sessione, non c'è nulla da mostrare.
