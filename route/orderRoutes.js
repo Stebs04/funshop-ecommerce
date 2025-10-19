@@ -8,14 +8,14 @@ const { isLoggedIn } = require('../middleware/passport-config');
 // Proteggi tutte le rotte in questo file
 router.use(isLoggedIn);
 
-// Rotta per la pagina di riepilogo/successo dell'ordine
 router.get('/riepilogo', (req, res) => {
+    // Se non ci sono dati di un ordine recente nella sessione, non c'è nulla da mostrare.
     if (!req.session.latestOrder) {
         req.flash('error', 'Nessun riepilogo ordine da visualizzare.');
         return res.redirect('/');
     }
     const orderDetails = req.session.latestOrder;
-    // Pulisce la sessione dopo l'uso per evitare che la pagina sia accessibile di nuovo
+    // Pulisce la sessione dopo l'uso per evitare che la pagina sia ricaricata o accessibile di nuovo.
     delete req.session.latestOrder; 
     
     res.render('pages/ordine-riepilogo', {

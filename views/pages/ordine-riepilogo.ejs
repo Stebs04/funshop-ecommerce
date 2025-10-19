@@ -1,3 +1,4 @@
+<%# views/pages/ordine-riepilogo.ejs %>
 <!doctype html>
 <html lang="it">
 <%- include('../partials/header') %>
@@ -14,9 +15,9 @@
                         <h2 class="card-title mt-3">Grazie per il Tuo Ordine!</h2>
                         <p class="text-muted">Il tuo ordine è stato confermato con successo.</p>
                     </div>
-                
+                    
                     <div class="alert alert-light text-center" role="alert">
-                        Invio email di conferma a <strong><%= order.buyer.email %></strong>.
+                        Abbiamo simulato l'invio di un'email di conferma a <strong><%= order.buyer.email %></strong>.
                     </div>
                     
                     <hr class="my-4">
@@ -65,9 +66,14 @@
                     </div>
                 
                     <div class="text-center mt-5">
-                        <p class="mb-2">La tua opinione è importante! Aiuta la community lasciando una recensione.</p>
-                        <a href="<%= order.reviewLink %>" class="btn btn-info mb-3">Lascia una recensione ora</a>
-                        <br>
+                        <%# --- INIZIO MODIFICA --- %>
+                        <%# Mostra il blocco recensione solo se l'utente NON è un ospite %>
+                        <% if (!order.isGuest) { %>
+                            <p class="mb-2">La tua opinione è importante! Aiuta la community lasciando una recensione.</p>
+                            <a href="<%= order.reviewLink %>" class="btn btn-info mb-3">Lascia una recensione ora</a>
+                            <br>
+                        <% } %>
+                        <%# --- FINE MODIFICA --- %>
                         <a href="/" class="btn btn-primary">Continua lo Shopping</a>
                     </div>
                 </div>
