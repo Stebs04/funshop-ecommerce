@@ -50,7 +50,12 @@ router.post('/login',
             req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
         }
         
-        return res.redirect('/');
+        // Controlla se c'è un URL di reindirizzamento salvato nella sessione
+        const returnTo = req.session.returnTo;
+        delete req.session.returnTo; // Pulisci la sessione dopo averlo usato
+        
+        // Reindirizza all'URL salvato o alla homepage come fallback
+        return res.redirect(returnTo || '/');
       });
     })(req, res, next);
   }

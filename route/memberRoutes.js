@@ -1,3 +1,4 @@
+// File: route/memberRoutes.js
 'use strict';
 
 const recensioniDao = require('../models/dao/recensioni-dao');
@@ -13,10 +14,9 @@ const informazioniDao = require('../models/dao/informazioni-dao');
 router.get('/:id', async (req, res) => {
     try {
         const memberId = req.params.id;
-        // Evita che l'utente visualizzi il proprio profilo tramite questa rotta
-        if (req.isAuthenticated() && memberId == req.user.id) {
-            return res.redirect('/utente');
-        }
+        
+        // Controlla se l'utente che visualizza è il proprietario del profilo
+        const isOwner = req.isAuthenticated() && memberId == req.user.id;
 
         const member = await utentiDao.getUserById(memberId);
         if (!member) {
@@ -43,8 +43,9 @@ router.get('/:id', async (req, res) => {
             accountInfo: accountInfo,
             prodotti: prodottiUtente,
             recensioni: recensioniRicevute,
-            averageRating: averageRating, // Passa la media
-            reviewCount: recensioniRicevute.length // Passa il numero di recensioni
+            averageRating: averageRating,
+            reviewCount: recensioniRicevute.length,
+            isOwner: isOwner // Passa la variabile alla vista
         });
     } catch (error) {
         console.error(`Errore nel caricare la pagina membro:`, error);

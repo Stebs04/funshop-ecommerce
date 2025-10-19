@@ -6,29 +6,68 @@
 
 <main class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-9">
             <div class="card shadow-sm">
                 <div class="card-body p-lg-5">
-                    <h2 class="card-title text-center mb-4">Riepilogo del Tuo Ordine</h2>
-                    <div class="alert alert-light" role="alert">
-                        Abbiamo simulato l'invio di un'email di conferma a <strong><%= order.buyer.email %></strong> con i dettagli e il link per lasciare una recensione.
+                    <div class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                        <h2 class="card-title mt-3">Grazie per il Tuo Ordine!</h2>
+                        <p class="text-muted">Il tuo ordine è stato confermato con successo.</p>
                     </div>
-                    <hr>
-                    <h5 class="mb-3">Prodotti Acquistati</h5>
+                
+                    <div class="alert alert-light text-center" role="alert">
+                        Abbiamo simulato l'invio di un'email di conferma a <strong><%= order.buyer.email %></strong>.
+                    </div>
+                    
+                    <hr class="my-4">
+
+                    <h5 class="mb-3">Riepilogo Prodotti</h5>
                     <ul class="list-group list-group-flush mb-4">
                         <% order.items.forEach(item => { %>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><%= item.nome %></span>
+                             <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <div class="d-flex align-items-center">
+                                    <img src="<%= item.percorso_immagine %>" alt="<%= item.nome %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3">
+                                    <span><%= item.nome %></span>
+                                </div>
                                 <span class="fw-bold">€<%= (item.prezzo_scontato || item.prezzo).toFixed(2) %></span>
-                            </li>
+                             </li>
                         <% }) %>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 fw-bold fs-5">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 fw-bold fs-5 border-top pt-3">
                             <span>Totale</span>
                             <span>€<%= order.total.toFixed(2) %></span>
                         </li>
                     </ul>
-                    <div class="text-center mt-4">
-                        <a href="<%= order.reviewLink %>" class="btn btn-info mb-3">Lascia una recensione ora</a><br>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Indirizzo di Spedizione</h5>
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <p class="mb-1"><strong><%= order.address.nome %> <%= order.address.cognome %></strong></p>
+                                    <p class="mb-1"><%= order.address.indirizzo %></p>
+                                    <p class="mb-0"><%= order.address.cap %>, <%= order.address.citta %></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Metodo di Pagamento</h5>
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <p class="mb-1">
+                                        <i class="bi bi-credit-card-fill"></i>
+                                        Carta che termina con **** <%= order.payment.last4 %>
+                                    </p>
+                                    <p class="mb-0">Titolare: <%= order.payment.nome_titolare %></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="text-center mt-5">
+                        <p class="mb-2">La tua opinione è importante! Aiuta la community lasciando una recensione.</p>
+                        <a href="<%= order.reviewLink %>" class="btn btn-info mb-3">Lascia una recensione ora</a>
+                        <br>
                         <a href="/" class="btn btn-primary">Continua lo Shopping</a>
                     </div>
                 </div>
@@ -37,26 +76,8 @@
     </div>
 </main>
 
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-body text-center p-4">
-        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
-        <h3 class="mt-3" id="successModalLabel">Grazie!</h3>
-        <p class="lead">Il tuo ordine è andato a buon fine.</p>
-        <button type="button" class="btn btn-success" data-bs-dismiss="modal">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <%- include('../partials/footer') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
-    });
-</script>
+
 </body>
 </html>

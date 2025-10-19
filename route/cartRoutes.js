@@ -140,11 +140,50 @@ router.post('/checkout', async (req, res) => {
         return res.redirect('/carrello');
     }
 
-    const { addressSelection, paymentSelection, ...formData } = req.body;
+    const { addressSelection, paymentMethod, ...formData } = req.body;
     const userId = req.user.id;
     const buyerEmail = req.user.email;
 
+    let finalAddress;
+    let finalPaymentMethod;
+
     try {
+        // --- LOGICA MIGLIORATA PER INDIRIZZO E PAGAMENTO ---
+        if (addressSelection === 'new') {
+            finalAddress = {
+                nome: req.user.nome,
+                cognome: req.user.cognome,
+                indirizzo: formData.indirizzo,
+                citta: formData.citta,
+                cap: formData.cap,
+            };
+        } else {
+            const savedAddress = await indirizziDao.getIndirizzoById(addressSelection);
+            if (savedAddress && savedAddress.user_id === userId) {
+                finalAddress = { ...savedAddress, nome: req.user.nome, cognome: req.user.cognome };
+            } else {
+                throw new Error('Indirizzo selezionato non valido.');
+            }
+        }
+
+        if (paymentMethod === 'new') {
+            finalPaymentMethod = {
+                nome_titolare: formData.nome_titolare,
+                last4: formData.numero_carta.slice(-4),
+                data_scadenza: formData.data_scadenza,
+            };
+        } else {
+            const savedPayment = await metodiPagamentoDao.getMetodiPagamentoByUserId(userId);
+            const selectedPayment = savedPayment.find(p => p.id == paymentMethod);
+            if (selectedPayment) {
+                finalPaymentMethod = selectedPayment;
+            } else {
+                throw new Error('Metodo di pagamento selezionato non valido.');
+            }
+        }
+        // --- FINE LOGICA MIGLIORATA ---
+
+
         await new Promise((resolve, reject) => db.run('BEGIN TRANSACTION', err => err ? reject(err) : resolve()));
 
         const purchasedItems = [];
@@ -159,24 +198,23 @@ router.post('/checkout', async (req, res) => {
             purchasedItems.push(product);
         }
 
-        // Svuota il carrello persistente
         await cartDao.clearCart(userId);
 
         await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
 
         const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
         
+        // Crea l'oggetto per la sessione con i dati strutturati
         req.session.latestOrder = {
             buyer: req.user,
             items: purchasedItems,
             total: cart.totalPrice,
-            address: formData,
-            payment: formData,
+            address: finalAddress,          // <-- Dati indirizzo aggiornati
+            payment: finalPaymentMethod,    // <-- Dati pagamento aggiornati
             date: new Date(),
             reviewLink: reviewLink
         };
         
-        // Svuota il carrello della sessione
         req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
         
         sendOrderConfirmationEmail(buyerEmail, req.session.latestOrder).catch(console.error);
@@ -186,7 +224,7 @@ router.post('/checkout', async (req, res) => {
     } catch (error) {
         await new Promise((resolve, reject) => db.run('ROLLBACK', err => err ? reject(err) : resolve()));
         console.error("Errore durante il checkout:", error);
-        req.flash('error', 'Si è verificato un errore durante la finalizzazione dell\'ordine.');
+        req.flash('error', 'Si è verificato un errore durante la finalizzazione dell\'ordine. ' + error.message);
         res.redirect('/carrello');
     }
 });

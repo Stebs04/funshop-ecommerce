@@ -67,7 +67,9 @@ class ProdottiDAO {
   }
 
   async getProductsByUserId(userId) {
-    const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato != 'eliminato' ORDER BY data_inserimento DESC";
+    // --- MODIFICA QUI ---
+    // La query ora seleziona solo i prodotti con stato 'disponibile'
+    const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato = 'disponibile' ORDER BY data_inserimento DESC";
     return new Promise((resolve, reject) => {
       this.db.all(sql, [userId], (err, rows) => {
         if (err) reject(err);

@@ -1,3 +1,4 @@
+// File: middleware/passport-config.js
 'use strict';
 
 const passport = require('passport');
@@ -72,6 +73,8 @@ function isLoggedIn(req, res, next) {
     if (req.isAuthenticated()) {
         return next();
     }
+    // Salva l'URL originale a cui l'utente stava tentando di accedere
+    req.session.returnTo = req.originalUrl;
     req.flash('error', 'Devi effettuare il login per accedere a questa pagina.');
     res.redirect('/auth/login');
 }
