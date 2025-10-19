@@ -9,36 +9,61 @@
     
     <%- include('../partials/messages') %>
 
-    <% if (cart && cart.totalQty > 0) { %>
+    <% if (cart && Object.keys(cart.items).length > 0) { %>
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow-sm mb-3">
                 <div class="card-body">
                     <% for(let id in cart.items) { const product = cart.items[id]; %>
-                    <div class="row align-items-center mb-3">
-                        <div class="col-md-2">
-                            <img src="<%= product.item.percorso_immagine %>" class="img-fluid rounded" alt="<%= product.item.nome %>">
-                        </div>
-                        <div class="col-md-4">
-                            <h5 class="mb-0"><%= product.item.nome %></h5>
-                            <p class="text-muted small mb-0">Venduto da <%= product.item.nome_venditore %></p>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="number" class="form-control text-center" value="<%= product.qty %>" min="1" disabled>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <span class="fw-bold fs-5">€<%= product.price.toFixed(2) %></span>
-                        </div>
-                        <div class="col-md-2 text-end">
-                            <%# CORREZIONE: Assicurati che l'action punti all'ID corretto del prodotto %>
-                            <form action="/carrello/remove/<%= product.item.id %>" method="POST">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Rimuovi"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </div>
-                    </div>
-                    <% if (Object.keys(cart.items).indexOf(id) < Object.keys(cart.items).length - 1) { %>
-                        <hr>
-                    <% } %>
+                        
+                        <%# --- INIZIO MODIFICA --- %>
+                        <% if (product.item.stato === 'disponibile') { %>
+                            <div class="row align-items-center mb-3">
+                                <div class="col-md-2">
+                                    <img src="<%= product.item.percorso_immagine %>" class="img-fluid rounded" alt="<%= product.item.nome %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <h5 class="mb-0"><%= product.item.nome %></h5>
+                                    <p class="text-muted small mb-0">Venduto da <%= product.item.nome_venditore %></p>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="number" class="form-control text-center" value="<%= product.qty %>" min="1" disabled>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <span class="fw-bold fs-5">€<%= product.price.toFixed(2) %></span>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <form action="/carrello/remove/<%= product.item.id %>" method="POST">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Rimuovi"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="row align-items-center mb-3 p-3 bg-light rounded border">
+                                <div class="col-md-2">
+                                    <img src="<%= product.item.percorso_immagine %>" class="img-fluid rounded opacity-50" alt="<%= product.item.nome %>">
+                                </div>
+                                <div class="col-md-7">
+                                    <h5 class="mb-0 text-muted text-decoration-line-through"><%= product.item.nome %></h5>
+                                    <div class="alert alert-warning p-2 mt-2 mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        Questo articolo non è più disponibile.
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <form action="/carrello/remove/<%= product.item.id %>" method="POST">
+                                        <button type="submit" class="btn btn-danger" title="Rimuovi dal carrello">
+                                            <i class="bi bi-trash-fill me-2"></i>Rimuovi
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <% } %>
+                        <%# --- FINE MODIFICA --- %>
+
+                        <% if (Object.keys(cart.items).indexOf(id) < Object.keys(cart.items).length - 1) { %>
+                            <hr>
+                        <% } %>
                     <% } %>
                 </div>
             </div>
@@ -51,7 +76,7 @@
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 pb-0">
-                            Subtotale<span>€<%= cart.totalPrice.toFixed(2) %></span>
+                            Subtotale articoli disponibili<span>€<%= cart.totalPrice.toFixed(2) %></span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
                             Spedizione<span>€5.00</span> 
@@ -61,7 +86,14 @@
                             <span><strong>€<%= (cart.totalPrice + 5).toFixed(2) %></strong></span>
                         </li>
                     </ul>
-                    <a href="/carrello/checkout" class="btn btn-primary btn-lg w-100" role="button">Procedi al checkout</a>
+                    <%# --- INIZIO MODIFICA --- %>
+                    <% if (cart.totalQty > 0) { %>
+                        <a href="/carrello/checkout" class="btn btn-primary btn-lg w-100" role="button">Procedi al checkout</a>
+                    <% } else { %>
+                        <button class="btn btn-primary btn-lg w-100" disabled>Procedi al checkout</button>
+                        <small class="form-text text-muted text-center d-block mt-2">Aggiungi articoli disponibili per procedere.</small>
+                    <% } %>
+                    <%# --- FINE MODIFICA --- %>
                 </div>
             </div>
         </div>

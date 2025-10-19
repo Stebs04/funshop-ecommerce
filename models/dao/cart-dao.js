@@ -22,16 +22,22 @@ class CartDAO {
 
                 for (const row of rows) {
                     const product = await prodottiDao.getProductById(row.product_id);
-                    if (product && product.stato === 'disponibile') {
+                    // --- INIZIO MODIFICA ---
+                    // Se il prodotto esiste ancora nel DB (non è stato eliminato fisicamente)...
+                    if (product) {
                         const itemPrice = product.prezzo_scontato || product.prezzo;
                         cart.items[product.id] = {
-                            item: product,
+                            item: product, // L'oggetto 'item' contiene lo stato ('disponibile', 'venduto', ecc.)
                             qty: row.quantity,
                             price: itemPrice * row.quantity
                         };
-                        cart.totalQty += row.quantity;
-                        cart.totalPrice += itemPrice * row.quantity;
+                        // ...ma aggiungilo al totale solo se è effettivamente disponibile per l'acquisto.
+                        if (product.stato === 'disponibile') {
+                            cart.totalQty += row.quantity;
+                            cart.totalPrice += itemPrice * row.quantity;
+                        }
                     }
+                    // --- FINE MODIFICA ---
                 }
                 resolve(cart);
             });

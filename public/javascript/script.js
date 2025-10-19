@@ -29,8 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             profilePreview = document.createElement('div');
             profilePreview.id = 'profile-preview';
             const isSeller = authData.user.tipo_account === 'venditore';
-            
-            // --- INIZIO MODIFICA ---
             const isAdmin = authData.user.tipo_account === 'admin';
 
             profilePreview.innerHTML = `
@@ -41,7 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="profile-divider" style="height: 1px; background: #eee; margin: 8px 0;"></div>
                 <a href="/auth/logout" class="profile-link">Esci</a>
             `;
-            // --- FINE MODIFICA ---
 
             document.body.appendChild(profilePreview);
 
@@ -112,31 +109,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                     cartCounter.style.display = 'none';
                 }
                 if (!cartPreview) createCartPopup();
-                if (!cart || cart.totalQty === 0) {
+                if (!cart || Object.keys(cart.items).length === 0) {
                     cartPreview.innerHTML = `<p class="text-center text-muted m-0">Il tuo carrello è vuoto.</p>`;
                 } else {
-                    let itemsHtml = Object.values(cart.items).map(product => `
-                        <div class="d-flex mb-3">
-                            <img src="${product.item.percorso_immagine}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
-                            <div class="ms-2 flex-grow-1">
-                                <h6 class="mb-0 small">${product.item.nome}</h6>
-                                <small class="text-muted">${product.qty} x €${(product.item.prezzo_scontato || product.item.prezzo).toFixed(2)}</small>
-                            </div>
-                            <span class="fw-bold small">€${product.price.toFixed(2)}</span>
-                        </div>
-                    `).join('');
+                    // --- INIZIO MODIFICA ---
+                    let itemsHtml = Object.values(cart.items).map(product => {
+                        if (product.item.stato === 'disponibile') {
+                            return `
+                                <div class="d-flex mb-3">
+                                    <img src="${product.item.percorso_immagine}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                    <div class="ms-2 flex-grow-1">
+                                        <h6 class="mb-0 small">${product.item.nome}</h6>
+                                        <small class="text-muted">${product.qty} x €${(product.item.prezzo_scontato || product.item.prezzo).toFixed(2)}</small>
+                                    </div>
+                                    <span class="fw-bold small">€${product.price.toFixed(2)}</span>
+                                </div>
+                            `;
+                        } else {
+                             return `
+                                <div class="d-flex mb-3 p-2 bg-light rounded border">
+                                     <img src="${product.item.percorso_immagine}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; opacity: 0.5;">
+                                    <div class="ms-2 flex-grow-1">
+                                        <h6 class="mb-0 small text-decoration-line-through">${product.item.nome}</h6>
+                                        <small class="text-warning fw-bold">Non disponibile</small>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }).join('');
+                    
+                    let checkoutButtonHtml = '';
+                    if (cart.totalQty > 0) {
+                        checkoutButtonHtml = `<a href="/carrello/checkout" class="btn btn-primary btn-sm">Vai al Checkout</a>`;
+                    } else {
+                        checkoutButtonHtml = `<button class="btn btn-primary btn-sm" disabled>Checkout non disponibile</button>`;
+                    }
+
                     cartPreview.innerHTML = `
                         ${itemsHtml}
                         <hr class="my-2">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="fw-bold">Totale:</span>
+                            <span class="fw-bold">Totale disponibili:</span>
                             <span class="fw-bold fs-5">€${cart.totalPrice.toFixed(2)}</span>
                         </div>
                         <div class="d-grid gap-2">
-                            <a href="/carrello" class="btn btn-outline-primary btn-sm">Vedi il Carrello</a>
-                            <a href="/carrello/checkout" class="btn btn-primary btn-sm">Vai al Checkout</a>
+                            <a href="/carrello" class="btn btn-outline-primary btn-sm">Vedi il Carrello Completo</a>
+                            ${checkoutButtonHtml}
                         </div>
                     `;
+                    // --- FINE MODIFICA ---
                 }
             } catch (error) {
                 console.error('Errore nel recuperare i dati del carrello:', error);
@@ -187,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     /**
-     * NUOVA FUNZIONE: Gestisce la logica per il popup "Chiedi Informazioni".
+     * Gestisce la logica per il popup "Chiedi Informazioni".
      */
     const handleInfoModalLogic = () => {
         const infoModal = document.getElementById('infoModal');
@@ -196,9 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let sellerEmail = '';
         let productName = '';
 
-        // Quando il modale sta per essere mostrato...
         infoModal.addEventListener('show.bs.modal', function (event) {
-            // ...prendi i dati dal pulsante che lo ha attivato
             const button = event.relatedTarget;
             sellerEmail = button.getAttribute('data-seller-email');
             productName = button.getAttribute('data-product-name');
@@ -206,19 +225,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const infoForm = document.getElementById('infoForm');
         infoForm.addEventListener('submit', function(event) {
-            event.preventDefault(); // Impedisce l'invio tradizionale del form
+            event.preventDefault(); 
 
             const message = document.getElementById('infoMessage').value;
-            
-            // Crea l'oggetto e il corpo dell'email
             const subject = `Richiesta informazioni per il prodotto: ${productName}`;
             const body = `${message}\n\n---\nMessaggio inviato tramite FunShop per il prodotto: ${window.location.href}`;
             
-            // Costruisci e apri il link mailto:
             const mailtoLink = `mailto:${sellerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
 
-            // Chiudi il modale
             const modalInstance = bootstrap.Modal.getInstance(infoModal);
             modalInstance.hide();
         });
@@ -228,5 +243,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await updateUserProfileLogic();
     updateCartPopupLogic();
     handleProfileImageUpload();
-    handleInfoModalLogic(); // <-- NUOVA FUNZIONE
+    handleInfoModalLogic();
 });
