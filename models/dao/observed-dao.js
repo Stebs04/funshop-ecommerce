@@ -67,13 +67,15 @@ class ObservedDAO {
                     if (err) return reject(err);
                 });
 
-                // Rimuovi le osservazioni per i prodotti che sono stati eliminati (dopo che la notifica è stata vista)
+                // --- INIZIO MODIFICA ---
+                // Rimuovi le osservazioni per i prodotti che sono stati eliminati o venduti (dopo che la notifica è stata vista)
                 const deleteSql = `
                     DELETE FROM observed_products
                     WHERE user_id = ? AND notifica_letta = 0 AND product_id IN (
-                        SELECT id FROM prodotti WHERE stato = 'eliminato'
+                        SELECT id FROM prodotti WHERE stato = 'eliminato' OR stato = 'venduto'
                     )
                 `;
+                // --- FINE MODIFICA ---
                 db.run(deleteSql, [userId], function(err) {
                     if (err) {
                         return db.run('ROLLBACK', () => reject(err));

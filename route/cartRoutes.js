@@ -10,6 +10,7 @@ const ordiniDao = require('../models/dao/ordini-dao');
 const { db } = require('../managedb');
 const { sendOrderConfirmationEmail } = require('../services/emailService');
 const cartDao = require('../models/dao/cart-dao');
+const observedDao = require('../models/dao/observed-dao'); // <-- 1. IMPORTA IL DAO
 
 // Middleware per caricare/inizializzare il carrello
 router.use(async (req, res, next) => {
@@ -122,7 +123,6 @@ router.get('/checkout', async (req, res) => {
     });
 });
 
-// --- VERSIONE CORRETTA DELLA ROTTA DI CHECKOUT ---
 router.post('/checkout', async (req, res) => {
     const cart = req.session.cart;
     if (!cart || cart.totalQty === 0) {
@@ -170,6 +170,7 @@ router.post('/checkout', async (req, res) => {
                 const product = cart.items[id].item;
                 await ordiniDao.createOrder({ totale: cart.items[id].price, user_id: userId, prodotto_id: product.id });
                 await prodottiDao.updateProductStatus(product.id, 'venduto');
+                await observedDao.flagPriceChange(product.id); // <-- 2. ATTIVA NOTIFICA
                 purchasedItems.push(product);
             }
             await cartDao.clearCart(userId);
@@ -204,6 +205,7 @@ router.post('/checkout', async (req, res) => {
                 const product = cart.items[id].item;
                 await ordiniDao.createOrder({ totale: cart.items[id].price, user_id: null, prodotto_id: product.id });
                 await prodottiDao.updateProductStatus(product.id, 'venduto');
+                await observedDao.flagPriceChange(product.id); // <-- 2. ATTIVA NOTIFICA
                 purchasedItems.push(product);
             }
 

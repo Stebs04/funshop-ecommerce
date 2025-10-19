@@ -29,6 +29,10 @@
                             if (hasUnreadNotification) {
                                 if (prodotto.stato === 'eliminato') {
                                     notification = { type: 'deleted', message: 'Questo prodotto è stato rimosso dalla vendita.' };
+                                // --- INIZIO MODIFICA ---
+                                } else if (prodotto.stato === 'venduto') {
+                                    notification = { type: 'sold', message: 'Questo prodotto è stato venduto.' };
+                                // --- FINE MODIFICA ---
                                 } else if (typeof currentPrice === 'number' && typeof observedPrice === 'number' && currentPrice !== observedPrice) {
                                     if (currentPrice < observedPrice) {
                                         notification = { type: 'decrease', message: `Prezzo scontato! Da <strong>€${observedPrice.toFixed(2)}</strong> a <strong>€${currentPrice.toFixed(2)}</strong>` };
@@ -42,6 +46,7 @@
                             <% if (notification && notification.type === 'decrease') { %>list-group-item-success<% } %>
                             <% if (notification && notification.type === 'increase') { %>list-group-item-warning<% } %>
                             <% if (notification && notification.type === 'deleted') { %>list-group-item-danger bg-opacity-10<% } %>
+                            <% if (notification && notification.type === 'sold') { %>list-group-item-info bg-opacity-10<% } %>
                         ">
                             
                             <% if (notification) { %>
@@ -49,29 +54,33 @@
                                     <% if (notification.type === 'decrease') { %>alert-success<% } %>
                                     <% if (notification.type === 'increase') { %>alert-warning<% } %>
                                     <% if (notification.type === 'deleted') { %>alert-danger<% } %>
+                                    <% if (notification.type === 'sold') { %>alert-info<% } %>
                                 " role="alert">
                                     
                                     <% if (notification.type === 'decrease') { %><i class="bi bi-tags-fill me-2"></i><% } %>
                                     <% if (notification.type === 'increase') { %><i class="bi bi-graph-up-arrow me-2"></i><% } %>
                                     <% if (notification.type === 'deleted') { %><i class="bi bi-x-circle-fill me-2"></i><% } %>
+                                    <% if (notification.type === 'sold') { %><i class="bi bi-bag-check-fill me-2"></i><% } %>
 
                                     <div><%- notification.message %></div>
                                 </div>
                             <% } %>
 
-                            <div class="row align-items-center g-3 <%= prodotto.stato === 'eliminato' ? 'opacity-50' : '' %>">
+                            <div class="row align-items-center g-3 <%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') ? 'opacity-50' : '' %>">
                                 <div class="col-12 col-md-2 text-center">
-                                    <a href="/products/<%= prodotto.id %>" class="<%= prodotto.stato === 'eliminato' ? 'pe-none' : '' %>">
+                                    <a href="/products/<%= prodotto.id %>" class="<%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') ? 'pe-none' : '' %>">
                                         <img src="<%= prodotto.percorso_immagine %>" alt="<%= prodotto.nome %>" class="img-fluid rounded" style="max-height: 100px; max-width: 100px; object-fit: cover;">
                                     </a>
                                 </div>
 
                                 <div class="col-12 col-md-4">
                                     <h5 class="mb-1">
-                                        <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark <%= prodotto.stato === 'eliminato' ? 'pe-none' : '' %>"><%= prodotto.nome %></a>
+                                        <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark <%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') ? 'pe-none' : '' %>"><%= prodotto.nome %></a>
                                     </h5>
                                     <% if (prodotto.stato === 'eliminato') { %>
                                         <p class="mb-1 text-danger fw-bold small">Non più disponibile</p>
+                                    <% } else if (prodotto.stato === 'venduto') { %>
+                                        <p class="mb-1 text-info fw-bold small">Venduto</p>
                                     <% } else { %>
                                         <p class="mb-1 text-muted small">
                                             Venduto da <a href="/member/<%= prodotto.user_id %>" class="text-primary"><%= prodotto.nome_venditore %></a>
@@ -81,7 +90,7 @@
                                 </div>
 
                                 <div class="col-6 col-md-2 text-md-center">
-                                     <% if (prodotto.stato !== 'eliminato') { %>
+                                     <% if (prodotto.stato !== 'eliminato' && prodotto.stato !== 'venduto') { %>
                                         <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
                                             <div>
                                                 <span class="text-muted text-decoration-line-through me-2">€<%= prodotto.prezzo.toFixed(2) %></span>
@@ -94,7 +103,7 @@
                                 </div>
 
                                 <div class="col-6 col-md-4 text-end">
-                                    <% if (prodotto.stato !== 'eliminato') { %>
+                                    <% if (prodotto.stato === 'disponibile') { %>
                                         <form action="/carrello/add/<%= prodotto.id %>" method="POST" class="d-inline-block me-2">
                                             <input type="hidden" name="redirectUrl" value="/observed">
                                             <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
