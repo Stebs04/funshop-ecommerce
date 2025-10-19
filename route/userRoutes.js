@@ -26,8 +26,7 @@ const ensureAuthenticated = (req, res, next) => {
 };
 router.use(ensureAuthenticated);
 
-// --- INIZIO MODIFICA ---
-// Rotta per la dashboard utente (AGGIORNATA)
+// Rotta per la dashboard utente
 router.get(['/', '/:section'], async (req, res) => {
     const section = req.params.section || req.query.section || 'dati';
     const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche', 'pagamento'];
@@ -40,7 +39,6 @@ router.get(['/', '/:section'], async (req, res) => {
     }
 
     try {
-        // Aggiungiamo una chiamata per le statistiche se l'utente è un venditore
         const dataPromises = [
             prodottiDao.getProductsByUserId(req.user.id),
             ordiniDao.getOrdersByUserId(req.user.id),
@@ -69,7 +67,7 @@ router.get(['/', '/:section'], async (req, res) => {
             ordini: storicoOrdini,
             indirizzi: indirizziUtente,
             metodiPagamento: metodiPagamento,
-            sellerStats: sellerStats, // Passiamo le statistiche alla vista
+            sellerStats: sellerStats,
         });
     } catch (error) {
         console.error(`Errore nel caricare la dashboard utente:`, error);
@@ -77,8 +75,6 @@ router.get(['/', '/:section'], async (req, res) => {
         res.redirect('/');
     }
 });
-// --- FINE MODIFICA ---
-
 
 router.post('/profilo/aggiorna', [
     check('nome').notEmpty().withMessage('Il nome è obbligatorio'),
@@ -259,7 +255,6 @@ router.post('/prodotti/:id/delete', async (req, res) => {
             req.flash('error', 'Azione non permessa o prodotto non trovato.');
         } else {
             req.flash('success', 'Prodotto eliminato con successo.');
-            // Attiva la notifica per gli utenti che osservano il prodotto
             await observedDao.flagPriceChange(productId);
         }
     } catch (err) {
@@ -268,23 +263,9 @@ router.post('/prodotti/:id/delete', async (req, res) => {
     res.redirect('/utente?section=prodotti');
 });
 
-router.get('/prodotti/:id/edit', async (req, res) => {
-    try {
-        const product = await prodottiDao.getProductById(req.params.id);
-        if (!product || product.user_id !== req.user.id) {
-            req.flash('error', 'Azione non permessa.');
-            return res.redirect('/utente?section=prodotti');
-        }
-        res.render('pages/edit-prodotto', {
-            title: 'Modifica Prodotto',
-            prodotto: product,
-            user: req.user
-        });
-    } catch (err) {
-        req.flash('error', 'Errore nel caricamento della pagina di modifica.');
-        res.redirect('/utente?section=prodotti');
-    }
-});
+// --- INIZIO MODIFICA: La rotta GET per la pagina di modifica è stata rimossa ---
+// router.get('/prodotti/:id/edit', ...); // QUESTA ROTTA NON ESISTE PIÙ
+// --- FINE MODIFICA ---
 
 router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
     try {
@@ -311,7 +292,6 @@ router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
             const newPriceRaw = updatedData.prezzo_scontato || updatedData.prezzo;
             if (newPriceRaw) {
                 const newPrice = parseFloat(newPriceRaw);
-                // Attiva la notifica se il prezzo è cambiato (aumentato o diminuito)
                 if (newPrice !== oldPrice) {
                     await observedDao.flagPriceChange(productId);
                 }

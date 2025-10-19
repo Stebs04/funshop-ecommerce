@@ -118,7 +118,19 @@
                                     <% } %>
                                 </td>
                                 <td>
-                                    <a href="/admin/products/edit/<%= p.id %>" class="btn btn-sm btn-primary">Modifica</a>
+                                    <button class="btn btn-sm btn-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editProductModal"
+                                            data-context="admin"
+                                            data-product-id="<%= p.id %>"
+                                            data-product-nome="<%= p.nome %>"
+                                            data-product-descrizione="<%= p.descrizione %>"
+                                            data-product-prezzo="<%= p.prezzo %>"
+                                            data-product-prezzo-scontato="<%= p.prezzo_scontato || '' %>"
+                                            data-product-parola-chiave="<%= p.parola_chiave %>"
+                                            data-product-condizione="<%= p.condizione %>">
+                                        Modifica
+                                    </button>
                                     <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
                                     </form>
@@ -132,6 +144,58 @@
     </div>
 </main>
 
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">Modifica Prodotto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="edit_nome" class="form-label">Nome Prodotto</label>
+                        <input type="text" class="form-control" id="edit_nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_descrizione" class="form-label">Descrizione</label>
+                        <textarea class="form-control" id="edit_descrizione" name="descrizione" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_prezzo" class="form-label">Prezzo Originale (€)</label>
+                            <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
+                            <input type="number" class="form-control" id="edit_prezzo_scontato" name="prezzo_scontato" step="0.01">
+                            <small class="form-text text-muted">Lascia vuoto se non c'è sconto.</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_parola_chiave" class="form-label">Categoria</label>
+                            <input type="text" class="form-control" id="edit_parola_chiave" name="parola_chiave">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                             <label for="edit_condizione" class="form-label">Condizione</label>
+                             <input type="text" class="form-control" id="edit_condizione" name="condizione">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_percorso_immagine" class="form-label">Immagine Prodotto</label>
+                        <input class="form-control" type="file" id="edit_percorso_immagine" name="percorso_immagine">
+                        <small class="form-text text-muted">Lascia vuoto per non modificare l'immagine attuale.</small>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <%- include('../partials/footer') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -144,6 +208,44 @@
                 tab.show();
             }
         }
+
+        // --- INIZIO MODIFICA: Script per il modale di modifica prodotto ---
+        const editProductModal = document.getElementById('editProductModal');
+        if (editProductModal) {
+            editProductModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                
+                const productId = button.getAttribute('data-product-id');
+                const nome = button.getAttribute('data-product-nome');
+                const descrizione = button.getAttribute('data-product-descrizione');
+                const prezzo = button.getAttribute('data-product-prezzo');
+                const prezzoScontato = button.getAttribute('data-product-prezzo-scontato');
+                const parolaChiave = button.getAttribute('data-product-parola-chiave');
+                const condizione = button.getAttribute('data-product-condizione');
+                const context = button.getAttribute('data-context'); // 'user' o 'admin'
+
+                const form = editProductModal.querySelector('#editProductForm');
+                const modalTitle = editProductModal.querySelector('#editProductModalLabel');
+
+                // Imposta dinamicamente l'action del form
+                if (context === 'admin') {
+                    form.action = `/admin/products/edit/${productId}`;
+                    modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
+                } else {
+                    form.action = `/utente/prodotti/${productId}/edit`;
+                    modalTitle.textContent = `Modifica Prodotto: ${nome}`;
+                }
+
+                // Popola i campi del form
+                form.querySelector('#edit_nome').value = nome;
+                form.querySelector('#edit_descrizione').value = descrizione;
+                form.querySelector('#edit_prezzo').value = prezzo;
+                form.querySelector('#edit_prezzo_scontato').value = prezzoScontato;
+                form.querySelector('#edit_parola_chiave').value = parolaChiave;
+                form.querySelector('#edit_condizione').value = condizione;
+            });
+        }
+        // --- FINE MODIFICA ---
     });
 </script>
 </body>

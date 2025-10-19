@@ -95,23 +95,9 @@ router.post('/products/delete/:id', async (req, res) => {
     res.redirect('/admin/dashboard#prodotti');
 });
 
-// GET /admin/products/edit/:id - Mostra la pagina di modifica per un prodotto
-router.get('/products/edit/:id', async (req, res) => {
-    try {
-        const product = await prodottiDao.getProductById(req.params.id);
-        if (!product) {
-            req.flash('error', 'Prodotto non trovato.');
-            return res.redirect('/admin/dashboard');
-        }
-        res.render('pages/admin-edit-prodotto', {
-            title: `Modifica: ${product.nome}`,
-            prodotto: product
-        });
-    } catch (err) {
-        req.flash('error', 'Errore nel caricamento della pagina di modifica.');
-        res.redirect('/admin/dashboard');
-    }
-});
+// --- INIZIO MODIFICA: La rotta GET per la pagina di modifica è stata rimossa ---
+// router.get('/products/edit/:id', ...); // QUESTA ROTTA NON ESISTE PIÙ
+// --- FINE MODIFICA ---
 
 // POST /admin/products/edit/:id - Aggiorna un prodotto
 router.post('/products/edit/:id', upload, async (req, res) => {
