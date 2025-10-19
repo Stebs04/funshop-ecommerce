@@ -108,10 +108,11 @@ class UtentiDAO {
 
   /**
    * Elimina un utente dal database.
-   * Grazie a 'ON DELETE CASCADE' nello schema, verranno eliminati anche tutti i record
-   * collegati (prodotti, indirizzi, ecc.).
+   * Grazie a 'ON DELETE CASCADE' nello schema del database, quando un utente viene eliminato,
+   * verranno automaticamente rimossi anche tutti i record ad esso collegati nelle altre tabelle
+   * (prodotti, indirizzi, recensioni, etc.), garantendo l'integrità dei dati.
    * @param {number} userId - L'ID dell'utente da eliminare.
-   * @returns {Promise<number>} Il numero di righe eliminate.
+   * @returns {Promise<number>} Il numero di righe eliminate (dovrebbe essere 1).
    */
   deleteUser(userId) {
       const sql = 'DELETE FROM users WHERE id = ?';
@@ -137,7 +138,7 @@ class UtentiDAO {
     });
   }
 
-  // --- NUOVE FUNZIONI PER IL RESET DELLA PASSWORD ---
+  // --- FUNZIONI PER IL RESET DELLA PASSWORD ---
 
   /**
    * Salva il token di reset e la sua data di scadenza per un utente.

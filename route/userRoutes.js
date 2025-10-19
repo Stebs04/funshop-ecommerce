@@ -130,6 +130,44 @@ router.post('/profilo/aggiorna', [
     res.redirect('/utente?section=dati');
 });
 
+/**
+ * ROTTA: POST /utente/profilo/elimina
+ * Gestisce la richiesta di eliminazione dell'account utente in modo sicuro.
+ * * Logica:
+ * 1. Salva l'ID dell'utente in una variabile, poiché `req.user` non sarà più disponibile dopo il logout.
+ * 2. Esegue il logout dell'utente (`req.logout()`). Questo distrugge la sessione.
+ * 3. Se il logout ha successo, procede con l'eliminazione dell'utente dal database usando l'ID salvato.
+ * 4. Se l'eliminazione dal database ha successo, mostra un messaggio di conferma e reindirizza alla homepage.
+ * 5. Se una qualsiasi delle operazioni fallisce (logout o cancellazione DB), cattura l'errore,
+ * logga i dettagli e mostra un messaggio di errore generico all'utente, reindirizzandolo
+ * in un luogo sicuro (homepage o pagina di login).
+ */
+router.post('/profilo/elimina', (req, res, next) => {
+    const userIdToDelete = req.user.id;
+
+    req.logout((err) => {
+        if (err) {
+            console.error("Errore durante il logout prima dell'eliminazione dell'account:", err);
+            req.flash('error', 'Si è verificato un errore durante il logout. Riprova.');
+            return res.redirect('/utente?section=dati');
+        }
+
+        // Dopo che il logout è stato completato con successo, procediamo con l'eliminazione dal DB
+        utentiDao.deleteUser(userIdToDelete)
+            .then(() => {
+                req.flash('success', 'Il tuo account è stato eliminato con successo.');
+                res.redirect('/');
+            })
+            .catch(dbErr => {
+                console.error("Errore durante l'eliminazione dell'account dal database:", dbErr);
+                req.flash('error', "Si è verificato un errore durante l'eliminazione definitiva del tuo account.");
+                // L'utente è già sloggato, quindi lo reindirizziamo alla homepage
+                res.redirect('/');
+            });
+    });
+});
+
+
 // --- CONFIGURAZIONE MULTER PER CARICAMENTO FILE ---
 // Vengono definite due configurazioni separate di Multer: una per le immagini del profilo
 // e una per le immagini dei prodotti, per mantenere il codice organizzato.
@@ -256,27 +294,11 @@ router.post('/indirizzi/elimina/:id', async (req, res) => {
 
 // --- ROTTE PER I METODI DI PAGAMENTO ---
 
-/**
- * ROTTA: POST /utente/pagamento/aggiungi
- * * Gestisce l'aggiunta di una nuova carta di credito.
- * * LOGICA CORRETTA:
- * 1. Viene eseguita una validazione completa su tutti i campi necessari:
- * - `nome_titolare`: non deve essere vuoto.
- * - `numero_carta`: deve essere un numero di carta di credito valido.
- * - `data_scadenza`: deve essere nel formato MM/YY.
- * - `cvv`: **(CORREZIONE)** deve essere un numero di 3 o 4 cifre. Questo controllo era mancante.
- * 2. Se la validazione fallisce, vengono mostrati gli errori.
- * 3. Se la validazione ha successo, viene chiamato il DAO per creare il nuovo metodo di pagamento,
- * associandolo all'ID dell'utente loggato.
- */
 router.post('/pagamento/aggiungi', [
     check('nome_titolare').notEmpty().withMessage('Il nome del titolare è obbligatorio.'),
     check('numero_carta').isCreditCard().withMessage('Numero di carta non valido.'),
     check('data_scadenza').matches(/^(0[1-9]|1[0-2])\/?([0-9]{2})$/).withMessage('Data di scadenza non valida (MM/YY).'),
-    // --- INIZIO CORREZIONE ---
-    // Aggiunta della validazione per il campo CVV, che prima mancava.
     check('cvv').notEmpty().withMessage('Il CVV è obbligatorio.').isNumeric().withMessage('Il CVV deve essere un numero.').isLength({ min: 3, max: 4 }).withMessage('Il CVV deve avere 3 o 4 cifre.')
-    // --- FINE CORREZIONE ---
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -284,7 +306,6 @@ router.post('/pagamento/aggiungi', [
         return res.redirect('/utente?section=pagamento');
     }
     try {
-        // Ora tutti i dati, incluso il CVV, vengono passati correttamente al DAO.
         await metodiPagamentoDao.createMetodoPagamento({ ...req.body, user_id: req.user.id });
         req.flash('success', 'Metodo di pagamento aggiunto con successo!');
     } catch (err) {
@@ -300,7 +321,7 @@ router.post('/pagamento/elimina/:id', async (req, res) => {
         await metodiPagamentoDao.deleteMetodoPagamento(req.params.id, req.user.id);
         req.flash('success', 'Metodo di pagamento eliminato con successo!');
     } catch (err) {
-        req.flash('error', "Errore durante l'eliminazione.");
+        req.flash('error', "Errore during l'eliminazione.");
     }
     res.redirect('/utente?section=pagamento');
 });
@@ -317,7 +338,6 @@ router.post('/prodotti/:id/delete', async (req, res) => {
             req.flash('error', 'Azione non permessa o prodotto non trovato.');
         } else {
             req.flash('success', 'Prodotto eliminato con successo.');
-            // Notifica gli utenti che osservavano il prodotto che è stato rimosso.
             await observedDao.flagPriceChange(productId);
         }
     } catch (err) {
@@ -348,7 +368,6 @@ router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
         if (result > 0) {
             req.flash('success', 'Prodotto aggiornato con successo.');
             
-            // Logica di notifica: se il prezzo è cambiato, aggiorna lo stato per gli osservatori.
             const newPriceRaw = updatedData.prezzo_scontato || updatedData.prezzo;
             if (newPriceRaw) {
                 const newPrice = parseFloat(newPriceRaw);
