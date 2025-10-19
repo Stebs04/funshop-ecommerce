@@ -26,7 +26,8 @@ const ensureAuthenticated = (req, res, next) => {
 };
 router.use(ensureAuthenticated);
 
-// Rotta per la dashboard utente
+// --- INIZIO MODIFICA ---
+// Rotta per la dashboard utente (AGGIORNATA)
 router.get(['/', '/:section'], async (req, res) => {
     const section = req.params.section || req.query.section || 'dati';
     const validSections = ['dati', 'ordini', 'indirizzi', 'prodotti', 'statistiche', 'pagamento'];
@@ -39,14 +40,25 @@ router.get(['/', '/:section'], async (req, res) => {
     }
 
     try {
-        const [prodottiUtente, storicoOrdini, indirizziUtente, accountInfoResult, metodiPagamento] = await Promise.all([
+        // Aggiungiamo una chiamata per le statistiche se l'utente è un venditore
+        const dataPromises = [
             prodottiDao.getProductsByUserId(req.user.id),
             ordiniDao.getOrdersByUserId(req.user.id),
             indirizziDao.getIndirizziByUserId(req.user.id),
             informazioniDao.getAccountInfoByUserId(req.user.id),
             metodiPagamentoDao.getMetodiPagamentoByUserId(req.user.id)
-        ]);
-       const accountInfo = accountInfoResult || {};
+        ];
+
+        if (req.user.tipo_account === 'venditore') {
+            dataPromises.push(ordiniDao.getSalesStatsBySellerId(req.user.id));
+        }
+
+        const results = await Promise.all(dataPromises);
+
+        const [prodottiUtente, storicoOrdini, indirizziUtente, accountInfoResult, metodiPagamento] = results;
+        const sellerStats = req.user.tipo_account === 'venditore' ? results[5] : null;
+
+        const accountInfo = accountInfoResult || {};
 
         res.render('pages/utente', {
             title: 'Il Mio Profilo',
@@ -57,6 +69,7 @@ router.get(['/', '/:section'], async (req, res) => {
             ordini: storicoOrdini,
             indirizzi: indirizziUtente,
             metodiPagamento: metodiPagamento,
+            sellerStats: sellerStats, // Passiamo le statistiche alla vista
         });
     } catch (error) {
         console.error(`Errore nel caricare la dashboard utente:`, error);
@@ -64,6 +77,8 @@ router.get(['/', '/:section'], async (req, res) => {
         res.redirect('/');
     }
 });
+// --- FINE MODIFICA ---
+
 
 router.post('/profilo/aggiorna', [
     check('nome').notEmpty().withMessage('Il nome è obbligatorio'),

@@ -34,7 +34,7 @@
             </div>
         </div>
         <div class="col-md-9">
-             <div class="tab-content" id="v-pills-tabContent">
+            <div class="tab-content" id="v-pills-tabContent">
                 <div class="tab-pane fade <%= currentSection === 'dati' ? 'show active' : '' %>" id="v-pills-dati" role="tabpanel">
                     <h3>I Miei Dati</h3>
                     <p>Gestisci le tue informazioni personali.</p>
@@ -55,7 +55,7 @@
                             <div class="modal-content">
                                 <div class="modal-header">
                                      <h5 class="modal-title">Carica Nuova Immagine</h5>
-                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
                                     <form action="/utente/dati/upload-immagine" method="POST" enctype="multipart/form-data">
@@ -78,7 +78,7 @@
                                 </div>
                                 <div class="mb-3">
                                      <label for="userSurname" class="form-label">Cognome</label>
-                                     <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
+                                    <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
                                 </div>
                                 <div class="mb-3">
                                     <label for="username" class="form-label">Username</label>
@@ -185,7 +185,7 @@
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
                                             </form>
                                         </div>
-                                    </div>
+                                     </div>
                                 </div>
                             <% }) %>
                         <% } else { %>
@@ -195,6 +195,7 @@
                         <% } %>
                     </div>
                     <hr class="my-4">
+                    
                     <h4>Aggiungi una nuova carta</h4>
                     <div class="card">
                         <div class="card-body">
@@ -247,11 +248,37 @@
                     </div>
                 </div>
                 <% if (user.tipo_account === 'venditore') { %>
+                
                 <div class="tab-pane fade <%= currentSection === 'statistiche' ? 'show active' : '' %>" id="v-pills-statistiche" role="tabpanel">
                     <h3>Statistiche Venditore</h3>
                     <p>Visualizza le tue statistiche di vendita.</p>
+
+                    <% if (sellerStats) { %>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card text-center h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <i class="bi bi-currency-euro fs-1 text-success"></i>
+                                        <h5 class="card-title mt-2">Guadagni Totali</h5>
+                                        <p class="card-text display-4 fw-bold"><%= sellerStats.totalRevenue.toFixed(2) %></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card text-center h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <i class="bi bi-box-seam-fill fs-1 text-primary"></i>
+                                        <h5 class="card-title mt-2">Prodotti Venduti</h5>
+                                        <p class="card-text display-4 fw-bold"><%= sellerStats.productsSoldCount %></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <p class="text-center text-muted">Nessuna statistica disponibile.</p>
+                    <% } %>
                 </div>
-                 <% } %>
+                <% } %>
             </div>
         </div>
     </div>

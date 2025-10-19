@@ -77,6 +77,36 @@ class OrdiniDAO {
         });
     });
   }
+
+  // --- INIZIO MODIFICA: NUOVA FUNZIONE PER STATISTICHE VENDITORE ---
+  /**
+   * Calcola le statistiche di vendita per un singolo venditore.
+   * @param {number} sellerId - L'ID dell'utente venditore.
+   * @returns {Promise<Object>} Un oggetto con 'totalRevenue' e 'productsSoldCount'.
+   */
+  async getSalesStatsBySellerId(sellerId) {
+    const sql = `
+        SELECT
+            SUM(so.totale) as totalRevenue,
+            COUNT(so.id) as productsSoldCount
+        FROM storico_ordini so
+        JOIN prodotti p ON so.prodotto_id = p.id
+        WHERE p.user_id = ?`;
+
+    return new Promise((resolve, reject) => {
+        this.db.get(sql, [sellerId], (err, row) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve({
+                    totalRevenue: row.totalRevenue || 0,
+                    productsSoldCount: row.productsSoldCount || 0
+                });
+            }
+        });
+    });
+  }
+  // --- FINE MODIFICA ---
 }
 
 module.exports = new OrdiniDAO(db);
