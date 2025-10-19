@@ -41,7 +41,6 @@ function checkFileType(file, cb){
     if(mimetype && extname){
         return cb(null,true);
     } else {
-        // Passa un errore specifico se il tipo di file non è corretto.
         cb(new Error('Errore: Puoi caricare solo immagini!'));
     }
 }
@@ -58,8 +57,6 @@ const upload = multer({
 const uploadWrapper = (req, res, next) => {
     upload(req, res, (err) => {
         if (err) {
-            // Se Multer restituisce un errore (es. tipo di file non valido),
-            // lo catturiamo qui e inviamo un messaggio flash.
             if (err instanceof multer.MulterError) {
                  req.flash('error', `Errore Multer: ${err.message}`);
             } else if (err) {
@@ -67,7 +64,6 @@ const uploadWrapper = (req, res, next) => {
             }
             return res.redirect('/products/new');
         }
-        // Se non ci sono errori, procedi alla rotta successiva.
         next();
     });
 };
@@ -91,15 +87,14 @@ router.get('/new', isLoggedIn, (req, res) => {
 /**
  * ROTTA: POST /products/
  * Gestisce la creazione di un nuovo prodotto.
- * Utilizza il nostro 'uploadWrapper' per gestire il caricamento e gli errori.
  */
 router.post('/', isLoggedIn, uploadWrapper, [
-    // Aggiunge la validazione dei campi del form
+    // Validazione dei campi del form
     check('nome').notEmpty().withMessage('Il titolo del prodotto è obbligatorio.'),
     check('descrizione').notEmpty().withMessage('La descrizione è obbligatoria.'),
-    check('categoria').notEmpty().withMessage('La categoria è obbligatoria.'),
+    check('parola_chiave').notEmpty().withMessage('La categoria è obbligatoria.'),
     check('condizione').notEmpty().withMessage('La condizione è obbligatoria.'),
-    check('prezzo').optional({ checkFalsy: true }).isFloat({ gt: 0 }).withMessage('Il prezzo deve essere un numero valido.')
+    check('prezzo').notEmpty().withMessage('Il prezzo è obbligatorio.').isFloat({ gt: 0 }).withMessage('Il prezzo deve essere un numero maggiore di zero.')
 ], async (req, res) => {
     if (req.user.tipo_account !== 'venditore') {
         req.flash('error', 'Azione non permessa.');
@@ -112,26 +107,19 @@ router.post('/', isLoggedIn, uploadWrapper, [
         return res.redirect('/products/new');
     }
 
-    // Ora controlliamo se il file è stato caricato dopo che Multer ha fatto il suo lavoro.
     if (!req.file) {
         req.flash('error', 'Devi caricare un\'immagine per il prodotto.');
         return res.redirect('/products/new');
     }
 
-    const { nome, descrizione, categoria, condizione } = req.body;
-    let prezzo = parseFloat(req.body.prezzo);
-    
-    if (isNaN(prezzo) || prezzo <= 0) {
-        req.flash('error', 'Il prezzo specificato non è valido.');
-        return res.redirect('/products/new');
-    }
+    const { nome, descrizione, parola_chiave, condizione, prezzo } = req.body;
 
     const newProduct = {
         nome,
         descrizione,
         condizione,
-        parola_chiave: categoria,
-        prezzo,
+        parola_chiave,
+        prezzo: parseFloat(prezzo),
         percorso_immagine: '/uploads/' + req.file.filename,
         user_id: req.user.id
     };
@@ -146,6 +134,7 @@ router.post('/', isLoggedIn, uploadWrapper, [
         res.redirect('/products/new');
     }
 });
+
 
 /**
  * ROTTA: GET /products/:id

@@ -162,6 +162,12 @@ router.post('/checkout', async (req, res) => {
     let transactionStarted = false;
 
     try {
+        // Filtra il carrello per processare solo gli articoli ancora disponibili
+        const availableItems = Object.values(cart.items).filter(item => item.item.stato === 'disponibile');
+        if (availableItems.length === 0) {
+            throw new Error('Nessun articolo disponibile nel carrello per il checkout.');
+        }
+
         if (req.isAuthenticated()) {
             // --- LOGICA PER UTENTE AUTENTICATO ---
             const userId = req.user.id;
@@ -199,9 +205,9 @@ router.post('/checkout', async (req, res) => {
             transactionStarted = true;
 
             const purchasedItems = [];
-            for (const id in cart.items) {
-                const product = cart.items[id].item;
-                await ordiniDao.createOrder({ totale: cart.items[id].price, user_id: userId, prodotto_id: product.id });
+            for (const item of availableItems) {
+                const product = item.item;
+                await ordiniDao.createOrder({ totale: item.price, user_id: userId, prodotto_id: product.id });
                 await prodottiDao.updateProductStatus(product.id, 'venduto');
                 await observedDao.flagPriceChange(product.id); // Notifica chi osserva il prodotto
                 purchasedItems.push(product);
@@ -211,12 +217,15 @@ router.post('/checkout', async (req, res) => {
             // Fine Transazione
             await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
             transactionStarted = false;
+            
+            // Calcola il totale corretto solo degli articoli acquistati
+            const finalTotal = purchasedItems.reduce((sum, item) => sum + (item.prezzo_scontato || item.prezzo), 0);
 
             // Preparazione per la pagina di riepilogo e email
             const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
             req.session.latestOrder = {
                 buyer: { email: buyerEmail, nome: req.user.nome },
-                items: purchasedItems, total: cart.totalPrice, address: finalAddress, payment: finalPaymentMethod, date: new Date(), reviewLink,
+                items: purchasedItems, total: finalTotal, address: finalAddress, payment: finalPaymentMethod, date: new Date(), reviewLink,
                 isGuest: false
             };
             req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
@@ -236,9 +245,9 @@ router.post('/checkout', async (req, res) => {
             transactionStarted = true;
 
             const purchasedItems = [];
-            for (const id in cart.items) {
-                const product = cart.items[id].item;
-                await ordiniDao.createOrder({ totale: cart.items[id].price, user_id: null, prodotto_id: product.id });
+            for (const item of availableItems) {
+                const product = item.item;
+                await ordiniDao.createOrder({ totale: item.price, user_id: null, prodotto_id: product.id });
                 await prodottiDao.updateProductStatus(product.id, 'venduto');
                 await observedDao.flagPriceChange(product.id);
                 purchasedItems.push(product);
@@ -247,10 +256,12 @@ router.post('/checkout', async (req, res) => {
             await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
             transactionStarted = false;
 
+            const finalTotal = purchasedItems.reduce((sum, item) => sum + (item.prezzo_scontato || item.prezzo), 0);
+
             const reviewLink = `${req.protocol}://${req.get('host')}/`;
             req.session.latestOrder = {
                 buyer: { email: buyerEmail, nome: formData.nome },
-                items: purchasedItems, total: cart.totalPrice, address: finalAddress, payment: finalPaymentMethod, date: new Date(), reviewLink,
+                items: purchasedItems, total: finalTotal, address: finalAddress, payment: finalPaymentMethod, date: new Date(), reviewLink,
                 isGuest: true
             };
             req.session.cart = { items: {}, totalQty: 0, totalPrice: 0 };
@@ -262,11 +273,12 @@ router.post('/checkout', async (req, res) => {
         if (transactionStarted) {
             await new Promise((resolve) => db.run('ROLLBACK', () => resolve()));
         }
-        console.error("Errore during il checkout:", error);
+        console.error("Errore durante il checkout:", error);
         req.flash('error', error.message || 'Si è verificato un errore durante la finalizzazione dell\'ordine.');
         res.redirect('/carrello/checkout');
     }
 });
+
 
 /**
  * ROTTA: GET /carrello/api/data

@@ -1,6 +1,6 @@
 <%# views/pages/nuovo-prodotto.ejs %>
 <%# Pagina con il form per l'inserimento di un nuovo prodotto da parte di un venditore.
-%>
+ %>
 
 <!doctype html>
 <html lang="it">
@@ -18,73 +18,61 @@
                 <div class="card-body p-4 p-md-5">
                 <h2 class="text-center mb-4">Aggiungi un nuovo prodotto</h2>
                 <%# Il form invia i dati con metodo POST alla rotta /products.
-%>
+ %>
                 <%# `enctype="multipart/form-data"` è FONDAMENTALE per permettere il caricamento di file (l'immagine).
-%>
+ %>
                 <form id="new-product-form" action="/products" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="productTitle" class="form-label">Titolo del prodotto</label>
-                        <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action 
-Figure Son Goku SSJ" required>
+                        <input name="nome" type="text" class="form-control" id="productTitle" placeholder="Es. Action Figure Son Goku SSJ" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="productDescription" class="form-label">Descrizione</label>
-                        <textarea name="descrizione" class="form-control" id="productDescription" rows="5" 
-placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc."
-required></textarea>
+                        <textarea name="descrizione" class="form-control" id="productDescription" rows="5" placeholder="Descrivi il tuo prodotto in dettaglio, incluse le condizioni, la serie, ecc." required></textarea>
                     </div>
 
                     <div class="mb-3">
                         <label for="productCategory" class="form-label">Categoria</label>
-                        <select name="categoria" class="form-select" id="productCategory" required>
-     
-                        <option value="" disabled selected>Seleziona una categoria</option>
+                        <select name="parola_chiave" class="form-select" id="productCategory" required>
+                            <option value="" disabled selected>Seleziona una categoria</option>
                             <%# Popola dinamicamente le opzioni del menu a tendina usando l'array `categorie` passato dalla rotta.
-%>
+ %>
                             <% if (locals.categorie) { %>
                                 <% categorie.forEach(cat => { %>
-                                
-    <option value="<%= cat %>"><%= cat %></option>
+                                    <option value="<%= cat %>"><%= cat %></option>
                                 <% }) %>
                             <% } %>
                         </select>
-   
-                 </div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="productCondition" class="form-label">Condizione</label>
                         <select name="condizione" class="form-select" id="productCondition" required>
-        
-                    <option value="" disabled selected>Seleziona una condizione</option>
+                            <option value="" disabled selected>Seleziona una condizione</option>
                             <option value="Come nuovo">Come nuovo</option>
                             <option value="Ottimo stato">Ottimo stato</option>
-             
-               <option value="Tanto usato">Tanto usato</option>
+                            <option value="Tanto usato">Tanto usato</option>
                         </select>
                     </div>
 
                     <div class="mb-4">
-                 
-       <label for="productImages" class="form-label">Immagine del prodotto</label>
+                        <label for="productImages" class="form-label">Immagine del prodotto</label>
                         <input name="percorso_immagine" class="form-control" type="file" id="productImages" accept="image/*" required>
                     </div>
 
                     <div id="price-section" class="mb-3">
                         <label for="productPrice" class="form-label">Prezzo</label>
-          
-               <div class="input-group">
+                        <div class="input-group">
                             <span class="input-group-text">€</span>
-                            <input name="prezzo" type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0" required>
-                    
-     </div>
+                            <input name="prezzo" type="number" class="form-control" id="productPrice" placeholder="29.99" step="0.01" min="0.01" required>
+                        </div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                         <button type="button" class="btn btn-outline-secondary" onclick="window.history.back()">Annulla</button>
                         <button type="submit" class="btn btn-primary">Metti in vendita</button>
-         
-           </div>
+                    </div>
                 </form>
                 </div>
             </div>
