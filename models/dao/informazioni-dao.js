@@ -61,36 +61,3 @@ exports.updateProfileImage = (userId, imagePath) => {
         });
     });
 };
-
-/**
- * Aggiorna o imposta per la prima volta la descrizione del profilo e altre informazioni.
- * Logica simile a 'updateProfileImage': aggiorna se esiste, altrimenti crea.
- * @param {number} userId - L'ID dell'utente.
- * @param {Object} infoData - Un oggetto contenente i dati da aggiornare (es. { descrizione: '...' }).
- * @returns {Promise<number>} Numero di righe modificate o ID del nuovo record.
- */
-exports.updateProfileInfo = (userId, infoData) => {
-    return new Promise((resolve, reject) => {
-        const { descrizione } = infoData;
-        // 1. Tentiamo l'aggiornamento.
-        const sql = 'UPDATE accountinfos SET descrizione = ? WHERE user_id = ?';
-        db.run(sql, [descrizione, userId], function(err) {
-            if (err) {
-                reject(err);
-            } else {
-                 // 2. Se non è stato modificato nulla, il record non esiste.
-                 if (this.changes === 0) {
-                    // 3. Creiamo un nuovo record.
-                    const insertSql = 'INSERT INTO accountinfos (user_id, descrizione) VALUES (?, ?)';
-                    db.run(insertSql, [userId, descrizione], function(err) {
-                        if (err) reject(err);
-                        else resolve(this.lastID); // Risolviamo con il nuovo ID.
-                    });
-                 } else {
-                    // 4. Se l'aggiornamento ha avuto successo, risolviamo.
-                    resolve(this.changes);
-                 }
-            }
-        });
-    });
-};

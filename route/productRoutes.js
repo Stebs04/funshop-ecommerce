@@ -32,14 +32,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({
-    storage: storage,
-    limits:{fileSize: 1000000}, // Limite di 1MB per file
-    fileFilter: function(req, file, cb){
-        checkFileType(file, cb);
-    }
-}).single('percorso_immagine');
-
+// Funzione per controllare il tipo di file
 function checkFileType(file, cb){
     const filetypes = /jpeg|jpg|png|gif/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
@@ -48,9 +41,36 @@ function checkFileType(file, cb){
     if(mimetype && extname){
         return cb(null,true);
     } else {
-        cb('Error: Images Only!');
+        // Passa un errore specifico se il tipo di file non è corretto.
+        cb(new Error('Errore: Puoi caricare solo immagini!'));
     }
 }
+
+const upload = multer({
+    storage: storage,
+    limits:{fileSize: 1000000}, // Limite di 1MB per file
+    fileFilter: function(req, file, cb){
+        checkFileType(file, cb);
+    }
+}).single('percorso_immagine');
+
+// Middleware wrapper per gestire gli errori di Multer in modo pulito
+const uploadWrapper = (req, res, next) => {
+    upload(req, res, (err) => {
+        if (err) {
+            // Se Multer restituisce un errore (es. tipo di file non valido),
+            // lo catturiamo qui e inviamo un messaggio flash.
+            if (err instanceof multer.MulterError) {
+                 req.flash('error', `Errore Multer: ${err.message}`);
+            } else if (err) {
+                 req.flash('error', err.message);
+            }
+            return res.redirect('/products/new');
+        }
+        // Se non ci sono errori, procedi alla rotta successiva.
+        next();
+    });
+};
 
 /**
  * ROTTA: GET /products/new
@@ -71,8 +91,9 @@ router.get('/new', isLoggedIn, (req, res) => {
 /**
  * ROTTA: POST /products/
  * Gestisce la creazione di un nuovo prodotto.
+ * Utilizza il nostro 'uploadWrapper' per gestire il caricamento e gli errori.
  */
-router.post('/', isLoggedIn, upload, [
+router.post('/', isLoggedIn, uploadWrapper, [
     // Aggiunge la validazione dei campi del form
     check('nome').notEmpty().withMessage('Il titolo del prodotto è obbligatorio.'),
     check('descrizione').notEmpty().withMessage('La descrizione è obbligatoria.'),
@@ -91,6 +112,7 @@ router.post('/', isLoggedIn, upload, [
         return res.redirect('/products/new');
     }
 
+    // Ora controlliamo se il file è stato caricato dopo che Multer ha fatto il suo lavoro.
     if (!req.file) {
         req.flash('error', 'Devi caricare un\'immagine per il prodotto.');
         return res.redirect('/products/new');
