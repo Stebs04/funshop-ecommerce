@@ -8,10 +8,12 @@ require('dotenv').config();
 // Configurazione del "trasportatore" di email, utilizzando Gmail come servizio.
 // Le credenziali (utente e password) sono caricate in modo sicuro dalle variabili d'ambiente.
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: process.env.EMAIL_USER, // La tua email di Brevo
+        pass: process.env.EMAIL_PASS  // La tua CHIAVE API v3
     }
 });
 
