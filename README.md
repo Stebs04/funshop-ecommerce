@@ -1,70 +1,58 @@
 # FunShop E-commerce 🛍️
 
-Benvenuto in FunShop, un progetto di e-commerce full-stack costruito con Node.js, Express e EJS. Questa piattaforma consente agli utenti di registrarsi, acquistare e vendere prodotti in un ambiente dinamico e interattivo.
+Benvenuto in FunShop, un progetto di e-commerce full-stack completo costruito con Node.js, Express e EJS. Questa piattaforma è un marketplace dinamico che consente agli utenti di registrarsi, acquistare e vendere oggetti da collezione, con un sistema di ruoli che include clienti, venditori e amministratori.
 
 ---
 
-### ⚠️ Stato del Progetto: In Fase di Sviluppo
+## ✨ Funzionalità Principali
 
-Questo progetto è attualmente in **fase di sviluppo attivo**. Le funzionalità presenti sono una base solida ma verranno aggiornate, migliorate e ampliate nel tempo. L'obiettivo è trasformare FunShop in una piattaforma e-commerce completa e robusta.
+### Autenticazione e Gestione Utenti
+-   **Sistema di Autenticazione Completo**: Registrazione e login sicuri con password crittografate (bcrypt) e gestione delle sessioni tramite `passport.js`.
+-   **Recupero Password**: Flusso di reset password sicuro tramite email con token univoci e a scadenza.
+-   **Ruoli Utente Multipli**: Sistema a tre livelli (Cliente, Venditore, Amministratore) con permessi e interfacce dedicate.
+-   **Profili Pubblici**: Ogni utente ha una pagina profilo pubblica (`/member/:id`) che mostra i prodotti in vendita e le recensioni ricevute.
 
----
+### Funzionalità E-commerce
+-   **Gestione Prodotti**: I venditori possono aggiungere, modificare ed eliminare prodotti, con caricamento di immagini gestito da `multer`.
+-   **Carrello Avanzato**: Sistema di carrello funzionante sia per utenti registrati (persistente su database) che per ospiti (basato su sessione), con aggiornamenti in tempo reale.
+-   **Checkout Completo**: Processo di checkout sicuro per utenti registrati e ospiti, con gestione di indirizzi e metodi di pagamento (salvati o nuovi) e creazione di ordini tramite transazioni SQL per garantire l'integrità dei dati.
+-   **Conferma Ordine via Email**: Invio automatico di email di riepilogo ordine all'acquirente dopo un acquisto andato a buon fine, utilizzando `Nodemailer`.
+-   **Sistema di Recensioni**: Gli acquirenti possono lasciare recensioni e valutazioni (da 1 a 5 stelle) per i prodotti acquistati, che vengono visualizzate sui profili pubblici dei venditori.
 
-## ✨ Features Attuali
+### Dashboard e Pannelli di Controllo
+-   **Dashboard Utente Completa**: Un'area personale (`/utente`) multi-sezione dove gli utenti possono:
+    -   Modificare i propri dati anagrafici e l'immagine del profilo.
+    -   Visualizzare lo storico degli ordini.
+    -   Gestire indirizzi di spedizione e metodi di pagamento.
+    -   **Per i venditori**: Gestire i propri prodotti in vendita e visualizzare statistiche sui guadagni e sul numero di articoli venduti.
+-   **Pannello di Amministrazione**: Un'area riservata (`/admin`) che fornisce una panoramica completa del sito, con statistiche su utenti registrati, prodotti e guadagni totali. L'admin può gestire (eliminare e modificare) tutti gli utenti e i prodotti della piattaforma.
 
--   **Sistema di Autenticazione Completo**:
-    -   Registrazione e login sicuri con password crittografate (bcrypt).
-    -   Gestione delle sessioni utente con `express-session` e `passport.js`.
-    -   Login automatico dopo la registrazione.
-    -   Logout sicuro con reindirizzamento alla homepage.
-
--   **Gestione Prodotti**:
-    -   I venditori possono aggiungere nuovi prodotti tramite un form dedicato, con caricamento di immagini.
-    -   I venditori possono modificare e aggiornare i dettagli dei propri prodotti, inclusa l'immagine.
-    -   I venditori possono eliminare i prodotti che hanno messo in vendita.
-
--   **Dashboard Utente**:
-    -   Area personale multi-sezione per la gestione del profilo.
-    -   **I Miei Dati**: Aggiornamento delle informazioni personali (nome, cognome, username, descrizione) e caricamento di un'immagine del profilo.
-    -   **Storico Ordini**: Visualizzazione degli ordini passati (struttura pronta).
-    -   **Indirizzi**: Aggiunta, modifica ed eliminazione degli indirizzi di spedizione.
-    -   **I Miei Prodotti**: Sezione dedicata ai venditori per gestire i loro articoli in vendita.
-
--   **Logica Venditore**:
-    -   Funzionalità "Diventa un Venditore" che aggiorna il ruolo dell'utente da 'cliente' a 'venditore'.
-    -   Il link per diventare venditore è visibile solo agli utenti non-venditori e reindirizza al login se l'utente non è autenticato.
-
--   **Sistema di Recensioni**:
-    -   Le recensioni vengono visualizzate nella pagina di dettaglio del prodotto.
-    -   La pagina del profilo pubblico di un venditore (`member.ejs`) mostra la media delle valutazioni ricevute (con stelline) e il numero totale di recensioni.
-
--   **Pagine Pubbliche**:
-    -   Homepage dinamica che mostra tutti i prodotti presenti nel database, ordinati dal più recente.
-    -   Pagina di dettaglio del singolo prodotto.
-    -   Pagina profilo pubblico per ogni utente, dove sono visibili i suoi prodotti in vendita e le recensioni ricevute.
-
-## 🔮 Sviluppi Futuri
-
--   **Gestione completa del carrello e del checkout** sia per utenti registrati che per ospiti.
--   Un pannello di amministrazione per la gestione di utenti e prodotti.
--   Funzionalità di ricerca e filtro avanzato per i prodotti.
+### User Experience
+-   **Ricerca Globale**: Funzionalità di ricerca per trovare sia prodotti che utenti.
+-   **Filtri e Ordinamento**: La homepage permette di filtrare i prodotti per categoria, condizione e ordinare per prezzo o data di inserimento.
+-   **Prodotti Osservati**: Gli utenti registrati possono "osservare" i prodotti e ricevere notifiche visive nella loro dashboard se il prezzo di un articolo cambia o se non è più disponibile.
 
 ## 🛠️ Stack Tecnologico
 
 -   **Backend**: Node.js, Express.js
 -   **Database**: SQLite 3
 -   **View Engine**: EJS (Embedded JavaScript templates)
--   **Autenticazione**: Passport.js (Local Strategy)
--   **Middleware**: express-session, bcrypt, express-validator, connect-flash, morgan, multer
--   **Frontend**: HTML, CSS, Bootstrap 5, JavaScript (Fetch API)
+-   **Autenticazione**: Passport.js (Local Strategy), bcrypt, express-session
+-   **Middleware & Librerie**:
+    -   `multer`: Per la gestione dell'upload di file (immagini).
+    -   `nodemailer`: Per l'invio di email transazionali (conferma ordine, reset password).
+    -   `express-validator`: Per la validazione e sanificazione dei dati dei form.
+    -   `connect-flash`: Per mostrare messaggi di notifica temporanei (es. "Login effettuato!").
+    -   `morgan`: Per il logging delle richieste HTTP in fase di sviluppo.
+-   **Frontend**: HTML, CSS, Bootstrap 5, JavaScript
 
-## 🚀 Getting Started
+## 🚀 Avvio Rapido
 
 Segui questi passaggi per avviare il progetto in locale.
 
 ### Prerequisiti
 
--   Node.js (versione 14 o superiore)
+-   Node.js (versione 18 o superiore consigliata)
 -   npm (incluso con Node.js)
 
 ### Installazione
@@ -81,20 +69,90 @@ Segui questi passaggi per avviare il progetto in locale.
     ```
 
 3.  **Configura le variabili d'ambiente:**
-    Crea un file `.env` nella cartella principale del progetto.
-    ```
+    Crea un file `.env` nella cartella principale del progetto e popola le variabili come mostrato nel file `/.env` del progetto. Assicurati di inserire una chiave segreta per le sessioni e le tue credenziali per il servizio email.
+
+    ```env
+    # Configurazione ambiente
     NODE_ENV=development
+
+    # Nome del database SQLite
     DB_NAME=datastorage.db
+
+    # Porta del server
     PORT=5500
-    SECRET_SESSION=una-chiave-segreta-molto-lunga-e-casuale
+
+    # Chiave segreta per le sessioni (usa una stringa lunga e casuale)
+    SECRET_SESSION=your-secret-session-key-here
+
+    # Credenziali per il servizio di invio email (es. Gmail)
+    EMAIL_USER=tua-email@gmail.com
+    EMAIL_PASS=la-tua-password-per-le-app
     ```
 
 4.  **Avvia il server:**
     ```bash
     npm start
     ```
-    Il server sarà in ascolto su `http://localhost:5500`. Al primo avvio, il database `datastorage.db` e le relative tabelle verranno create automaticamente.
+    Il server sarà in ascolto su `http://localhost:5500`. Al primo avvio, il database `datastorage.db` e le relative tabelle verranno create automaticamente, incluso un utente `admin` di default.
 
 ## 📜 Script Disponibili
 
--   `npm start`: Avvia l'applicazione in modalità di produzione.
+-   `npm start`: Avvia l'applicazione.
+-   `npm test`: (Da configurare) Esegue i test.
+
+- ---
+
+## 📂 Struttura del Progetto
+
+Il progetto è organizzato secondo una struttura modulare che separa le diverse responsabilità dell'applicazione, seguendo le best practice per lo sviluppo di applicazioni Node.js.
+
+```
+/
+├── middleware/
+│   └── passport-config.js      # Configurazione di Passport.js per l'autenticazione
+├── models/
+│   └── dao/                    # Data Access Objects per l'interazione con il DB
+│       ├── cart-dao.js
+│       ├── indirizzi-dao.js
+│       ├── informazioni-dao.js
+│       ├── metodi-pagamento-dao.js
+│       ├── observed-dao.js
+│       ├── ordini-dao.js
+│       ├── prodotti-dao.js
+│       ├── recensioni-dao.js
+│       ├── search-dao.js
+│       ├── seller-dao.js
+│       └── utenti-dao.js
+├── public/
+│   ├── immagini/                 # Immagini statiche (logo, avatar di default)
+│   ├── javascript/               # File JavaScript per il frontend
+│   │   └── script.js
+│   ├── stylesheet/               # Fogli di stile CSS
+│   │   └── style.css
+│   └── uploads/                  # Cartella per le immagini caricate dagli utenti
+├── route/
+│   ├── adminRoutes.js            # Rotte per il pannello di amministrazione
+│   ├── auth.js                   # Rotte per login, registrazione, logout, reset password
+│   ├── cartRoutes.js             # Rotte per la gestione del carrello
+│   ├── home.js                   # Rotta per la homepage
+│   ├── ... (e tutte le altre rotte)
+├── services/
+│   └── emailService.js           # Logica per l'invio di email transazionali
+├── views/
+│   ├── pages/                    # Template EJS per le pagine principali
+│   │   ├── home.ejs
+│   │   ├── prodotto.ejs
+│   │   ├── utente.ejs
+│   │   └── ... (e tutte le altre pagine)
+│   └── partials/                 # Componenti riutilizzabili (header, footer, navbar)
+│       ├── header.ejs
+│       ├── footer.ejs
+│       └── navbar.ejs
+├── .env                          # File per le variabili d'ambiente (non versionato)
+├── .gitignore                    # File ignorati da Git
+├── app.js                        # Configurazione principale dell'applicazione Express
+├── managedb.js                   # Logica per l'inizializzazione del database
+├── package.json                  # Dipendenze e script del progetto
+├── schema.sql                    # Schema del database SQLite
+└── server.js                     # Punto di ingresso dell'applicazione (avvia il server)
+```
