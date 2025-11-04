@@ -18,6 +18,7 @@
             <h3 class="card-title text-center mb-4">Crea il Tuo Account FunShop</h3>
             <%# Il form invia i dati con metodo POST alla rotta /auth/registrazione.
  %>
+              <%- include('../partials/messages') %>
             <form action="/auth/registrazione" method="POST">
               <div class="mb-3">
                 <label for="nome" class="form-label">Nome</label>
