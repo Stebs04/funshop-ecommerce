@@ -24,7 +24,7 @@
         <% } else { %>
           <h1 class="text-center mb-4">Diventa un Venditore su FunShop</h1>
           <p class="lead text-center mb-5">Unisciti alla nostra community e inizia a vendere i tuoi prodotti a migliaia di appassionati. Compila il modulo sottostante per inviare la tua richiesta.</p>
-
+          <%- include('../partials/messages') %>
           <%# Il form invia i dati alla rotta /venditore. %>
           <form action="/venditore" method="POST">
             <div class="mb-3">
