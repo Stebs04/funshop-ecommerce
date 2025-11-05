@@ -1,12 +1,9 @@
 'use strict';
 
-// Importiamo la connessione al database
+// Importiamo la connessione al database (pool 'pg')
 const { db } = require('../../managedb');
 
 class OrdiniDAO {
-  constructor(database) {
-    this.db = database;
-  }
 
   /**
    * Recupera lo storico degli ordini per un utente specifico.
@@ -14,7 +11,7 @@ class OrdiniDAO {
    * @returns {Promise<Array<Object>>} Una promessa che risolve in un array di oggetti ordine.
    */
   async getOrdersByUserId(userId) {
-    // La query unisce storico_ordini e prodotti per ottenere anche il nome e l'immagine del prodotto.
+    // Sostituiamo ? con $1
     const sql = `
       SELECT 
         so.id, 
@@ -25,18 +22,16 @@ class OrdiniDAO {
         p.percorso_immagine as immagine_prodotto
       FROM storico_ordini so
       LEFT JOIN prodotti p ON so.prodotto_id = p.id
-      WHERE so.user_id = ?
-      ORDER BY so.data_ordine DESC`; // Ordina dal più recente al più vecchio.
+      WHERE so.user_id = $1
+      ORDER BY so.data_ordine DESC`;
       
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, [userId], (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
-      });
-    });
+    try {
+      const { rows } = await db.query(sql, [userId]);
+      return rows;
+    } catch (err) {
+      console.error("Errore in getOrdersByUserId:", err);
+      throw err;
+    }
   }
 
   /**
@@ -46,20 +41,20 @@ class OrdiniDAO {
    */
   async createOrder(orderData) {
     const { totale, user_id, prodotto_id } = orderData;
+    // Sostituiamo ? con $1, $2, $3 e usiamo RETURNING id
     const sql = `
       INSERT INTO storico_ordini (totale, user_id, prodotto_id) 
-      VALUES (?, ?, ?)`;
+      VALUES ($1, $2, $3)
+      RETURNING id`;
     const params = [totale, user_id, prodotto_id];
 
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function (err) {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(this.lastID);
-        }
-      });
-    });
+    try {
+      const { rows } = await db.query(sql, params);
+      return rows[0].id; // Restituisce l'ID del nuovo ordine
+    } catch (err) {
+      console.error("Errore in createOrder:", err);
+      throw err;
+    }
   }
 
   /**
@@ -68,17 +63,14 @@ class OrdiniDAO {
    * @returns {Promise<Object>} L'oggetto ordine.
    */
   async getOrderById(id) {
-    const sql = `SELECT * FROM storico_ordini WHERE id = ?`;
-
-    return new Promise((resolve, reject) => {
-      this.db.get(sql, [id], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
-    });
+    const sql = `SELECT * FROM storico_ordini WHERE id = $1`;
+    try {
+      const { rows } = await db.query(sql, [id]);
+      return rows[0];
+    } catch (err) {
+      console.error("Errore in getOrderById:", err);
+      throw err;
+    }
   }
 
   /**
@@ -89,16 +81,16 @@ class OrdiniDAO {
   async getTotalSales() {
     // SUM(totale) calcola la somma di tutti i valori nella colonna 'totale'.
     const sql = `SELECT SUM(totale) as total FROM storico_ordini`;
-    return new Promise((resolve, reject) => {
-        this.db.get(sql, [], (err, row) => {
-            if (err) {
-                reject(err);
-            } else {
-                // Se non ci sono ordini, row.total sarà NULL. In quel caso, restituiamo 0.
-                resolve(row.total || 0);
-            }
-        });
-    });
+    try {
+        const { rows } = await db.query(sql);
+        const row = rows[0];
+        // Se non ci sono ordini, row.total sarà NULL. In quel caso, restituiamo 0.
+        // Usiamo parseFloat per assicurare che il risultato sia un numero.
+        return parseFloat(row.total) || 0;
+    } catch (err) {
+        console.error("Errore in getTotalSales:", err);
+        throw err;
+    }
   }
 
   /**
@@ -107,28 +99,29 @@ class OrdiniDAO {
    * @returns {Promise<Object>} Un oggetto con 'totalRevenue' (guadagno totale) e 'productsSoldCount' (prodotti venduti).
    */
   async getSalesStatsBySellerId(sellerId) {
+    // Sostituiamo ? con $1
     const sql = `
         SELECT
             SUM(so.totale) as totalRevenue,
             COUNT(so.id) as productsSoldCount
         FROM storico_ordini so
         JOIN prodotti p ON so.prodotto_id = p.id
-        WHERE p.user_id = ?`; // Filtra gli ordini solo per i prodotti venduti da questo specifico utente.
+        WHERE p.user_id = $1`; 
 
-    return new Promise((resolve, reject) => {
-        this.db.get(sql, [sellerId], (err, row) => {
-            if (err) {
-                reject(err);
-            } else {
-                // Restituiamo un oggetto con i totali, assicurandoci che siano 0 se non ci sono risultati.
-                resolve({
-                    totalRevenue: row.totalRevenue || 0,
-                    productsSoldCount: row.productsSoldCount || 0
-                });
-            }
+    try {
+        const { rows } = await db.query(sql, [sellerId]);
+        const row = rows[0];
+        // Restituiamo un oggetto con i totali, assicurandoci che siano 0 se non ci sono risultati.
+        resolve({
+            totalRevenue: parseFloat(row.totalrevenue) || 0, // 'totalrevenue' è minuscolo in pg
+            productsSoldCount: parseInt(row.productssoldcount, 10) || 0 // 'productssoldcount' è minuscolo
         });
-    });
+    } catch (err) {
+        console.error("Errore in getSalesStatsBySellerId:", err);
+        throw err;
+    }
   }
 }
 
-module.exports = new OrdiniDAO(db);
+// Esportiamo una nuova istanza della classe
+module.exports = new OrdiniDAO();

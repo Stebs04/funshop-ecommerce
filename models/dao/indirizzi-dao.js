@@ -1,6 +1,6 @@
 'use strict';
 
-// Importiamo la connessione al database.
+// Importiamo la connessione al database (pool 'pg')
 const { db } = require('../../managedb');
 
 /**
@@ -15,20 +15,17 @@ class IndirizziDAO {
      * @param {number} userId - L'ID dell'utente di cui vogliamo gli indirizzi.
      * @returns {Promise<Array<Object>>} Una promessa che, se risolta, restituisce un array di oggetti indirizzo.
      */
-    getIndirizziByUserId(userId) {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM indirizzi WHERE user_id = ?';
-            // db.all esegue la query e restituisce tutte le righe trovate come un array.
-            db.all(sql, [userId], (err, rows) => {
-                if (err) {
-                    // Se c'è un errore, rifiutiamo la promessa.
-                    reject(err);
-                } else {
-                    // Altrimenti, risolviamo la promessa con le righe trovate.
-                    resolve(rows);
-                }
-            });
-        });
+    async getIndirizziByUserId(userId) {
+        // Sostituiamo ? con $1
+        const sql = 'SELECT * FROM indirizzi WHERE user_id = $1';
+        try {
+            // Usiamo await e db.query, il risultato è in 'rows'
+            const { rows } = await db.query(sql, [userId]);
+            return rows;
+        } catch (err) {
+            console.error("Errore in getIndirizziByUserId:", err);
+            throw err; // Rilanciamo l'errore per gestirlo nel chiamante
+        }
     }
 
     /**
@@ -36,18 +33,17 @@ class IndirizziDAO {
      * @param {number} indirizzoId - L'ID dell'indirizzo da cercare.
      * @returns {Promise<Object>} Una promessa che restituisce l'oggetto indirizzo, se trovato.
      */
-    getIndirizzoById(indirizzoId) {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT * FROM indirizzi WHERE id = ?';
-            // db.get esegue la query e restituisce solo la prima riga trovata.
-            db.get(sql, [indirizzoId], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row);
-                }
-            });
-        });
+    async getIndirizzoById(indirizzoId) {
+        // Sostituiamo ? con $1
+        const sql = 'SELECT * FROM indirizzi WHERE id = $1';
+        try {
+            // Usiamo db.query, il risultato è in 'rows[0]'
+            const { rows } = await db.query(sql, [indirizzoId]);
+            return rows[0]; // Restituisce la prima (e unica) riga trovata
+        } catch (err) {
+            console.error("Errore in getIndirizzoById:", err);
+            throw err;
+        }
     }
 
     /**
@@ -55,21 +51,21 @@ class IndirizziDAO {
      * @param {Object} indirizzoData - Un oggetto contenente i dati dell'indirizzo: { user_id, indirizzo, citta, cap }.
      * @returns {Promise<number>} L'ID del nuovo indirizzo appena inserito.
      */
-    createIndirizzo(indirizzoData) {
-        return new Promise((resolve, reject) => {
-            // Estraiamo i dati dall'oggetto per chiarezza.
-            const { user_id, indirizzo, citta, cap } = indirizzoData;
-            const sql = 'INSERT INTO indirizzi (user_id, indirizzo, citta, cap) VALUES (?, ?, ?, ?)';
-            // db.run esegue una query che non restituisce righe (come INSERT, UPDATE, DELETE).
-            db.run(sql, [user_id, indirizzo, citta, cap], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    // 'this.lastID' contiene l'ID dell'ultima riga inserita.
-                    resolve(this.lastID);
-                }
-            });
-        });
+    async createIndirizzo(indirizzoData) {
+        const { user_id, indirizzo, citta, cap } = indirizzoData;
+        // Usiamo i placeholder $1, $2, ecc. e 'RETURNING id' per ottenere l'ID
+        const sql = `
+            INSERT INTO indirizzi (user_id, indirizzo, citta, cap) 
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+        `;
+        try {
+            const { rows } = await db.query(sql, [user_id, indirizzo, citta, cap]);
+            return rows[0].id; // Restituisce l'ID del record appena creato
+        } catch (err) {
+            console.error("Errore in createIndirizzo:", err);
+            throw err;
+        }
     }
 
     /**
@@ -78,19 +74,18 @@ class IndirizziDAO {
      * @param {Object} indirizzoData - I nuovi dati: { indirizzo, citta, cap }.
      * @returns {Promise<number>} Il numero di righe modificate (dovrebbe essere 1).
      */
-    updateIndirizzo(indirizzoId, indirizzoData) {
-        return new Promise((resolve, reject) => {
-            const { indirizzo, citta, cap } = indirizzoData;
-            const sql = 'UPDATE indirizzi SET indirizzo = ?, citta = ?, cap = ? WHERE id = ?';
-            db.run(sql, [indirizzo, citta, cap, indirizzoId], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    // 'this.changes' contiene il numero di righe che sono state modificate dalla query.
-                    resolve(this.changes);
-                }
-            });
-        });
+    async updateIndirizzo(indirizzoId, indirizzoData) {
+        const { indirizzo, citta, cap } = indirizzoData;
+        // Placeholder $1, $2, $3, $4
+        const sql = 'UPDATE indirizzi SET indirizzo = $1, citta = $2, cap = $3 WHERE id = $4';
+        try {
+            // 'rowCount' contiene il numero di righe modificate
+            const { rowCount } = await db.query(sql, [indirizzo, citta, cap, indirizzoId]);
+            return rowCount;
+        } catch (err) {
+            console.error("Errore in updateIndirizzo:", err);
+            throw err;
+        }
     }
 
     /**
@@ -99,21 +94,18 @@ class IndirizziDAO {
      * @param {number} userId - L'ID dell'utente proprietario, per un controllo di sicurezza.
      * @returns {Promise<number>} Il numero di righe eliminate.
      */
-    deleteIndirizzo(indirizzoId, userId) {
-        return new Promise((resolve, reject) => {
-            // La clausola 'AND user_id = ?' assicura che un utente possa eliminare solo i propri indirizzi.
-            const sql = 'DELETE FROM indirizzi WHERE id = ? AND user_id = ?';
-            db.run(sql, [indirizzoId, userId], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this.changes);
-                }
-            });
-        });
+    async deleteIndirizzo(indirizzoId, userId) {
+        // Placeholder $1 e $2
+        const sql = 'DELETE FROM indirizzi WHERE id = $1 AND user_id = $2';
+        try {
+            const { rowCount } = await db.query(sql, [indirizzoId, userId]);
+            return rowCount; // Restituisce il numero di righe eliminate
+        } catch (err) {
+            console.error("Errore in deleteIndirizzo:", err);
+            throw err;
+        }
     }
 }
 
-// Esportiamo una nuova istanza della classe, così da poterla usare come un singleton
-// in altre parti dell'applicazione (es. nelle routes).
+// Esportiamo una nuova istanza della classe
 module.exports = new IndirizziDAO();

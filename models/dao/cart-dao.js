@@ -1,7 +1,7 @@
 // File: models/dao/cart-dao.js
 'use strict';
 
-// Importazione del database e del DAO dei prodotti
+// Importazione del database (pool 'pg') e del DAO dei prodotti
 const { db } = require('../../managedb');
 const prodottiDao = require('./prodotti-dao');
 
@@ -17,64 +17,72 @@ class CartDAO {
      * @returns {Promise<object>} Un oggetto che rappresenta il carrello.
      */
     async getCartByUserId(userId) {
-        const sql = 'SELECT * FROM cart_items WHERE user_id = ?';
-        return new Promise((resolve, reject) => {
-            db.all(sql, [userId], async (err, cartItems) => {
-                if (err) return reject(err);
+        const sql = 'SELECT * FROM cart_items WHERE user_id = $1';
+        
+        try {
+            const { rows: cartItems } = await db.query(sql, [userId]);
+            
+            const cart = { items: {}, totalQty: 0, totalPrice: 0 };
+            if (!cartItems || cartItems.length === 0) {
+                return cart;
+            }
+            
+            // Estrae tutti gli ID dei prodotti dal carrello.
+            const productIds = cartItems.map(item => item.product_id);
 
-                const cart = { items: {}, totalQty: 0, totalPrice: 0 };
-                if (!cartItems || cartItems.length === 0) {
-                    return resolve(cart);
-                }
-                
-                // Estrae tutti gli ID dei prodotti dal carrello.
-                const productIds = cartItems.map(item => item.product_id);
+            // Recupera tutti i dettagli dei prodotti in una singola query.
+            const products = await prodottiDao.getProductsByIds(productIds);
+            const productsMap = products.reduce((map, product) => {
+                map[product.id] = product;
+                return map;
+            }, {});
 
-                // Recupera tutti i dettagli dei prodotti in una singola query.
-                const products = await prodottiDao.getProductsByIds(productIds);
-                const productsMap = products.reduce((map, product) => {
-                    map[product.id] = product;
-                    return map;
-                }, {});
-
-                // Costruisce l'oggetto carrello.
-                for (const item of cartItems) {
-                    const product = productsMap[item.product_id];
-                    if (product) {
-                        const itemPrice = product.prezzo_scontato || product.prezzo;
-                        cart.items[product.id] = {
-                            item: product,
-                            qty: item.quantity,
-                            price: itemPrice * item.quantity
-                        };
-                        // Aggiunge al totale solo se il prodotto è effettivamente disponibile.
-                        if (product.stato === 'disponibile') {
-                            cart.totalQty += item.quantity;
-                            cart.totalPrice += itemPrice * item.quantity;
-                        }
+            // Costruisce l'oggetto carrello.
+            for (const item of cartItems) {
+                const product = productsMap[item.product_id];
+                if (product) {
+                    // Convertiamo il prezzo da stringa (di NUMERIC) a numero
+                    const itemPrice = parseFloat(product.prezzo_scontato) || parseFloat(product.prezzo);
+                    cart.items[product.id] = {
+                        item: product,
+                        qty: item.quantity,
+                        price: itemPrice * item.quantity
+                    };
+                    // Aggiunge al totale solo se il prodotto è effettivamente disponibile.
+                    if (product.stato === 'disponibile') {
+                        cart.totalQty += item.quantity;
+                        cart.totalPrice += itemPrice * item.quantity;
                     }
                 }
-                resolve(cart);
-            });
-        });
+            }
+            return cart;
+        } catch (err) {
+            console.error("Errore in getCartByUserId:", err);
+            throw err;
+        }
     }
 
 
     /**
      * Aggiunge un prodotto al carrello di un utente.
-     * Utilizza 'INSERT OR IGNORE' per evitare di inserire duplicati.
+     * Utilizza 'INSERT ... ON CONFLICT ... DO NOTHING' per evitare duplicati.
      * @param {number} userId - L'ID dell'utente.
      * @param {number} productId - L'ID del prodotto da aggiungere.
      * @returns {Promise<number>} Il numero di righe modificate (1 se aggiunto, 0 se già presente).
      */
-    addToCart(userId, productId) {
-        const sql = 'INSERT OR IGNORE INTO cart_items (user_id, product_id, quantity) VALUES (?, ?, 1)';
-        return new Promise((resolve, reject) => {
-            db.run(sql, [userId, productId], function(err) {
-                if (err) return reject(err);
-                resolve(this.changes);
-            });
-        });
+    async addToCart(userId, productId) {
+        const sql = `
+            INSERT INTO cart_items (user_id, product_id, quantity) 
+            VALUES ($1, $2, 1)
+            ON CONFLICT (user_id, product_id) DO NOTHING
+        `;
+        try {
+            const { rowCount } = await db.query(sql, [userId, productId]);
+            return rowCount; // 1 se inserito, 0 se c'era conflitto
+        } catch (err) {
+            console.error("Errore in addToCart:", err);
+            throw err;
+        }
     }
 
     /**
@@ -83,14 +91,15 @@ class CartDAO {
      * @param {number} productId - L'ID del prodotto da rimuovere.
      * @returns {Promise<number>} Il numero di righe eliminate.
      */
-    removeFromCart(userId, productId) {
-        const sql = 'DELETE FROM cart_items WHERE user_id = ? AND product_id = ?';
-        return new Promise((resolve, reject) => {
-            db.run(sql, [userId, productId], function(err) {
-                if (err) return reject(err);
-                resolve(this.changes);
-            });
-        });
+    async removeFromCart(userId, productId) {
+        const sql = 'DELETE FROM cart_items WHERE user_id = $1 AND product_id = $2';
+        try {
+            const { rowCount } = await db.query(sql, [userId, productId]);
+            return rowCount;
+        } catch (err) {
+            console.error("Errore in removeFromCart:", err);
+            throw err;
+        }
     }
 
     /**
@@ -98,14 +107,15 @@ class CartDAO {
      * @param {number} userId - L'ID dell'utente.
      * @returns {Promise<number>} Il numero totale di righe eliminate.
      */
-    clearCart(userId) {
-        const sql = 'DELETE FROM cart_items WHERE user_id = ?';
-        return new Promise((resolve, reject) => {
-            db.run(sql, [userId], function(err) {
-                if (err) return reject(err);
-                resolve(this.changes);
-            });
-        });
+    async clearCart(userId) {
+        const sql = 'DELETE FROM cart_items WHERE user_id = $1';
+        try {
+            const { rowCount } = await db.query(sql, [userId]);
+            return rowCount;
+        } catch (err) {
+            console.error("Errore in clearCart:", err);
+            throw err;
+        }
     }
 
     /**
@@ -118,12 +128,19 @@ class CartDAO {
         if (!sessionCart || !sessionCart.items) return;
 
         // Crea una serie di promesse per aggiungere ogni articolo dal carrello di sessione
+        // Usiamo Promise.all per eseguirle in parallelo
         const promises = Object.keys(sessionCart.items).map(productId => {
-            return this.addToCart(userId, productId);
+            // productId è una stringa, lo convertiamo in numero
+            return this.addToCart(userId, parseInt(productId, 10));
         });
 
-        // Attende che tutte le operazioni di inserimento siano completate
-        await Promise.all(promises);
+        try {
+            // Attende che tutte le operazioni di inserimento siano completate
+            await Promise.all(promises);
+        } catch (err) {
+            console.error("Errore in mergeSessionCart:", err);
+            throw err;
+        }
     }
 }
 

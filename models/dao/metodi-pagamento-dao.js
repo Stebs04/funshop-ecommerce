@@ -1,24 +1,26 @@
 // File: models/dao/metodi-pagamento-dao.js
 'use strict';
 
+// Importiamo la connessione al database (pool 'pg')
 const { db } = require('../../managedb');
 
 class MetodiPagamentoDAO {
     /**
      * Recupera i metodi di pagamento di un utente specifico.
      * Per sicurezza, non restituisce mai il numero completo della carta o il CVV.
-     * `substr(numero_carta, -4)` è una funzione SQL che estrae solo le ultime 4 cifre.
+     * Usiamo la funzione RIGHT() di PostgreSQL per estrarre le ultime 4 cifre.
      * @param {number} userId L'ID dell'utente.
      * @returns {Promise<Array<Object>>} Una lista di metodi di pagamento (dati parziali).
      */
-    getMetodiPagamentoByUserId(userId) {
-        return new Promise((resolve, reject) => {
-            const sql = 'SELECT id, user_id, nome_titolare, substr(numero_carta, -4) as last4, data_scadenza FROM metodi_pagamento WHERE user_id = ?';
-            db.all(sql, [userId], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
+    async getMetodiPagamentoByUserId(userId) {
+        const sql = 'SELECT id, user_id, nome_titolare, RIGHT(numero_carta, 4) as last4, data_scadenza FROM metodi_pagamento WHERE user_id = $1';
+        try {
+            const { rows } = await db.query(sql, [userId]);
+            return rows;
+        } catch (err) {
+            console.error("Errore in getMetodiPagamentoByUserId:", err);
+            throw err;
+        }
     }
 
     /**
@@ -26,19 +28,23 @@ class MetodiPagamentoDAO {
      * @param {Object} datiCarta Dati completi: { user_id, nome_titolare, numero_carta, data_scadenza, cvv }.
      * @returns {Promise<number>} L'ID del nuovo metodo di pagamento inserito.
      */
-    createMetodoPagamento(datiCarta) {
-        return new Promise((resolve, reject) => {
-            // Estrae tutti i campi necessari, incluso il CVV, dall'oggetto in input.
-            const { user_id, nome_titolare, numero_carta, data_scadenza, cvv } = datiCarta;
-            
-            // La query SQL include tutti i campi necessari per un inserimento completo.
-            const sql = 'INSERT INTO metodi_pagamento (user_id, nome_titolare, numero_carta, data_scadenza, cvv) VALUES (?, ?, ?, ?, ?)';
-            
-            db.run(sql, [user_id, nome_titolare, numero_carta, data_scadenza, cvv], function(err) {
-                if (err) reject(err);
-                else resolve(this.lastID); // Restituisce l'ID del record appena creato.
-            });
-        });
+    async createMetodoPagamento(datiCarta) {
+        const { user_id, nome_titolare, numero_carta, data_scadenza, cvv } = datiCarta;
+        
+        // Query con placeholder $1, $2, ... e RETURNING id
+        const sql = `
+            INSERT INTO metodi_pagamento (user_id, nome_titolare, numero_carta, data_scadenza, cvv) 
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id
+        `;
+        
+        try {
+            const { rows } = await db.query(sql, [user_id, nome_titolare, numero_carta, data_scadenza, cvv]);
+            return rows[0].id; // Restituisce l'ID del record appena creato.
+        } catch (err) {
+            console.error("Errore in createMetodoPagamento:", err);
+            throw err;
+        }
     }
 
     /**
@@ -48,14 +54,15 @@ class MetodiPagamentoDAO {
      * @param {number} userId L'ID dell'utente che effettua la richiesta.
      * @returns {Promise<number>} Il numero di righe eliminate (dovrebbe essere 1 o 0).
      */
-    deleteMetodoPagamento(metodoId, userId) {
-        return new Promise((resolve, reject) => {
-            const sql = 'DELETE FROM metodi_pagamento WHERE id = ? AND user_id = ?';
-            db.run(sql, [metodoId, userId], function(err) {
-                if (err) reject(err);
-                else resolve(this.changes);
-            });
-        });
+    async deleteMetodoPagamento(metodoId, userId) {
+        const sql = 'DELETE FROM metodi_pagamento WHERE id = $1 AND user_id = $2';
+        try {
+            const { rowCount } = await db.query(sql, [metodoId, userId]);
+            return rowCount; // Restituisce il numero di righe eliminate
+        } catch (err) {
+            console.error("Errore in deleteMetodoPagamento:", err);
+            throw err;
+        }
     }
 }
 

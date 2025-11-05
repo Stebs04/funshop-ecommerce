@@ -4,22 +4,22 @@
 const express = require('express');
 const router = express.Router();
 
-// Import dei DAO per interagire con il database
+// Import dei DAO (che ora usano pg)
 const prodottiDao = require('../models/dao/prodotti-dao');
 const indirizziDao = require('../models/dao/indirizzi-dao');
 const metodiPagamentoDao = require('../models/dao/metodi-pagamento-dao');
 const ordiniDao = require('../models/dao/ordini-dao');
 const cartDao = require('../models/dao/cart-dao');
-const observedDao = require('../models/dao/observed-dao'); // DAO per i prodotti osservati
+const observedDao = require('../models/dao/observed-dao');
 
 // Import del servizio per l'invio di email
 const { sendOrderConfirmationEmail } = require('../services/emailService');
-const { db } = require('../managedb'); // Import diretto del database per le transazioni
+// Importiamo il pool 'db' di pg per gestire le transazioni manualmente
+const { db } = require('../managedb');
 
 /**
  * Middleware: Inizializzazione del Carrello
- * Questo middleware viene eseguito per ogni richiesta che arriva a `/carrello/*`.
- * La sua funzione è assicurarsi che ci sia sempre un carrello (`req.session.cart`) disponibile.
+ * (Logica invariata, ma ora cartDao.getCartByUserId usa pg)
  */
 router.use(async (req, res, next) => {
     if (req.isAuthenticated()) {
@@ -32,7 +32,7 @@ router.use(async (req, res, next) => {
 
 /**
  * ROTTA: POST /carrello/add/:id
- * Aggiunge un prodotto al carrello.
+ * (Logica invariata, ma ora prodottiDao e cartDao usano pg)
  */
 router.post('/add/:id', async (req, res) => {
     const productId = req.params.id;
@@ -54,11 +54,11 @@ router.post('/add/:id', async (req, res) => {
             }
         } else {
             const cart = req.session.cart;
-            // Controlla se l'articolo è già nel carrello dell'utente ospite.
             if (cart.items[productId]) {
                 req.flash('error', 'Questo articolo è già presente nel carrello.');
             } else {
-                const itemPrice = product.prezzo_scontato || product.prezzo;
+                // Assicuriamo che il prezzo sia un numero
+                const itemPrice = parseFloat(product.prezzo_scontato) || parseFloat(product.prezzo);
                 cart.items[productId] = { item: product, qty: 1, price: itemPrice };
                 cart.totalQty++;
                 cart.totalPrice += itemPrice;
@@ -76,7 +76,7 @@ router.post('/add/:id', async (req, res) => {
 
 /**
  * ROTTA: POST /carrello/remove/:id
- * Rimuove un prodotto dal carrello.
+ * (Logica invariata, ma ora cartDao usa pg)
  */
 router.post('/remove/:id', async (req, res) => {
     const productId = req.params.id;
@@ -103,7 +103,7 @@ router.post('/remove/:id', async (req, res) => {
 
 /**
  * ROTTA: GET /carrello/
- * Mostra la pagina di riepilogo del carrello.
+ * (Logica invariata)
  */
 router.get('/', (req, res) => {
     const cart = req.session.cart;
@@ -115,7 +115,7 @@ router.get('/', (req, res) => {
 
 /**
  * ROTTA: GET /carrello/checkout
- * Mostra la pagina di checkout.
+ * (Logica invariata, ma i DAO usano pg)
  */
 router.get('/checkout', async (req, res) => {
     const cart = req.session.cart;
@@ -150,7 +150,7 @@ router.get('/checkout', async (req, res) => {
 
 /**
  * ROTTA: POST /carrello/checkout
- * Gestisce la logica di finalizzazione dell'ordine.
+ * Gestisce la logica di finalizzazione dell'ordine con transazione PostgreSQL.
  */
 router.post('/checkout', async (req, res) => {
     const cart = req.session.cart;
@@ -159,14 +159,19 @@ router.post('/checkout', async (req, res) => {
     }
 
     const { addressSelection, paymentMethod, ...formData } = req.body;
-    let transactionStarted = false;
 
+    // Acquisiamo un client dal pool per la transazione
+    const client = await db.connect();
+    
     try {
         // Filtra il carrello per processare solo gli articoli ancora disponibili
         const availableItems = Object.values(cart.items).filter(item => item.item.stato === 'disponibile');
         if (availableItems.length === 0) {
             throw new Error('Nessun articolo disponibile nel carrello per il checkout.');
         }
+
+        // Iniziamo la transazione
+        await client.query('BEGIN');
 
         if (req.isAuthenticated()) {
             // --- LOGICA PER UTENTE AUTENTICATO ---
@@ -183,7 +188,11 @@ router.post('/checkout', async (req, res) => {
             // Gestione Indirizzo
             if (addressSelection === 'new') {
                 finalAddress = { nome: req.user.nome, cognome: req.user.cognome, indirizzo: formData.indirizzo, citta: formData.citta, cap: formData.cap };
-                await indirizziDao.createIndirizzo({ ...finalAddress, user_id: userId });
+                // Usiamo client.query perché siamo in una transazione
+                await client.query(
+                    'INSERT INTO indirizzi (user_id, indirizzo, citta, cap) VALUES ($1, $2, $3, $4)',
+                    [userId, finalAddress.indirizzo, finalAddress.citta, finalAddress.cap]
+                );
             } else {
                 const savedAddress = await indirizziDao.getIndirizzoById(addressSelection);
                 if (!savedAddress || savedAddress.user_id !== userId) throw new Error('Indirizzo selezionato non valido.');
@@ -193,33 +202,43 @@ router.post('/checkout', async (req, res) => {
             // Gestione Pagamento
             if (paymentMethod === 'new') {
                 finalPaymentMethod = { nome_titolare: formData.nome_titolare, last4: formData.numero_carta.slice(-4), data_scadenza: formData.data_scadenza };
-                await metodiPagamentoDao.createMetodoPagamento({ ...formData, user_id: userId });
+                // Usiamo client.query perché siamo in una transazione
+                await client.query(
+                    'INSERT INTO metodi_pagamento (user_id, nome_titolare, numero_carta, data_scadenza, cvv) VALUES ($1, $2, $3, $4, $5)',
+                    [userId, formData.nome_titolare, formData.numero_carta, formData.data_scadenza, formData.cvv]
+                );
             } else {
                 const savedPayments = await metodiPagamentoDao.getMetodiPagamentoByUserId(userId);
                 finalPaymentMethod = savedPayments.find(p => p.id == paymentMethod);
                 if (!finalPaymentMethod) throw new Error('Metodo di pagamento selezionato non valido.');
             }
 
-            // Inizio Transazione
-            await new Promise((resolve, reject) => db.run('BEGIN TRANSACTION', err => err ? reject(err) : resolve()));
-            transactionStarted = true;
-
             const purchasedItems = [];
             for (const item of availableItems) {
                 const product = item.item;
-                await ordiniDao.createOrder({ totale: item.price, user_id: userId, prodotto_id: product.id });
-                await prodottiDao.updateProductStatus(product.id, 'venduto');
-                await observedDao.flagPriceChange(product.id); // Notifica chi osserva il prodotto
+                // Usiamo client.query per tutte le operazioni della transazione
+                await client.query(
+                    'INSERT INTO storico_ordini (totale, user_id, prodotto_id) VALUES ($1, $2, $3)',
+                    [item.price, userId, product.id]
+                );
+                await client.query(
+                    'UPDATE prodotti SET stato = $1 WHERE id = $2',
+                    ['venduto', product.id]
+                );
+                await client.query(
+                    'UPDATE observed_products SET notifica_letta = 0 WHERE product_id = $1',
+                    [product.id]
+                );
                 purchasedItems.push(product);
             }
-            await cartDao.clearCart(userId); // Svuota il carrello dal DB
+            // Svuota il carrello dal DB usando il client della transazione
+            await client.query('DELETE FROM cart_items WHERE user_id = $1', [userId]);
 
             // Fine Transazione
-            await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
-            transactionStarted = false;
+            await client.query('COMMIT');
             
             // Calcola il totale corretto solo degli articoli acquistati
-            const finalTotal = purchasedItems.reduce((sum, item) => sum + (item.prezzo_scontato || item.prezzo), 0);
+            const finalTotal = purchasedItems.reduce((sum, item) => sum + (parseFloat(item.prezzo_scontato) || parseFloat(item.prezzo)), 0);
 
             // Preparazione per la pagina di riepilogo e email
             const reviewLink = `${req.protocol}://${req.get('host')}/recensioni/venditore/${purchasedItems[0].id}`;
@@ -241,22 +260,29 @@ router.post('/checkout', async (req, res) => {
             const finalAddress = { nome: formData.nome, cognome: formData.cognome, indirizzo: formData.indirizzo, citta: formData.citta, cap: formData.cap };
             const finalPaymentMethod = { nome_titolare: formData.nome_titolare, last4: formData.numero_carta.slice(-4), data_scadenza: formData.data_scadenza };
             
-            await new Promise((resolve, reject) => db.run('BEGIN TRANSACTION', err => err ? reject(err) : resolve()));
-            transactionStarted = true;
-
             const purchasedItems = [];
             for (const item of availableItems) {
                 const product = item.item;
-                await ordiniDao.createOrder({ totale: item.price, user_id: null, prodotto_id: product.id });
-                await prodottiDao.updateProductStatus(product.id, 'venduto');
-                await observedDao.flagPriceChange(product.id);
+                // Usiamo client.query per tutte le operazioni della transazione
+                await client.query(
+                    'INSERT INTO storico_ordini (totale, user_id, prodotto_id) VALUES ($1, $2, $3)',
+                    [item.price, null, product.id] // user_id è null per l'ospite
+                );
+                await client.query(
+                    'UPDATE prodotti SET stato = $1 WHERE id = $2',
+                    ['venduto', product.id]
+                );
+                await client.query(
+                    'UPDATE observed_products SET notifica_letta = 0 WHERE product_id = $1',
+                    [product.id]
+                );
                 purchasedItems.push(product);
             }
 
-            await new Promise((resolve, reject) => db.run('COMMIT', err => err ? reject(err) : resolve()));
-            transactionStarted = false;
+            // Fine Transazione
+            await client.query('COMMIT');
 
-            const finalTotal = purchasedItems.reduce((sum, item) => sum + (item.prezzo_scontato || item.prezzo), 0);
+            const finalTotal = purchasedItems.reduce((sum, item) => sum + (parseFloat(item.prezzo_scontato) || parseFloat(item.prezzo)), 0);
 
             const reviewLink = `${req.protocol}://${req.get('host')}/`;
             req.session.latestOrder = {
@@ -270,19 +296,21 @@ router.post('/checkout', async (req, res) => {
         }
 
     } catch (error) {
-        if (transactionStarted) {
-            await new Promise((resolve) => db.run('ROLLBACK', () => resolve()));
-        }
+        // Se si è verificato un errore, esegui il ROLLBACK
+        await client.query('ROLLBACK');
         console.error("Errore durante il checkout:", error);
         req.flash('error', error.message || 'Si è verificato un errore durante la finalizzazione dell\'ordine.');
         res.redirect('/carrello/checkout');
+    } finally {
+        // Rilascia il client al pool in ogni caso
+        client.release();
     }
 });
 
 
 /**
  * ROTTA: GET /carrello/api/data
- * Un endpoint API che restituisce i dati del carrello in formato JSON.
+ * (Logica invariata)
  */
 router.get('/api/data', (req, res) => {
     res.json(req.session.cart);

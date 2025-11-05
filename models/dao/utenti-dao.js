@@ -1,13 +1,10 @@
 'use strict';
 
-// Importiamo la connessione al database e la libreria bcrypt per l'hashing delle password.
+// Importiamo la connessione al database (ora è il pool 'pg') e bcrypt
 const { db } = require('../../managedb');
 const bcrypt = require('bcrypt');
 
 class UtentiDAO {
-  constructor(database) {
-    this.db = database;
-  }
 
   /**
    * Recupera un utente dal database tramite la sua email.
@@ -15,14 +12,18 @@ class UtentiDAO {
    * @returns {Promise<Object|undefined>} Una promessa che risolve con l'oggetto utente completo
    * (incluso l'hash della password) o 'undefined' se non trovato.
    */
-  getUser(email) {
-    const sql = 'SELECT * FROM users WHERE email = ?';
-    return new Promise((resolve, reject) => {
-      this.db.get(sql, [email], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+  async getUser(email) {
+    // Sostituiamo ? con $1
+    const sql = 'SELECT * FROM users WHERE email = $1';
+    try {
+      // usiamo await e db.query, prendiamo 'rows' dal risultato
+      const { rows } = await db.query(sql, [email]);
+      // restituiamo la prima riga (o undefined se non trovato)
+      return rows[0];
+    } catch (err) {
+      console.error("Errore in getUser:", err);
+      throw err;
+    }
   }
 
   /**
@@ -31,14 +32,15 @@ class UtentiDAO {
    * @param {number} id - L'ID dell'utente.
    * @returns {Promise<Object|undefined>} L'oggetto utente con i dati pubblici.
    */
-  getUserById(id) {
-    const sql = 'SELECT id, username, nome, cognome, email, data_nascita, tipo_account FROM users WHERE id = ?';
-    return new Promise((resolve, reject) => {
-      this.db.get(sql, [id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+  async getUserById(id) {
+    const sql = 'SELECT id, username, nome, cognome, email, data_nascita, tipo_account FROM users WHERE id = $1';
+    try {
+      const { rows } = await db.query(sql, [id]);
+      return rows[0];
+    } catch (err) {
+      console.error("Errore in getUserById:", err);
+      throw err;
+    }
   }
 
   /**
@@ -46,24 +48,25 @@ class UtentiDAO {
    * @param {Object} user - I dati dell'utente dal form di registrazione.
    * @returns {Promise<number>} L'ID del nuovo utente creato.
    */
-  createUser(user) {
+  async createUser(user) {
     const { username, nome, cognome, email, password, data_nascita } = user;
-    return new Promise(async (resolve, reject) => {
-        try {
-            // Prima di salvare la password, la crittografiamo con bcrypt.
-            // Il '10' è il "costo" dell'hashing: un valore più alto è più sicuro ma più lento.
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const sql = 'INSERT INTO users (username, nome, cognome, email, password_hash, data_nascita) VALUES (?, ?, ?, ?, ?, ?)';
-            const params = [username, nome, cognome, email, hashedPassword, data_nascita];
-
-            this.db.run(sql, params, function (err) {
-                if (err) reject(err);
-                else resolve(this.lastID);
-            });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      // Usiamo i placeholder $1, $2, ecc. e aggiungiamo 'RETURNING id'
+      const sql = `
+        INSERT INTO users (username, nome, cognome, email, password_hash, data_nascita) 
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id
+      `;
+      const params = [username, nome, cognome, email, hashedPassword, data_nascita || null];
+      
+      const { rows } = await db.query(sql, params);
+      // Restituiamo l'ID del nuovo utente
+      return rows[0].id;
+    } catch (error) {
+      console.error("Errore in createUser:", error);
+      throw error;
+    }
   }
 
   /**
@@ -74,68 +77,72 @@ class UtentiDAO {
    */
   async updateUserProfile(userId, data) {
     const { nome, cognome, username, data_nascita, descrizione } = data;
+    
+    // Acquisiamo un client dedicato per la transazione
+    const client = await db.connect();
+    
+    try {
+      // 1. Iniziamo la transazione
+      await client.query('BEGIN');
 
-    return new Promise((resolve, reject) => {
-        this.db.serialize(() => {
-            this.db.run('BEGIN TRANSACTION', (err) => { if (err) return reject(err); });
+      // 2. Aggiorna i dati nella tabella 'users'.
+      const userSql = 'UPDATE users SET nome = $1, cognome = $2, username = $3, data_nascita = $4 WHERE id = $5';
+      await client.query(userSql, [nome, cognome, username, data_nascita || null, userId]);
 
-            // 1. Aggiorna i dati nella tabella 'users'.
-            const userSql = 'UPDATE users SET nome = ?, cognome = ?, username = ?, data_nascita = ? WHERE id = ?';
-            this.db.run(userSql, [nome, cognome, username, data_nascita || null, userId], function(err) {
-                if (err) return this.db.run('ROLLBACK', () => reject(err));
-            });
+      // 3. Aggiorna o inserisce la descrizione nella tabella 'accountinfos'.
+      // Sintassi "UPSERT" di PostgreSQL
+      const accountInfoSql = `
+          INSERT INTO accountinfos (user_id, descrizione) 
+          VALUES ($1, $2)
+          ON CONFLICT (user_id) 
+          DO UPDATE SET descrizione = EXCLUDED.descrizione;
+      `;
+      await client.query(accountInfoSql, [userId, descrizione || '']);
 
-            // 2. Aggiorna o inserisce la descrizione nella tabella 'accountinfos'.
-            // "ON CONFLICT(user_id) DO UPDATE" è una sintassi SQLite (UPSERT) che
-            // tenta un INSERT, ma se trova un conflitto sulla chiave (user_id),
-            // esegue un UPDATE invece. È molto efficiente.
-            const accountInfoSql = `
-                INSERT INTO accountinfos (user_id, descrizione) VALUES (?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET descrizione = excluded.descrizione;
-            `;
-            this.db.run(accountInfoSql, [userId, descrizione || ''], function(err) {
-                if (err) return this.db.run('ROLLBACK', () => reject(err));
-            });
-
-            // 3. Se tutto ok, conferma la transazione.
-            this.db.run('COMMIT', (err) => {
-                if (err) reject(err);
-                else resolve(true);
-            });
-        });
-    });
+      // 4. Se tutto ok, conferma la transazione.
+      await client.query('COMMIT');
+      return true;
+    } catch (err) {
+      // 5. Se c'è un errore, annulla la transazione.
+      await client.query('ROLLBACK');
+      console.error("Errore nella transazione updateUserProfile:", err);
+      throw err;
+    } finally {
+      // 6. Rilascia il client al pool
+      client.release();
+    }
   }
 
   /**
    * Elimina un utente dal database.
-   * Grazie a 'ON DELETE CASCADE' nello schema del database, quando un utente viene eliminato,
-   * verranno automaticamente rimossi anche tutti i record ad esso collegati nelle altre tabelle
-   * (prodotti, indirizzi, recensioni, etc.), garantendo l'integrità dei dati.
    * @param {number} userId - L'ID dell'utente da eliminare.
    * @returns {Promise<number>} Il numero di righe eliminate (dovrebbe essere 1).
    */
-  deleteUser(userId) {
-      const sql = 'DELETE FROM users WHERE id = ?';
-      return new Promise((resolve, reject) => {
-          this.db.run(sql, [userId], function(err) {
-              if (err) reject(err);
-              else resolve(this.changes);
-          });
-      });
+  async deleteUser(userId) {
+    const sql = 'DELETE FROM users WHERE id = $1';
+    try {
+      // 'rowCount' ci dice quante righe sono state modificate
+      const { rowCount } = await db.query(sql, [userId]);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in deleteUser:", err);
+      throw err;
+    }
   }
   
   /**
    * Recupera tutti gli utenti dal database (per la dashboard admin).
    * @returns {Promise<Array<Object>>} Una lista di tutti gli utenti.
    */
-  getAllUsers() {
+  async getAllUsers() {
     const sql = 'SELECT id, username, email, tipo_account FROM users ORDER BY id ASC';
-    return new Promise((resolve, reject) => {
-        this.db.all(sql, [], (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
+    try {
+      const { rows } = await db.query(sql);
+      return rows;
+    } catch (err) {
+      console.error("Errore in getAllUsers:", err);
+      throw err;
+    }
   }
 
   // --- FUNZIONI PER IL RESET DELLA PASSWORD ---
@@ -147,14 +154,15 @@ class UtentiDAO {
    * @param {number} expires - Il timestamp di scadenza del token.
    * @returns {Promise<number>} Il numero di righe aggiornate.
    */
-  setUserResetToken(userId, token, expires) {
-    const sql = 'UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?';
-    return new Promise((resolve, reject) => {
-        this.db.run(sql, [token, expires, userId], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-        });
-    });
+  async setUserResetToken(userId, token, expires) {
+    const sql = 'UPDATE users SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3';
+    try {
+      const { rowCount } = await db.query(sql, [token, expires, userId]);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in setUserResetToken:", err);
+      throw err;
+    }
   }
 
   /**
@@ -162,15 +170,16 @@ class UtentiDAO {
    * @param {string} token - Il token da cercare.
    * @returns {Promise<Object|undefined>} L'oggetto utente se il token è valido.
    */
-  getUserByResetToken(token) {
+  async getUserByResetToken(token) {
     // La query controlla sia il token sia che la data di scadenza sia nel futuro.
-    const sql = 'SELECT * FROM users WHERE password_reset_token = ? AND password_reset_expires > ?';
-    return new Promise((resolve, reject) => {
-        this.db.get(sql, [token, Date.now()], (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
+    const sql = 'SELECT * FROM users WHERE password_reset_token = $1 AND password_reset_expires > $2';
+    try {
+      const { rows } = await db.query(sql, [token, Date.now()]);
+      return rows[0];
+    } catch (err) {
+      console.error("Errore in getUserByResetToken:", err);
+      throw err;
+    }
   }
 
   /**
@@ -180,15 +189,15 @@ class UtentiDAO {
    * @returns {Promise<number>} Il numero di righe aggiornate.
    */
   async updateUserPassword(userId, newPassword) {
-    // Come per la creazione, facciamo l'hashing della nuova password.
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const sql = 'UPDATE users SET password_hash = ? WHERE id = ?';
-    return new Promise((resolve, reject) => {
-        this.db.run(sql, [hashedPassword, userId], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-        });
-    });
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const sql = 'UPDATE users SET password_hash = $1 WHERE id = $2';
+      const { rowCount } = await db.query(sql, [hashedPassword, userId]);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in updateUserPassword:", err);
+      throw err;
+    }
   }
 
   /**
@@ -196,15 +205,17 @@ class UtentiDAO {
    * @param {number} userId - L'ID dell'utente.
    * @returns {Promise<number>} Il numero di righe aggiornate.
    */
-  clearUserResetToken(userId) {
-      const sql = 'UPDATE users SET password_reset_token = NULL, password_reset_expires = NULL WHERE id = ?';
-      return new Promise((resolve, reject) => {
-          this.db.run(sql, [userId], function(err) {
-              if (err) reject(err);
-              else resolve(this.changes);
-          });
-      });
+  async clearUserResetToken(userId) {
+    const sql = 'UPDATE users SET password_reset_token = NULL, password_reset_expires = NULL WHERE id = $1';
+    try {
+      const { rowCount } = await db.query(sql, [userId]);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in clearUserResetToken:", err);
+      throw err;
+    }
   }
 }
 
-module.exports = new UtentiDAO(db);
+// Esportiamo una nuova istanza della classe
+module.exports = new UtentiDAO();

@@ -1,6 +1,6 @@
 'use strict';
 
-// Importiamo la connessione al database.
+// Importiamo la connessione al database (pool 'pg')
 const { db } = require('../../managedb');
 
 /**
@@ -10,54 +10,45 @@ const { db } = require('../../managedb');
  * @returns {Promise<Object|undefined>} Una promessa che risolve in un oggetto contenente le informazioni
  * o 'undefined' se non viene trovato nessun record.
  */
-exports.getAccountInfoByUserId = (userId) => {
-    return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM accountinfos WHERE user_id = ?';
-        // Usiamo db.get perché ci aspettiamo al massimo una riga per utente (dato che user_id è UNIQUE).
-        db.get(sql, [userId], (err, row) => {
-            if (err) {
-                console.error("Errore nel recuperare le informazioni dell'account:", err.message);
-                reject(err);
-            } else {
-                resolve(row);
-            }
-        });
-    });
+const getAccountInfoByUserId = async (userId) => {
+    const sql = 'SELECT * FROM accountinfos WHERE user_id = $1';
+    try {
+        // Usiamo db.query e ci aspettiamo al massimo una riga (dato che user_id è UNIQUE)
+        const { rows } = await db.query(sql, [userId]);
+        return rows[0];
+    } catch (err) {
+        console.error("Errore nel recuperare le informazioni dell'account:", err.message);
+        throw err;
+    }
 };
 
 /**
  * Aggiorna o imposta per la prima volta l'immagine del profilo di un utente.
- * Se non esiste già un record per l'utente nella tabella 'accountinfos', ne crea uno nuovo.
+ * Utilizza la sintassi "UPSERT" (INSERT ... ON CONFLICT) di PostgreSQL:
+ * 1. Tenta di INSERIRE un nuovo record.
+ * 2. Se trova un conflitto sulla colonna 'user_id' (che è UNIQUE),
+ * esegue un UPDATE sulla riga esistente.
  * @param {number} userId - L'ID dell'utente.
  * @param {string} imagePath - Il percorso del file della nuova immagine.
- * @returns {Promise<number>} Una promessa che risolve nel numero di righe modificate (se l'update ha successo)
- * o nell'ID del nuovo record (se viene creato).
+ * @returns {Promise<number>} Una promessa che risolve nel numero di righe modificate.
  */
-exports.updateProfileImage = (userId, imagePath) => {
-    return new Promise((resolve, reject) => {
-        // 1. Tentiamo di aggiornare un record esistente.
-        const sql = 'UPDATE accountinfos SET immagine_profilo = ? WHERE user_id = ?';
-        db.run(sql, [imagePath, userId], function (err) {
-            if (err) {
-                reject(err);
-            } else {
-                // 2. Se 'this.changes' è 0, significa che non c'era nessun record da aggiornare.
-                if (this.changes === 0) {
-                    // 3. In questo caso, creiamo un nuovo record.
-                    const insertSql = 'INSERT INTO accountinfos (user_id, immagine_profilo) VALUES (?, ?)';
-                    db.run(insertSql, [userId, imagePath], function(err) {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            // Risolviamo con l'ID della nuova riga creata.
-                            resolve(this.lastID);
-                        }
-                    });
-                } else {
-                    // 4. Se l'aggiornamento è andato a buon fine, risolviamo con il numero di righe modificate.
-                    resolve(this.changes);
-                }
-            }
-        });
-    });
+const updateProfileImage = async (userId, imagePath) => {
+    const sql = `
+        INSERT INTO accountinfos (user_id, immagine_profilo)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id) DO UPDATE 
+        SET immagine_profilo = EXCLUDED.immagine_profilo;
+    `;
+    // EXCLUDED.immagine_profilo si riferisce al valore che stavamo cercando di inserire ($2)
+    
+    try {
+        const { rowCount } = await db.query(sql, [userId, imagePath]);
+        return rowCount; // Restituirà 1 sia in caso di INSERT che di UPDATE
+    } catch (err) {
+        console.error("Errore durante l'aggiornamento dell'immagine del profilo:", err.message);
+        throw err;
+    }
 };
+
+// Esportiamo le funzioni
+module.exports = { getAccountInfoByUserId, updateProfileImage };

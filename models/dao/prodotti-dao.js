@@ -1,13 +1,10 @@
 // File: models/dao/prodotti-dao.js
 'use strict';
 
-// Importiamo la connessione al database.
+// Importiamo la connessione al database (pool 'pg')
 const { db } = require('../../managedb');
 
 class ProdottiDAO {
-  constructor(database) {
-    this.db = database;
-  }
 
   /**
    * Recupera una lista di prodotti dal database in base a una serie di filtri.
@@ -15,55 +12,57 @@ class ProdottiDAO {
    * @returns {Promise<Array<Object>>} Una lista di prodotti che corrispondono ai filtri.
    */
   async getProducts(filters = {}) {
-    // Estraiamo i filtri dall'oggetto per un uso più semplice.
     const { view, category, condition, sortBy } = filters;
-    // Query di base che seleziona i prodotti disponibili e unisce la tabella utenti per ottenere il nome del venditore.
+    
     let sql = `
       SELECT p.*, u.username as nome_venditore 
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       WHERE p.stato = 'disponibile'
     `;
-    const params = []; // Array per i valori da passare alla query SQL per prevenire SQL injection.
-    const whereClauses = []; // Array per costruire dinamicamente la clausola WHERE.
+    const params = [];
+    const whereClauses = [];
 
-    // Aggiungiamo condizioni in base ai filtri ricevuti.
+    // Gestione dinamica dei placeholder per 'pg' (usano $1, $2, ...)
+    let paramIndex = 1;
+
     if (view === 'novita') {
       // Filtra per i prodotti inseriti negli ultimi 2 giorni.
-      whereClauses.push("p.data_inserimento >= date('now', '-2 days')");
+      // CURRENT_DATE - INTERVAL '2 days' è la sintassi PostgreSQL
+      whereClauses.push("p.data_inserimento >= (CURRENT_TIMESTAMP - INTERVAL '2 days')");
     } else if (view === 'offerte') {
       // Solo prodotti in offerta.
       whereClauses.push('p.prezzo_scontato IS NOT NULL AND p.prezzo_scontato > 0');
     }
     if (category) {
-      whereClauses.push('p.parola_chiave = ?');
+      whereClauses.push(`p.parola_chiave = $${paramIndex++}`);
       params.push(category);
     }
     if (condition) {
-      whereClauses.push('p.condizione = ?');
+      whereClauses.push(`p.condizione = $${paramIndex++}`);
       params.push(condition);
     }
-    // Se abbiamo aggiunto delle clausole, le uniamo con 'AND' e le aggiungiamo alla query.
+    
     if (whereClauses.length > 0) {
       sql += ' AND ' + whereClauses.join(' AND ');
     }
+
     // Gestiamo l'ordinamento.
     if (sortBy === 'price_asc') {
-      // COALESCE restituisce il primo valore non nullo: ordina per prezzo scontato se esiste, altrimenti per prezzo normale.
       sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) ASC';
     } else if (sortBy === 'price_desc') {
       sql += ' ORDER BY COALESCE(p.prezzo_scontato, p.prezzo) DESC';
     } else {
-      // Ordinamento di default: dal più recente al più vecchio.
       sql += ' ORDER BY p.data_inserimento DESC';
     }
 
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
+    try {
+      const { rows } = await db.query(sql, params);
+      return rows;
+    } catch (err) {
+      console.error("Errore in getProducts:", err);
+      throw err;
+    }
   }
   
   /**
@@ -72,19 +71,19 @@ class ProdottiDAO {
    * @returns {Promise<Object>} L'oggetto prodotto.
    */
   async getProductById(id) {
-    // La query unisce prodotti, utenti e accountinfos per ottenere tutti i dettagli necessari.
     const sql = `
       SELECT p.*, u.username as nome_venditore, u.email as email_venditore, ai.immagine_profilo
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       LEFT JOIN accountinfos ai ON u.id = ai.user_id
-      WHERE p.id = ?`;
-    return new Promise((resolve, reject) => {
-      this.db.get(sql, [id], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+      WHERE p.id = $1`;
+    try {
+      const { rows } = await db.query(sql, [id]);
+      return rows[0];
+    } catch (err) {
+      console.error("Errore in getProductById:", err);
+      throw err;
+    }
   }
 
   /**
@@ -96,20 +95,24 @@ class ProdottiDAO {
     if (!ids || ids.length === 0) {
         return [];
     }
-    // Crea una serie di placeholder '?' per la clausola IN.
-    const placeholders = ids.map(() => '?').join(',');
+    
+    // Creazione dinamica dei placeholder per la clausola IN
+    const placeholders = ids.map((_, index) => `$${index + 1}`).join(',');
+    
     const sql = `
         SELECT p.*, u.username as nome_venditore 
         FROM prodotti p 
         JOIN users u ON p.user_id = u.id 
         WHERE p.id IN (${placeholders})
     `;
-    return new Promise((resolve, reject) => {
-        this.db.all(sql, ids, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
+    try {
+      // Passiamo l'array di ID come parametri
+      const { rows } = await db.query(sql, ids);
+      return rows;
+    } catch (err) {
+      console.error("Errore in getProductsByIds:", err);
+      throw err;
+    }
   }
 
 
@@ -119,13 +122,14 @@ class ProdottiDAO {
    * @returns {Promise<Array<Object>>} Una lista dei suoi prodotti.
    */
   async getProductsByUserId(userId) {
-    const sql = "SELECT * FROM prodotti WHERE user_id = ? AND stato = 'disponibile' ORDER BY data_inserimento DESC";
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, [userId], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
+    const sql = "SELECT * FROM prodotti WHERE user_id = $1 AND stato = 'disponibile' ORDER BY data_inserimento DESC";
+    try {
+      const { rows } = await db.query(sql, [userId]);
+      return rows;
+    } catch (err) {
+      console.error("Errore in getProductsByUserId:", err);
+      throw err;
+    }
   }
   
   /**
@@ -137,15 +141,17 @@ class ProdottiDAO {
     const { nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, user_id } = product;
     const sql = `
       INSERT INTO prodotti (nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_scontato, user_id) 
-      VALUES (?, ?, ?, ?, ?, ?, NULL, ?)`;
-    // Usiamo '|| null' per assicurarci che se prezzo non è definito, venga inserito NULL nel DB.
+      VALUES ($1, $2, $3, $4, $5, $6, NULL, $7)
+      RETURNING id
+    `;
     const params = [nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo || null, user_id];
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function (err) {
-        if (err) reject(err);
-        else resolve(this.lastID);
-      });
-    });
+    try {
+      const { rows } = await db.query(sql, params);
+      return rows[0].id;
+    } catch (err) {
+      console.error("Errore in createProduct:", err);
+      throw err;
+    }
   }
 
   /**
@@ -155,13 +161,14 @@ class ProdottiDAO {
    * @returns {Promise<number>} Il numero di righe modificate.
    */
   async deleteProduct(productId, userId) {
-      const sql = "UPDATE prodotti SET stato = 'eliminato' WHERE id = ? AND user_id = ?";
-      return new Promise((resolve, reject) => {
-          this.db.run(sql, [productId, userId], function(err) {
-              if (err) reject(err);
-              else resolve(this.changes);
-          });
-      });
+      const sql = "UPDATE prodotti SET stato = 'eliminato' WHERE id = $1 AND user_id = $2";
+      try {
+        const { rowCount } = await db.query(sql, [productId, userId]);
+        return rowCount;
+      } catch (err) {
+        console.error("Errore in deleteProduct:", err);
+        throw err;
+      }
   }
 
   /**
@@ -172,29 +179,33 @@ class ProdottiDAO {
    * @returns {Promise<number>} Il numero di righe modificate.
    */
   async updateProduct(id, productData, userId) {
-    // Lista dei campi che l'utente è autorizzato a modificare.
     const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
-    // Filtriamo i dati in ingresso per usare solo i campi permessi.
     const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
+    
     if (fieldsToUpdate.length === 0) {
-        return Promise.resolve(0); // Nessun campo valido da aggiornare.
+        return 0; // Nessun campo valido da aggiornare.
     }
-    // Costruiamo dinamicamente la parte SET della query SQL.
-    const fieldPlaceholders = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
+
+    // Creazione dinamica dei placeholder
+    const fieldPlaceholders = fieldsToUpdate.map((field, index) => `${field} = $${index + 1}`).join(', ');
     const values = fieldsToUpdate.map(field => {
-        // Se il prezzo scontato viene inviato come stringa vuota o zero, lo impostiamo a NULL.
         if (field === 'prezzo_scontato' && (productData[field] === '' || parseFloat(productData[field]) === 0)) {
             return null;
         }
         return productData[field];
     });
-    const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = ? AND user_id = ?`;
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, [...values, id, userId], function (err) {
-        if (err) reject(err);
-        else resolve(this.changes);
-      });
-    });
+
+    // Aggiungiamo id e userId alla fine dell'array dei valori
+    const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = $${fieldsToUpdate.length + 1} AND user_id = $${fieldsToUpdate.length + 2}`;
+    values.push(id, userId);
+
+    try {
+      const { rowCount } = await db.query(sql, values);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in updateProduct:", err);
+      throw err;
+    }
   }
 
   /**
@@ -203,14 +214,15 @@ class ProdottiDAO {
    * @param {string} status - Il nuovo stato.
    * @returns {Promise<number>} Il numero di righe modificate.
    */
-  updateProductStatus(productId, status) {
-    const sql = 'UPDATE prodotti SET stato = ? WHERE id = ?';
-    return new Promise((resolve, reject) => {
-        this.db.run(sql, [status, productId], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-        });
-    });
+  async updateProductStatus(productId, status) {
+    const sql = 'UPDATE prodotti SET stato = $1 WHERE id = $2';
+    try {
+      const { rowCount } = await db.query(sql, [status, productId]);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in updateProductStatus:", err);
+      throw err;
+    }
   }
 
   // --- FUNZIONI RISERVATE AGLI AMMINISTRATORI ---
@@ -219,19 +231,20 @@ class ProdottiDAO {
    * Recupera TUTTI i prodotti, indipendentemente dal loro stato.
    * @returns {Promise<Array<Object>>} Una lista di tutti i prodotti.
    */
-  getAllProductsAdmin() {
+  async getAllProductsAdmin() {
     const sql = `
       SELECT p.*, u.username as nome_venditore 
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       ORDER BY p.data_inserimento DESC
     `;
-    return new Promise((resolve, reject) => {
-        this.db.all(sql, [], (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows);
-        });
-    });
+    try {
+      const { rows } = await db.query(sql);
+      return rows;
+    } catch (err) {
+      console.error("Errore in getAllProductsAdmin:", err);
+      throw err;
+    }
   }
 
   /**
@@ -239,14 +252,15 @@ class ProdottiDAO {
    * @param {number} productId - L'ID del prodotto da eliminare.
    * @returns {Promise<number>} Il numero di righe eliminate.
    */
-  deleteProductAdmin(productId) {
-    const sql = "DELETE FROM prodotti WHERE id = ?";
-    return new Promise((resolve, reject) => {
-        this.db.run(sql, [productId], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-        });
-    });
+  async deleteProductAdmin(productId) {
+    const sql = "DELETE FROM prodotti WHERE id = $1";
+    try {
+      const { rowCount } = await db.query(sql, [productId]);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in deleteProductAdmin:", err);
+      throw err;
+    }
   }
 
   /**
@@ -255,23 +269,31 @@ class ProdottiDAO {
    * @param {Object} productData - I dati da aggiornare.
    * @returns {Promise<number>} Il numero di righe modificate.
    */
-  updateProductAdmin(id, productData) {
+  async updateProductAdmin(id, productData) {
     const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
     const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
-    if (fieldsToUpdate.length === 0) return Promise.resolve(0);
+    if (fieldsToUpdate.length === 0) return 0;
     
-    const fieldPlaceholders = fieldsToUpdate.map(field => `${field} = ?`).join(', ');
-    const values = fieldsToUpdate.map(field => (productData[field] === '' ? null : productData[field]));
-    
-    // Notare l'assenza del controllo 'AND user_id = ?'.
-    const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = ?`;
-    return new Promise((resolve, reject) => {
-        this.db.run(sql, [...values, id], function(err) {
-            if (err) reject(err);
-            else resolve(this.changes);
-        });
+    const fieldPlaceholders = fieldsToUpdate.map((field, index) => `${field} = $${index + 1}`).join(', ');
+    const values = fieldsToUpdate.map(field => {
+      if (field === 'prezzo_scontato' && (productData[field] === '' || parseFloat(productData[field]) === 0)) {
+            return null;
+        }
+      return productData[field];
     });
+    
+    // L'ID è l'ultimo parametro
+    const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = $${fieldsToUpdate.length + 1}`;
+    values.push(id);
+
+    try {
+      const { rowCount } = await db.query(sql, values);
+      return rowCount;
+    } catch (err) {
+      console.error("Errore in updateProductAdmin:", err);
+      throw err;
+    }
   }
 }
 
-module.exports = new ProdottiDAO(db);
+module.exports = new ProdottiDAO();

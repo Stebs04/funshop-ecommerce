@@ -1,76 +1,82 @@
 'use strict';
 
-// Importazione dei moduli necessari
-const sqlite = require('sqlite3');
+// Importiamo il 'Pool' dal pacchetto 'pg' invece di 'sqlite3'
+const { Pool } = require('pg');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
 
-// Nome del database caricato dalle variabili d'ambiente
-const DB_NAME = process.env.DB_NAME;
+// Creiamo un'istanza del Pool di connessioni usando le variabili d'ambiente.
+// Il Pool gestisce più connessioni contemporaneamente, è molto efficiente.
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+});
 
-// Creazione di una nuova istanza del database SQLite
-const db = new sqlite.Database('./' + DB_NAME);
+// Esportiamo un oggetto 'db' che ha un metodo 'query'.
+// Questo ci permette di mantenere i nostri file DAO (Data Access Objects) puliti.
+// La sintassi è: db.query(stringaSql, [arrayDiParametri])
+const db = {
+  query: (text, params) => pool.query(text, params),
+};
 
 /**
  * Inizializza il database.
- * Questa funzione assicura che lo schema SQL sia applicato e che
- * l'utente amministratore esista, creando le tabelle e l'utente se necessario.
- * @returns {Promise<sqlite.Database>} Una Promise che si risolve con l'oggetto database quando pronto.
+ * Ora legge il file schema.sql e lo esegue su PostgreSQL.
+ * Gestisce anche la creazione dell'utente admin.
  */
-const initializeDb = () => {
-  return new Promise((resolve, reject) => {
-    // Legge il file schema.sql che contiene le query CREATE TABLE
+const initializeDb = async () => {
+  console.log('Avvio inizializzazione database PostgreSQL...');
+
+  // Acquisiamo una connessione "client" dal pool per eseguire le query di setup
+  const client = await pool.connect();
+  console.log('Connesso al database PostgreSQL.');
+
+  try {
+    // Leggiamo lo schema SQL (dovremo tradurlo per Postgres, te lo fornirò al prossimo passo!)
     const schema = fs.readFileSync('./schema.sql', 'utf8');
 
-    db.serialize(() => {
-      // Abilita il supporto per le chiavi esterne, fondamentale per l'integrità relazionale
-      db.run('PRAGMA foreign_keys = ON', (err) => {
-        if (err) return reject(err);
-      });
+    // Eseguiamo la query per creare le tabelle
+    await client.query(schema);
+    console.log('Schema del database verificato/creato con successo.');
 
-      // Esegue le query contenute nel file schema.sql.
-      // L'uso di "IF NOT EXISTS" previene errori se le tabelle sono già state create.
-      db.exec(schema, (err) => {
-        if (err) {
-          console.error("Errore nell'esecuzione dello schema SQL:", err);
-          return reject(err);
-        }
-        
-        console.log('Schema del database verificato/creato con successo.');
+    // Verifica se l'utente 'admin' esiste già
+    const checkAdminSql = `SELECT id FROM users WHERE username = 'admin'`;
+    // 'pg' restituisce un oggetto risultato, le righe sono nella proprietà 'rows'
+    const { rows } = await client.query(checkAdminSql);
 
-        // Verifica se l'utente 'admin' esiste già per evitare duplicati
-        const checkAdminSql = `SELECT id FROM users WHERE username = 'admin'`;
-        db.get(checkAdminSql, async (err, row) => {
-          if (err) return reject(err);
+    if (rows.length === 0) {
+      // Se l'admin non esiste, lo creiamo
+      console.log("Utente 'admin' non trovato, lo creo...");
+      const adminPassword = await bcrypt.hash('admin1234', 10);
+      
+      // Nota: i placeholder ora sono $1, $2, ecc. (specifici di pg)
+      const insertAdminSQL = `
+        INSERT INTO users (username, nome, cognome, data_nascita, email, password_hash, tipo_account) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `;
+      const adminParams = ['admin', 'admin', 'funshop', '2004-11-25', 'admin@mail.com', adminPassword, 'admin'];
+      
+      await client.query(insertAdminSQL, adminParams);
+      console.log('Utente admin creato con successo!');
+    } else {
+      console.log("Utente 'admin' già presente.");
+    }
 
-          // Se 'row' è undefined, l'admin non esiste e viene creato
-          if (!row) {
-            console.log("Utente 'admin' non trovato, lo creo...");
-            try {
-              // Hash della password di default per l'admin
-              const adminPassword = await bcrypt.hash('admin1234', 10);
-              const insertAdminSQL = `
-                INSERT INTO users (username, nome, cognome, data_nascita, email, password_hash, tipo_account) 
-                VALUES ('admin', 'admin', 'funshop', '2004-11-25', 'admin@mail.com', ?, 'admin')
-              `;
-              db.run(insertAdminSQL, [adminPassword], (err) => {
-                if (err) return reject(err);
-                console.log('Utente admin creato con successo!');
-                resolve(db); // Risolve la Promise, indicando che il DB è pronto
-              });
-            } catch (error) {
-              reject(error);
-            }
-          } else {
-            // Se l'admin esiste già, il DB è comunque pronto
-            console.log("Utente 'admin' già presente.");
-            resolve(db);
-          }
-        });
-      });
-    });
-  });
+    console.log('Inizializzazione del database completata.');
+
+  } catch (error) {
+    console.error('❌ Impossibile inizializzare il database:', error);
+    // Se c'è un errore, terminiamo il processo per evitare problemi
+    process.exit(1);
+  } finally {
+    // Rilasciamo il client al pool, sia in caso di successo che di errore
+    client.release();
+    console.log('Connessione di inizializzazione rilasciata.');
+  }
 };
 
-// Esporta l'istanza del database e la funzione di inizializzazione
+// Esportiamo il nostro nuovo oggetto 'db' (il pool) e la funzione di inizializzazione aggiornata
 module.exports = { db, initializeDb };
