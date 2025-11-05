@@ -1,6 +1,7 @@
 <%# views/pages/prodotto.ejs %>
 <%# Pagina di dettaglio per un singolo prodotto.
 %>
+<%# %>
 
 <!doctype html>
 <html lang="it">
@@ -31,7 +32,8 @@
       
           <%# Mostra il prezzo (scontato o base).
 %>
-          <h1 class="display-5 fw-bold">€ <%= (prodotto.prezzo_scontato || prodotto.prezzo).toFixed(2) %></h1>
+          <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+          <h1 class="display-5 fw-bold">€ <%= (parseFloat(prodotto.prezzo_scontato) || parseFloat(prodotto.prezzo || 0)).toFixed(2) %></h1>
           <h2><%= prodotto.nome %></h2>
           <hr>
           
@@ -39,7 +41,8 @@
             <li class="d-flex justify-content-between"><span>CONDIZIONI:</span><strong><%= prodotto.condizione %></strong></li>
             <li class="d-flex justify-content-between"><span>CATEGORIA:</span><strong><%= prodotto.parola_chiave %></strong></li>
      
-     </ul>
+  
+   </ul>
 
           <h5 class="fw-bold">Descrizione</h5>
           <p class="text-muted"><%= prodotto.descrizione %></p>
@@ -55,6 +58,7 @@
           </div>
 
      
+
      <%# --- BLOCCO LOGICA STATO PRODOTTO --- %>
           <%# Questo blocco gestisce quali pulsanti mostrare in base allo stato del prodotto.
 %>
@@ -76,6 +80,7 @@
               <input type="hidden" name="redirectUrl" value="<%= originalUrl %>">
               <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
                  
+
  <i class="bi bi-cart-plus-fill me-2"></i>Aggiungi al Carrello
               </button>
             </form>
@@ -90,6 +95,7 @@
                     <button type="submit" class="btn btn-outline-danger w-100 mb-2">
                            <i class="bi bi-star-fill me-2"></i>Rimuovi dagli Osservati
      
+
                  </button>
                   </form>
               <%# Altrimenti, mostra il pulsante per aggiungerlo.
@@ -99,6 +105,7 @@
                       <button type="submit" class="btn btn-outline-secondary w-100 mb-2">
                           <i class="bi bi-star me-2"></i>Osserva Prodotto
      
+
                  </button>
                  </form>
               <% } %>
@@ -111,6 +118,7 @@
             <% } %>
   
             <%# 
+
 Pulsante che apre il modale per chiedere informazioni al venditore.
 %>
             <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#infoModal" data-product-name="<%= prodotto.nome %>" data-seller-email="<%= prodotto.email_venditore %>">
@@ -132,6 +140,7 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
                 <i class="bi bi-envelope me-2"></i>Chiedi informazioni
             </button>
  
+
          <% } %>
           <%# --- FINE BLOCCO LOGICA STATO PRODOTTO --- %>
 
@@ -147,6 +156,7 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
   <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       
+
    <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="infoModalLabel">Chiedi informazioni</h5>
@@ -154,17 +164,20 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
             </div>
             <div class="modal-body">
                 <form id="infoForm">
-   
+  
+ 
                  <div class="mb-3">
                         <label for="infoMessage" class="form-label">Il tuo messaggio:</label>
                         <textarea class="form-control" id="infoMessage" rows="5" required placeholder="Ciao, vorrei avere maggiori informazioni su questo prodotto..."></textarea>
-                  
+                 
+ 
    </div>
                     <button type="submit" id="sendInfoButton" class="btn btn-primary w-100">
                         <i class="bi bi-send-fill me-2"></i>Invia tramite Email
                     </button>
                 </form>
-        
+      
+  
      </div>
         </div>
     </div>
@@ -177,7 +190,8 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
         <div class="modal-header">
           <h5 class="modal-title" id="unavailableModalLabel">
             <i class="bi bi-exclamation-circle-fill text-warning me-2"></i>Prodotto Non Disponibile
-          </h5>
+         
+ </h5>
   
          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -187,7 +201,8 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Ho capito</button>
         </div>
-     
+ 
+    
  </div>
     </div>
   </div>
@@ -211,6 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Quando il modale si apre, recupera l'email del venditore e il nome del prodotto dai data-attributes del pulsante.
             infoModal.addEventListener('show.bs.modal', function (event) {
  
+
               const button = event.relatedTarget;
                 sellerEmail = button.getAttribute('data-seller-email');
                 productName = button.getAttribute('data-product-name');
@@ -218,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Quando il form viene inviato...
             const infoForm = document.getElementById('infoForm');
    
+
          infoForm.addEventListener('submit', function(event) {
                event.preventDefault(); // ...previene il ricaricamento della pagina.
                 const message = document.getElementById('infoMessage').value;

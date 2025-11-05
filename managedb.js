@@ -78,5 +78,5 @@ const initializeDb = async () => {
   }
 };
 
-// Esportiamo il nostro nuovo oggetto 'db' (il pool) e la funzione di inizializzazione aggiornata
-module.exports = { db, initializeDb };
+// Esportiamo sia 'db' (per le query semplici) sia 'pool' (per le transazioni).
+module.exports = { db, pool, initializeDb };

@@ -1,7 +1,8 @@
 'use strict';
 
-// Importiamo la connessione al database (ora è il pool 'pg') e bcrypt
-const { db } = require('../../managedb');
+// --- MODIFICA ---
+// Importiamo sia 'db' (per le query semplici) che 'pool' (per le transazioni)
+const { db, pool } = require('../../managedb');
 const bcrypt = require('bcrypt');
 
 class UtentiDAO {
@@ -78,8 +79,9 @@ class UtentiDAO {
   async updateUserProfile(userId, data) {
     const { nome, cognome, username, data_nascita, descrizione } = data;
     
-    // Acquisiamo un client dedicato per la transazione
-    const client = await db.connect();
+    // --- MODIFICA ---
+    // Acquisiamo un client dedicato per la transazione dal 'pool'
+    const client = await pool.connect();
     
     try {
       // 1. Iniziamo la transazione

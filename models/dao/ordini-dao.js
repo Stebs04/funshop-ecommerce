@@ -3,15 +3,21 @@
 // Importiamo la connessione al database (pool 'pg')
 const { db } = require('../../managedb');
 
+/**
+ * OrdiniDAO (Data Access Object)
+ * Questa classe si occupa di tutte le operazioni relative alla tabella 'storico_ordini'.
+ */
 class OrdiniDAO {
 
   /**
    * Recupera lo storico degli ordini per un utente specifico.
+   * Effettua una JOIN con la tabella 'prodotti' per ottenere anche il nome e l'immagine
+   * del prodotto acquistato.
    * @param {number} userId - L'ID dell'utente.
    * @returns {Promise<Array<Object>>} Una promessa che risolve in un array di oggetti ordine.
    */
   async getOrdersByUserId(userId) {
-    // Sostituiamo ? con $1
+    // Sostituiamo ? con $1 (sintassi di pg)
     const sql = `
       SELECT 
         so.id, 
@@ -26,11 +32,12 @@ class OrdiniDAO {
       ORDER BY so.data_ordine DESC`;
       
     try {
+      // Usiamo 'db.query' e 'await', il risultato è in 'rows'
       const { rows } = await db.query(sql, [userId]);
       return rows;
     } catch (err) {
       console.error("Errore in getOrdersByUserId:", err);
-      throw err;
+      throw err; // Rilanciamo l'errore per gestirlo nella rotta
     }
   }
 
@@ -41,7 +48,7 @@ class OrdiniDAO {
    */
   async createOrder(orderData) {
     const { totale, user_id, prodotto_id } = orderData;
-    // Sostituiamo ? con $1, $2, $3 e usiamo RETURNING id
+    // Usiamo $1, $2, $3 e 'RETURNING id' per ottenere l'ID generato
     const sql = `
       INSERT INTO storico_ordini (totale, user_id, prodotto_id) 
       VALUES ($1, $2, $3)
@@ -67,10 +74,10 @@ class OrdiniDAO {
     try {
       const { rows } = await db.query(sql, [id]);
       return rows[0];
-    } catch (err) {
+    } catch (err) { // <-- MODIFICA: Aggiunte le parentesi graffe { } mancanti
       console.error("Errore in getOrderById:", err);
       throw err;
-    }
+    } // <-- MODIFICA: Aggiunte le parentesi graffe { } mancanti
   }
 
   /**
@@ -111,11 +118,14 @@ class OrdiniDAO {
     try {
         const { rows } = await db.query(sql, [sellerId]);
         const row = rows[0];
-        // Restituiamo un oggetto con i totali, assicurandoci che siano 0 se non ci sono risultati.
-        resolve({
+        
+        // --- MODIFICA ---
+        // Sostituiamo 'resolve' con 'return'.
+        // Una funzione 'async' restituisce automaticamente una promessa risolta con il valore di 'return'.
+        return {
             totalRevenue: parseFloat(row.totalrevenue) || 0, // 'totalrevenue' è minuscolo in pg
             productsSoldCount: parseInt(row.productssoldcount, 10) || 0 // 'productssoldcount' è minuscolo
-        });
+        };
     } catch (err) {
         console.error("Errore in getSalesStatsBySellerId:", err);
         throw err;

@@ -7,301 +7,405 @@
         <div class="col-md-3">
             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                 <a href="/utente?section=dati" class="nav-link text-start <%= currentSection === 'dati' ? 'active' : '' %>">
-                    <i class="bi bi-person-circle me-2"></i>I miei Dati
+                    <i class="bi bi-person-circle me-2"></i>I miei 
+Dati
                 </a>
                 <a href="/utente?section=ordini" class="nav-link text-start <%= currentSection === 'ordini' ? 'active' : '' %>">
                      <i class="bi bi-box-seam me-2"></i>Storico Ordini
                 </a>
-                <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>">
+               
+
+ <a href="/utente?section=indirizzi" class="nav-link text-start <%= currentSection === 'indirizzi' ? 'active' : '' %>">
                     <i class="bi bi-geo-alt me-2"></i>Indirizzi
                 </a>
-                <a href="/utente?section=pagamento" class="nav-link text-start <%= currentSection === 'pagamento' ? 'active' : '' %>">
+                <a href="/utente?section=pagamento" class="nav-link text-start <%= currentSection === 'pagamento' ?
+'active' : '' %>">
                     <i class="bi bi-credit-card me-2"></i>Dati di Pagamento
                 </a>
                 <% if (user.tipo_account === 'venditore') { %>
-                <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ? 'active' : '' %>">
+                <a href="/utente?section=prodotti" class="nav-link text-start <%= currentSection === 'prodotti' ?
+'active' : '' %>">
                     <i class="bi bi-tag me-2"></i>I miei Prodotti
                 </a>
-                <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ? 'active' : '' %>">
+                <a href="/utente?section=statistiche" class="nav-link text-start <%= currentSection === 'statistiche' ?
+'active' : '' %>">
                     <i class="bi bi-bar-chart-line me-2"></i>Statistiche Venditore
                 </a>
                 <% } %>
             </div>
          </div>
         <div class="col-md-9">
-            <div class="tab-content" id="v-pills-tabContent">
+         
+   <div class="tab-content" id="v-pills-tabContent">
 
-                <div class="tab-pane fade <%= currentSection === 'dati' ? 'show active' : '' %>" id="v-pills-dati" role="tabpanel">
+                <div class="tab-pane fade <%= currentSection === 'dati' ?
+'show active' : '' %>" id="v-pills-dati" role="tabpanel">
                     <h3>I Miei Dati</h3>
                     <p>Gestisci le tue informazioni personali.</p>
                     <div class="card mb-4">
-                         <div class="card-body text-center">
+                         <div 
+class="card-body text-center">
                             <div class="profile-image-container">
-                                <img src="<%= accountInfo.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+                                <img src="<%= accountInfo.immagine_profilo ||
+'/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle img-fluid" style="width: 150px; height: 150px;
+object-fit: cover;">
                                 <div class="profile-image-overlay">
                                      <div class="overlay-text">Modifica</div>
-                                </div>
+                            
+    </div>
                             </div>
                          <h5 class="my-3"><%= user.username %></h5>
                             <p class="text-muted mb-1"><%= user.tipo_account %></p>
-                        </div>
+        
+                </div>
                     </div>
                 
                     <div id="uploadModal" class="modal fade" tabindex="-1">
-                         <div class="modal-dialog">
+                        
+ <div class="modal-dialog">
                             <div class="modal-content">
                                  <div class="modal-header">
-                                     <h5 class="modal-title">Carica Nuova Immagine</h5>
+                                   
+  <h5 class="modal-title">Carica Nuova Immagine</h5>
                                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                    </div>
-                                <div class="modal-body">
+                   
+             <div class="modal-body">
                                       <form action="/utente/dati/upload-immagine" method="POST" enctype="multipart/form-data">
                                         <div class="mb-3">
-                                            <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
+    
+                                        <label for="immagineProfilo" class="form-label">Scegli un'immagine</label>
                                              <input class="form-control" type="file" id="immagineProfilo" name="immagineProfilo" required>
-                                        </div>
+       
+                                 </div>
                                          <button type="submit" class="btn btn-primary">Carica</button>
-                                     </form>
+                       
+              </form>
                                 </div>
                              </div>
                         </div>
-                    </div>
+ 
+                   </div>
                     <div class="card">
                         <div class="card-body">
                             <form action="/utente/profilo/aggiorna" method="POST">
-                                 <div class="mb-3">
+     
+                            <div class="mb-3">
                                     <label for="userName" class="form-label">Nome</label>
-                                    <input type="text" class="form-control" id="userName" name="nome" value="<%= user.nome %>">
+                                 
+   <input type="text" class="form-control" id="userName" name="nome" value="<%= user.nome %>">
                                  </div>
                                 <div class="mb-3">
-                                     <label for="userSurname" class="form-label">Cognome</label>
+                        
+             <label for="userSurname" class="form-label">Cognome</label>
                                       <input type="text" class="form-control" id="userSurname" name="cognome" value="<%= user.cognome %>">
                                 </div>
-                                 <div class="mb-3">
+        
+                         <div class="mb-3">
                                      <label for="username" class="form-label">Username</label>
-                                    <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>">
+                                   
+ <input type="text" class="form-control" id="username" name="username" value="<%= user.username %>">
                                  </div>
                                 <div class="mb-3">
-                                    <label for="userEmail" class="form-label">Email</label>
+                          
+          <label for="userEmail" class="form-label">Email</label>
                                      <input type="email" class="form-control" id="userEmail" name="email" value="<%= user.email %>" disabled>
                                 </div>
-                                 <div class="mb-3">
+           
+                      <div class="mb-3">
                                     <label for="userDataNascita" class="form-label">Data di Nascita</label>
-                                    <input type="date" class="form-control" id="userDataNascita" name="data_nascita" value="<%= user.data_nascita ? new Date(user.data_nascita).toISOString().split('T')[0] : '' %>">
+                                    <input 
+type="date" class="form-control" id="userDataNascita" name="data_nascita" value="<%= user.data_nascita ? new Date(user.data_nascita).toISOString().split('T')[0] : '' %>">
                                 </div>
                                  <div class="mb-3">
-                                    <label for="userDescrizione" class="form-label">Descrizione Profilo</label>
+                       
+             <label for="userDescrizione" class="form-label">Descrizione Profilo</label>
                                     <textarea class="form-control" id="userDescrizione" name="descrizione" rows="3"><%= accountInfo.descrizione || '' %></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Salva Modifiche</button>
+        
+                        <button type="submit" class="btn btn-primary">Salva Modifiche</button>
                             </form>
                            </div>
-                    </div>
+                 
+   </div>
                     <div class="card mt-4 border-danger">
                          <div class="card-header bg-danger text-white">
                             Elimina Account
-                        </div>
+                 
+       </div>
                         <div class="card-body">
                              <p>Questa azione è irreversibile. Una volta eliminato il tuo account, tutti i dati, inclusi prodotti e storico ordini, verranno rimossi definitivamente.</p>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                   
+         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
                                  Elimina il mio account
                             </button>
-                        </div>
+                      
+  </div>
                     </div>
                  </div>
 
-                <div class="tab-pane fade <%= currentSection === 'ordini' ? 'show active' : '' %>" id="v-pills-ordini" role="tabpanel">
+                <div class="tab-pane fade <%= currentSection === 'ordini' ?
+'show active' : '' %>" id="v-pills-ordini" role="tabpanel">
                     <h3>Storico Ordini</h3>
                      <p>Visualizza tutti gli acquisti che hai effettuato.</p>
                     <table class="table">
-                         <thead>
+                         
+<thead>
                             <tr>
                                  <th>ID Ordine</th>
                                 <th>Data</th>
-                                <th>Totale</th>
+      
+                          <th>Totale</th>
                                  <th>Stato</th>
                             </tr>
-                         </thead>
+             
+            </thead>
                         <tbody>
                             <% if (ordini && ordini.length > 0) { %>
-                                <% ordini.forEach(ordine => { %>
+                            
+    <% ordini.forEach(ordine => { %>
                                      <tr>
                                         <td>#<%= ordine.id %></td>
-                                        <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
-                                         <td>€ <%= ordine.totale.toFixed(2) %></td>
-                                        <td><span class="badge bg-success"><%= ordine.stato %></span></td>
+             
+                           <td><%= new Date(ordine.data_ordine).toLocaleDateString('it-IT') %></td>
+                                         <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+                                         <td>€ <%= parseFloat(ordine.totale || 0).toFixed(2) %></td>
+                          
+              <td><span class="badge bg-success"><%= ordine.stato %></span></td>
                                      </tr>
                                 <% }) %>
-                            <% } else { %>
+           
+                 <% } else { %>
                                 <tr>
                                      <td colspan="4" class="text-center text-muted">Non hai ancora effettuato nessun ordine.</td>
-                                </tr>
+  
+                              </tr>
                             <% } %>
                         </tbody>
-                     </table>
+                
+     </table>
                 </div>
 
-                <div class="tab-pane fade <%= currentSection === 'indirizzi' ? 'show active' : '' %>" id="v-pills-indirizzi" role="tabpanel">
+                <div class="tab-pane fade <%= currentSection === 'indirizzi' ?
+'show active' : '' %>" id="v-pills-indirizzi" role="tabpanel">
                       <h3>I Miei Indirizzi</h3>
                     <p>Gestisci i tuoi indirizzi di spedizione e fatturazione.</p>
                     <div class="row">
-                        <% if (indirizzi && indirizzi.length > 0) { %>
+                      
+  <% if (indirizzi && indirizzi.length > 0) { %>
                             <% indirizzi.forEach(indirizzo => { %>
                                 <div class="col-md-6 mb-3">
-                                     <div class="card h-100">
+                        
+             <div class="card h-100">
                                         <div class="card-body">
-                                              <h5 class="card-title">Indirizzo</h5>
+                                            
+  <h5 class="card-title">Indirizzo</h5>
                                             <p class="card-text">
-                                                 <%= indirizzo.indirizzo %>, <%= indirizzo.citta %><br>
+                                                 <%= indirizzo.indirizzo %>, 
+<%= indirizzo.citta %><br>
                                                 <%= indirizzo.cap %>
                                               </p>
-                                             <button class="btn btn-sm btn-outline-primary edit-address-btn" 
-                                                    data-bs-toggle="modal" 
+  
+                                           <button class="btn btn-sm btn-outline-primary edit-address-btn" 
+                                                    
+data-bs-toggle="modal" 
                                                      data-bs-target="#addressModal"
-                                                    data-id="<%= indirizzo.id %>"
+                                              
+      data-id="<%= indirizzo.id %>"
                                                      data-indirizzo="<%= indirizzo.indirizzo %>"
-                                                    data-citta="<%= indirizzo.citta %>"
+                                     
+               data-citta="<%= indirizzo.citta %>"
                                                      data-cap="<%= indirizzo.cap %>">
-                                                Modifica
+                            
+                    Modifica
                                               </button>
-                                            <form action="/utente/indirizzi/elimina/<%= indirizzo.id %>" method="POST" class="d-inline">
+                                  
+          <form action="/utente/indirizzi/elimina/<%= indirizzo.id %>" method="POST" class="d-inline">
                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
-                                            </form>
+                              
+              </form>
                                          </div>
                                      </div>
-                                 </div>
+        
+                         </div>
                              <% }) %>
                          <% } else { %>
-                            <div class="col">
+               
+             <div class="col">
                                   <p class="text-center text-muted">Non hai ancora aggiunto nessun indirizzo.</p>
                              </div>
-                        <% } %>
+                
+        <% } %>
                      </div>
                     <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addressModal">Aggiungi un nuovo indirizzo</button>
                 </div>
 
-                <div class="tab-pane fade <%= currentSection === 'pagamento' ? 'show active' : '' %>" id="v-pills-pagamento" role="tabpanel">
+                <div class="tab-pane fade <%= currentSection === 'pagamento' ?
+'show active' : '' %>" id="v-pills-pagamento" role="tabpanel">
                       <h3>Dati di Pagamento</h3>
                     <p>Gestisci i tuoi metodi di pagamento salvati.</p>
                     <div class="row">
-                        <% if (metodiPagamento && metodiPagamento.length > 0) { %>
+                       
+ <% if (metodiPagamento && metodiPagamento.length > 0) { %>
                               <% metodiPagamento.forEach(metodo => { %>
                                 <div class="col-md-6 mb-3">
-                                     <div class="card h-100">
+                       
+              <div class="card h-100">
                                         <div class="card-body">
-                                            <h5 class="card-title"><i class="bi bi-credit-card-fill"></i> Carta che termina in **** <%= metodo.last4 %></h5>
+                                           
+ <h5 class="card-title"><i class="bi bi-credit-card-fill"></i> Carta che termina in **** <%= metodo.last4 %></h5>
                                              <p class="card-text mb-1">Titolare: <%= metodo.nome_titolare %></p>
-                                            <p class="card-text">Scadenza: <%= metodo.data_scadenza %></p>
+                                      
+      <p class="card-text">Scadenza: <%= metodo.data_scadenza %></p>
                                               <form action="/utente/pagamento/elimina/<%= metodo.id %>" method="POST" class="d-inline">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                                       
+         <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
                                              </form>
                                         </div>
-                                  </div>
+  
+                                </div>
                                 </div>
                             <% }) %>
-                          <% } else { %>
+      
+                    <% } else { %>
                             <div class="col-12">
                                 <p class="text-center text-muted">Non hai ancora aggiunto nessun metodo di pagamento.</p>
-                              </div>
+      
+                        </div>
                         <% } %>
                     </div>
                     <hr class="my-4">
-                    
+         
+           
                      <h4>Aggiungi una nuova carta</h4>
                     <div class="card">
                         <div class="card-body">
-                            <form action="/utente/pagamento/aggiungi" method="POST">
+                   
+         <form action="/utente/pagamento/aggiungi" method="POST">
                                  <div class="mb-3">
                                     <label for="nome_titolare" class="form-label">Nome e Cognome Titolare</label>
-                                      <input type="text" class="form-control" id="nome_titolare" name="nome_titolare" required>
+              
+                        <input type="text" class="form-control" id="nome_titolare" name="nome_titolare" required>
                                 </div>
                                 <div class="mb-3">
-                                     <label for="numero_carta" class="form-label">Numero Carta</label>
+      
+                               <label for="numero_carta" class="form-label">Numero Carta</label>
                                     <input type="text" class="form-control" id="numero_carta" name="numero_carta" placeholder="xxxx xxxx xxxx xxxx" required>
-                                </div>
+                     
+           </div>
                                   <div class="row">
                                     <div class="col-md-6 mb-3">
-                                         <label for="data_scadenza" class="form-label">Data Scadenza</label>
+                
+                         <label for="data_scadenza" class="form-label">Data Scadenza</label>
                                         <input type="text" class="form-control" id="data_scadenza" name="data_scadenza" placeholder="MM/YY" required>
-                                    </div>
+                          
+          </div>
                                        <div class="col-md-6 mb-3">
                                         <label for="cvv" class="form-label">CVV</label>
-                                          <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
+       
+                                   <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
                                     </div>
-                                </div>
+                       
+         </div>
                                   <button type="submit" class="btn btn-primary">Salva Metodo di Pagamento</button>
                             </form>
-                        </div>
+                       
+ </div>
                      </div>
                  </div>
 
-                <div class="tab-pane fade <%= currentSection === 'prodotti' ? 'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
+                <div class="tab-pane fade <%= currentSection === 'prodotti' ?
+'show active' : '' %>" id="v-pills-prodotti" role="tabpanel">
                     <h3>I Miei Prodotti</h3>
                     <p>Gestisci i prodotti che hai messo in vendita.</p>
                     <div class="list-group">
-                    <% if (prodotti && prodotti.length > 0) { %>
+                    <% if (prodotti && 
+prodotti.length > 0) { %>
                         <% prodotti.forEach(prodotto => { %>
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                      <h5 class="mb-1"><%= prodotto.nome %></h5>
-                                    <small>Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : 'N/D' %></small>
-                                  </div>
+    
+                                  <h5 class="mb-1"><%= prodotto.nome %></h5>
+                                    <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+                                    <small>Prezzo: € <%= typeof prodotto.prezzo === 'number' ? prodotto.prezzo.toFixed(2) : parseFloat(prodotto.prezzo || 0).toFixed(2) %></small>
+                
+                  </div>
                                 <div>
                                      <button class="btn btn-sm btn-outline-primary"
-                                             data-bs-toggle="modal"
+          
+                                   data-bs-toggle="modal"
                                               data-bs-target="#editProductModal"
-                                             data-context="user"
+                   
+                          data-context="user"
                                               data-product-id="<%= prodotto.id %>"
-                                             data-product-nome="<%= prodotto.nome %>"
+                          
+                   data-product-nome="<%= prodotto.nome %>"
                                                data-product-descrizione="<%= prodotto.descrizione %>"
-                                             data-product-prezzo="<%= prodotto.prezzo %>"
-                                             data-product-prezzo-scontato="<%= prodotto.prezzo_scontato || '' %>"
+                              
+               data-product-prezzo="<%= prodotto.prezzo %>"
+                                             data-product-prezzo-scontato="<%= prodotto.prezzo_scontato ||
+'' %>"
                                              data-product-parola-chiave="<%= prodotto.parola_chiave %>"
                                              data-product-condizione="<%= prodotto.condizione %>">
-                                        Modifica
+     
+                                   Modifica
                                     </button>
-                                     <form action="/utente/prodotti/<%= prodotto.id %>/delete" method="POST" style="display: inline;">
+                             
+        <form action="/utente/prodotti/<%= prodotto.id %>/delete" method="POST" style="display: inline;">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
                                      </form>
-                                 </div>
+     
+                            </div>
                             </div>
                         <% }) %>
-                      <% } else { %>
+                  
+    <% } else { %>
                          <p class="text-center text-muted">Non hai nessun prodotto in vendita.</p>
                     <% } %>
                     </div>
                  </div>
-                 
+ 
+                
                 <% if (user.tipo_account === 'venditore') { %>
-                <div class="tab-pane fade <%= currentSection === 'statistiche' ? 'show active' : '' %>" id="v-pills-statistiche" role="tabpanel">
+                <div class="tab-pane fade <%= currentSection === 'statistiche' ?
+'show active' : '' %>" id="v-pills-statistiche" role="tabpanel">
                     <h3>Statistiche Venditore</h3>
                     <p>Visualizza le tue statistiche di vendita.</p>
                     <% if (sellerStats) { %>
-                          <div class="row">
+                        
+  <div class="row">
                             <div class="col-md-6">
                                 <div class="card text-center h-100 shadow-sm">
-                                      <div class="card-body">
+                                
+      <div class="card-body">
                                         <i class="bi bi-currency-euro fs-1 text-success"></i>
                                         <h5 class="card-title mt-2">Guadagni Totali</h5>
-                                         <p class="card-text display-4 fw-bold"><%= sellerStats.totalRevenue.toFixed(2) %></p>
+                                        <%# 'sellerStats.totalRevenue' è già un numero dal DAO, non serve parseFloat %>
+                                   <p class="card-text display-4 fw-bold"><%= sellerStats.totalRevenue.toFixed(2) %></p>
                                     </div>
-                                  </div>
+                        
+          </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card text-center h-100 shadow-sm">
+                                <div 
+class="card text-center h-100 shadow-sm">
                                      <div class="card-body">
                                         <i class="bi bi-box-seam-fill fs-1 text-primary"></i>
-                                          <h5 class="card-title mt-2">Prodotti Venduti</h5>
+               
+                           <h5 class="card-title mt-2">Prodotti Venduti</h5>
                                         <p class="card-text display-4 fw-bold"><%= sellerStats.productsSoldCount %></p>
-                                  </div>
+                         
+         </div>
                                 </div>
                             </div>
                         </div>
-                      <% } else { %>
+       
+               <% } else { %>
                         <p class="text-center text-muted">Nessuna statistica disponibile.</p>
                     <% } %>
                 </div>
-                  <% } %>
+               
+   <% } %>
              </div>
         </div>
     </div>
@@ -312,16 +416,19 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteAccountModalLabel">Conferma Eliminazione Account</h5>
-                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                 
+<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Sei assolutamente sicuro di voler eliminare il tuo account? Questa azione non può essere annullata.
+                Sei assolutamente sicuro di voler eliminare il tuo account?
+Questa azione non può essere annullata.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                 <form action="/utente/profilo/elimina" method="POST">
                      <button type="submit" class="btn btn-danger">Sì, elimina il mio account</button>
-                </form>
+               
+ </form>
             </div>
         </div>
     </div>
@@ -333,20 +440,24 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="addressModalLabel">Gestisci Indirizzo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+   
+         </div>
               <div class="modal-body">
                 <form id="addressForm" action="" method="POST">
                     <div class="mb-3">
                         <label for="indirizzo" class="form-label">Indirizzo</label>
-                        <input type="text" class="form-control" id="indirizzo" name="indirizzo" required>
+          
+              <input type="text" class="form-control" id="indirizzo" name="indirizzo" required>
                      </div>
                     <div class="mb-3">
                         <label for="citta" class="form-label">Città</label>
-                        <input type="text" class="form-control" id="citta" name="citta" required>
+             
+           <input type="text" class="form-control" id="citta" name="citta" required>
                       </div>
                     <div class="mb-3">
                         <label for="cap" class="form-label">CAP</label>
-                        <input type="text" class="form-control" id="cap" name="cap" required>
+               
+         <input type="text" class="form-control" id="cap" name="cap" required>
                       </div>
                     <button type="submit" class="btn btn-primary">Salva</button>
                 </form>
@@ -355,7 +466,8 @@
     </div>
 </div>
 
-<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+<div 
+class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -363,53 +475,67 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
               <div class="modal-body">
-                <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
+ 
+               <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="edit_nome" class="form-label">Nome Prodotto</label>
                         <input type="text" class="form-control" id="edit_nome" name="nome" required>
-                    </div>
+    
+                </div>
                     <div class="mb-3">
                         <label for="edit_descrizione" class="form-label">Descrizione</label>
                         <textarea class="form-control" id="edit_descrizione" name="descrizione" rows="3" required></textarea>
-                      </div>
+        
+              </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_prezzo" class="form-label">Prezzo Originale (€)</label>
-                              <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
+       
+                       <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                              <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
+                     
+         <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
                             <input type="number" class="form-control" id="edit_prezzo_scontato" name="prezzo_scontato" step="0.01">
                             <small class="form-text text-muted">Lascia vuoto se non c'è sconto.</small>
-                          </div>
+                   
+       </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                              <label for="edit_parola_chiave" class="form-label">Categoria</label>
+                          
+    <label for="edit_parola_chiave" class="form-label">Categoria</label>
                              <select class="form-select" id="edit_parola_chiave" name="parola_chiave" required>
                                   <option value="" disabled>Seleziona una categoria</option>
-                                <% if (locals.categorie) { %>
+                       
+         <% if (locals.categorie) { %>
                                      <% categorie.forEach(cat => { %>
                                         <option value="<%= cat %>"><%= cat %></option>
-                                     <% }) %>
+ 
+                                    <% }) %>
                                 <% } %>
-                             </select>
+                            
+ </select>
                           </div>
                         <div class="col-md-6 mb-3">
                               <label for="edit_condizione" class="form-label">Condizione</label>
-                             <input type="text" class="form-control" id="edit_condizione" name="condizione">
+               
+              <input type="text" class="form-control" id="edit_condizione" name="condizione">
                            </div>
                     </div>
                      <div class="mb-3">
-                        <label for="edit_percorso_immagine" class="form-label">Immagine Prodotto</label>
+             
+           <label for="edit_percorso_immagine" class="form-label">Immagine Prodotto</label>
                           <input class="form-control" type="file" id="edit_percorso_immagine" name="percorso_immagine">
                         <small class="form-text text-muted">Lascia vuoto per non modificare l'immagine attuale.</small>
                     </div>
-                    <div class="modal-footer">
+    
+                <div class="modal-footer">
                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                         <button type="submit" class="btn btn-primary">Salva Modifiche</button>
                      </div>
-                </form>
+     
+           </form>
             </div>
          </div>
     </div>
@@ -419,7 +545,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const addressModal = document.getElementById('addressModal');
-        const addressForm = document.getElementById('addressForm');
+const addressForm = document.getElementById('addressForm');
         const addressModalLabel = document.getElementById('addressModalLabel');
         addressModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
@@ -427,48 +553,52 @@
             addressForm.reset(); 
             if (id) { 
                 addressModalLabel.textContent = 'Modifica Indirizzo';
-                 addressForm.action = `/utente/indirizzi/aggiorna/${id}`; 
+           
+      addressForm.action = `/utente/indirizzi/aggiorna/${id}`; 
                 document.getElementById('indirizzo').value = button.getAttribute('data-indirizzo');
                 document.getElementById('citta').value = button.getAttribute('data-citta');
                 
                  document.getElementById('cap').value = button.getAttribute('data-cap');
             } else { 
-                addressModalLabel.textContent = 'Aggiungi Nuovo Indirizzo';
+     
+           addressModalLabel.textContent = 'Aggiungi Nuovo Indirizzo';
                 addressForm.action = '/utente/indirizzi/aggiungi'; 
             }
         });
-        const editProductModal = document.getElementById('editProductModal');
+const editProductModal = document.getElementById('editProductModal');
         if (editProductModal) {
             editProductModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget;
                 
                 const productId = button.getAttribute('data-product-id');
                   const nome = button.getAttribute('data-product-nome');
-                const descrizione = button.getAttribute('data-product-descrizione');
+    
+            const descrizione = button.getAttribute('data-product-descrizione');
                 const prezzo = button.getAttribute('data-product-prezzo');
                 const prezzoScontato = button.getAttribute('data-product-prezzo-scontato');
                 const parolaChiave = button.getAttribute('data-product-parola-chiave');
                   const condizione = button.getAttribute('data-product-condizione');
-                const context = button.getAttribute('data-context');
+       
+         const context = button.getAttribute('data-context');
 
                 const form = editProductModal.querySelector('#editProductForm');
                 const modalTitle = editProductModal.querySelector('#editProductModalLabel');
                 if (context === 'admin') {
                     form.action = `/admin/products/edit/${productId}`;
-                    modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
+modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
                 } else {
                     form.action = `/utente/prodotti/${productId}/edit`;
-                    modalTitle.textContent = `Modifica Prodotto: ${nome}`;
+modalTitle.textContent = `Modifica Prodotto: ${nome}`;
                 }
 
                 form.querySelector('#edit_nome').value = nome;
-                form.querySelector('#edit_descrizione').value = descrizione;
+form.querySelector('#edit_descrizione').value = descrizione;
                 form.querySelector('#edit_prezzo').value = prezzo;
                 form.querySelector('#edit_prezzo_scontato').value = prezzoScontato;
                 form.querySelector('#edit_parola_chiave').value = parolaChiave;
                 form.querySelector('#edit_condizione').value = condizione;
             });
-        }
+}
     });
 </script>
 </body>

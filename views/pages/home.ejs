@@ -3,6 +3,7 @@
 %>
 <%# Può visualizzare tutti i prodotti o un sottoinsieme basato sui filtri applicati.
 %>
+<%# %>
 
 <!doctype html>
 <html lang="it">
@@ -54,11 +55,13 @@
                 <%# Se il prodotto ha un prezzo scontato, mostra un badge "OFFERTA". %>
             
 
+
     <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
                   <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded" style="z-index: 1;">OFFERTA</div>
                 <% } %>
                 <img src="<%= prodotto.percorso_immagine %>" class="card-img-top" alt="<%= prodotto.nome %>" style="height: 200px; object-fit: cover;">
               
+
 
 </a>
               <div class="card-body d-flex flex-column">
@@ -66,6 +69,7 @@
                   <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark"><%= prodotto.nome %></a>
                 </h5>
                 <p class="card-text text-muted small"><%= prodotto.parola_chiave %></p> <%# Mostra la 
+
 
 categoria %>
                 <p class="card-text text-primary small">Venduto da <strong><a href="/member/<%= prodotto.user_id %>" class="text-decoration-none text-dark"><%= prodotto.nome_venditore %></a></strong></p>
@@ -77,15 +81,19 @@ categoria %>
                     <%# Se c'è uno sconto, mostra il prezzo originale barrato e quello scontato in evidenza.
 %>
                     <div>
-                      <span class="text-muted text-decoration-line-through me-2">€<%= prodotto.prezzo.toFixed(2) %></span>
-                      <span class="fw-bold fs-5 text-danger">€<%= prodotto.prezzo_scontato.toFixed(2) %></span>
+                      <%# --- MODIFICA --- Aggiunto parseFloat() %>
+                      <span class="text-muted text-decoration-line-through me-2">€<%= parseFloat(prodotto.prezzo).toFixed(2) %></span>
+                      <%# --- MODIFICA --- Aggiunto parseFloat() %>
+                      <span class="fw-bold fs-5 text-danger">€<%= parseFloat(prodotto.prezzo_scontato).toFixed(2) %></span>
                     </div>
       
+
 
             <% } else { %>
                     <%# Altrimenti, mostra il prezzo di vendita diretta.
 %>
-                    <span class="fw-bold fs-5">€<%= prodotto.prezzo.toFixed(2) %></span>
+                    <%# --- MODIFICA --- Aggiunto parseFloat() e un controllo per 'null' %>
+                    <span class="fw-bold fs-5">€<%= parseFloat(prodotto.prezzo || 0).toFixed(2) %></span>
                   <% } %>
                   
                   <%# Form per aggiungere il prodotto al carrello.
@@ -98,6 +106,7 @@ categoria %>
                           <i class="bi bi-cart-plus-fill fs-5"></i>
                
 
+
         </button>
                   </form>
                 </div>
@@ -105,6 +114,7 @@ categoria %>
               <div class="card-footer bg-transparent border-top-0 text-center">
                 <small class="text-success fw-bold"><%= prodotto.condizione %></small>
       
+
 
          </div>
             </div>
@@ -118,6 +128,7 @@ categoria %>
                 <p>Attualmente nessun prodotto è in offerta.</p>
             <% } else if (currentFilters.view === 'novita') { %>
                 <p>Nessun prodotto caricato negli 
+
 ultimi 2 giorni.</p>
             <% } else { %>
                 <p>Nessun prodotto trovato.
@@ -167,6 +178,7 @@ Prova a modificare i filtri.</p>
             <% } %>
     
 
+
       </select>
         </div>
         <%# Filtro per la condizione.
@@ -179,6 +191,7 @@ Prova a modificare i filtri.</p>
               <% condizioni.forEach(cond => { %>
                 <option 
 
+
 value="<%= cond %>" <%= (locals.currentFilters && currentFilters.condition === cond) ? 'selected' : '' %>><%= cond %></option>
               <% }) %>
             <% } %>
@@ -187,6 +200,7 @@ value="<%= cond %>" <%= (locals.currentFilters && currentFilters.condition === c
         <div class="d-grid gap-2">
             <button type="submit" class="btn btn-primary">Applica Filtri</button>
            
+
 
  <a href="/" class="btn btn-outline-secondary">Rimuovi Filtri</a>
         </div>

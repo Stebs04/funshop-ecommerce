@@ -1,7 +1,8 @@
 'use strict';
 
-// Importiamo la connessione al database (il pool 'pg')
-const { db } = require('../../managedb');
+// --- MODIFICA ---
+// Importiamo 'pool' invece di 'db' perché questo file usa solo transazioni.
+const { pool } = require('../../managedb');
 
 class SellerDAO {
     /**
@@ -15,8 +16,10 @@ class SellerDAO {
     async createSeller(userId, sellerData) {
         const { nome_negozio, partita_iva, email_contatto, iban, descrizione } = sellerData;
 
-        // Acquisiamo un client dal pool per la transazione
-        const client = await db.connect();
+        // --- MODIFICA ---
+        // Acquisiamo un client dal 'pool' (che ha il metodo .connect())
+        // invece che da 'db' (che non ce l'ha).
+        const client = await pool.connect();
 
         try {
             // Iniziamo la transazione

@@ -3,6 +3,7 @@
 %>
 <%# La sua funzione principale è notificare l'utente di cambiamenti di prezzo o di stato (es. venduto/eliminato).
 %>
+<%# %>
 
 <!doctype html>
 <html lang="it">
@@ -23,6 +24,7 @@
     
     <div class="card shadow-sm">
         
+
 <div class="card-body">
             <%# Controlla se l'array `prodotti` (passato dalla rotta) contiene almeno un elemento.
 %>
@@ -34,31 +36,36 @@
                         <%
                             // --- BLOCCO LOGICA DI NOTIFICA ---
                  
+
            // Questo blocco EJS definisce le variabili per gestire le notifiche prima di renderizzare l'HTML.
                             
-                            // Calcola il prezzo attuale: se esiste un `prezzo_scontato`, usa quello, altrimenti usa il `prezzo` base.
-    
-                         const currentPrice = (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) ? prodotto.prezzo_scontato : prodotto.prezzo;
-                            // Prende il prezzo che il prodotto aveva quando l'utente ha iniziato ad osservarlo.
-                        
-     const observedPrice = prodotto.prezzo_osservato;
+                            // --- MODIFICA ---
+                            // Convertiamo i prezzi (che sono stringhe da pg) in numeri usando parseFloat().
+                            const currentPrice = (parseFloat(prodotto.prezzo_scontato) > 0) ? parseFloat(prodotto.prezzo_scontato) : parseFloat(prodotto.prezzo);
+
+                            const observedPrice = parseFloat(prodotto.prezzo_osservato);
+
                             // Controlla se c'è una notifica da leggere (`notifica_letta` è 0).
                             const hasUnreadNotification = prodotto.notifica_letta === 0;
 
-                      
-       let notification = null; // Inizializza la variabile di notifica a null.
+                    
+  
+       let notification = null;
+// Inizializza la variabile di notifica a null.
             // Se c'è una notifica non letta, determina di che tipo è.
-            if (hasUnreadNotification) {
+if (hasUnreadNotification) {
                                             if (prodotto.stato === 'eliminato') {
-                                                notification = { type: 'deleted', message: 'Questo prodotto è stato rimosso dalla vendita.'
+                                                notification = 
+{ type: 'deleted', message: 'Questo prodotto è stato rimosso dalla vendita.'
             };
-                                            } else if (prodotto.stato === 'venduto') {
+} else if (prodotto.stato === 'venduto') {
                                                 notification = { type: 'sold', message: 'Questo prodotto è stato venduto.'
-            };
-                                            // Controlla se il prezzo è cambiato.
+};
+                                            // Controlla se il prezzo è cambiato (ora confrontiamo numeri)
                                             } else if (typeof currentPrice === 'number' && typeof observedPrice === 'number' && currentPrice !== observedPrice) {
                                                 if (currentPrice < observedPrice) { // Se il prezzo è diminuito
-                              
+                  
+            
            notification = { type: 'decrease', message: `Prezzo scontato!
 Da <strong>€${observedPrice.toFixed(2)}</strong> a <strong>€${currentPrice.toFixed(2)}</strong>` };
                                     } else { // Se il prezzo è aumentato
@@ -69,16 +76,19 @@ Da <strong>€${observedPrice.toFixed(2)}</strong> a <strong>€${currentPrice.t
                             }
                         %>
            
+
               
                         <%# L'intera riga del prodotto viene colorata con classi Bootstrap per dare un feedback visivo immediato sulla notifica.
 %>
                         <div class="list-group-item px-0 py-3 
                             <% if (notification && notification.type === 'decrease') { %>list-group-item-success<% } %>
                             <% if (notification && notification.type === 
+
 'increase') { %>list-group-item-warning<% } %>
                             <% if (notification && notification.type === 'deleted') { %>list-group-item-danger bg-opacity-10<% } %>
                             <% if (notification && notification.type === 'sold') { %>list-group-item-info bg-opacity-10<% } %>
                   
+
        ">
                             
                             <%# Se è stata creata una notifica nel blocco logico precedente, mostra un banner di avviso.
@@ -86,28 +96,34 @@ Da <strong>€${observedPrice.toFixed(2)}</strong> a <strong>€${currentPrice.t
                             <% if (notification) { %>
                                 <div class="alert mx-3 d-flex align-items-center
                                 
+
      <% if (notification.type === 'decrease') { %>alert-success<% } %>
                                     <% if (notification.type === 'increase') { %>alert-warning<% } %>
-                                    <% if (notification.type === 'deleted') { %>alert-danger<% } 
+                                    <% if (notification.type === 'deleted') { %>alert-danger<% 
+} 
 %>
                                     <% if (notification.type === 'sold') { %>alert-info<% } %>
                                 " role="alert">
-                       
+                      
+ 
               
                                     <%# Icona diversa per ogni tipo di notifica.
 %>
                                     <% if (notification.type === 'decrease') { %><i class="bi bi-tags-fill me-2"></i><% } %>
                                     <% if (notification.type === 'increase') { %><i class="bi bi-graph-up-arrow me-2"></i><% } %>
       
+
                                <% if (notification.type === 'deleted') { %><i class="bi bi-x-circle-fill me-2"></i><% } %>
                                     <% if (notification.type === 'sold') { %><i class="bi bi-bag-check-fill me-2"></i><% } %>
 
-            
+           
+ 
                          <%# Il tag < % permette di renderizzare l'HTML (es. <strong>) contenuto nella stringa del messaggio.
 %>
                                     
                                     <div><%- notification.message %></div>
                           
+
        </div>
                             <% } %>
 
@@ -117,18 +133,22 @@ Se il prodotto è venduto o eliminato, viene mostrato con opacità ridotta.
                             <div class="row align-items-center g-3 <%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') ? 'opacity-50' : '' %>">
                                 <div class="col-12 col-md-2 text-center">
                      
+
                <%# Il link alla pagina del prodotto viene disabilitato (`pe-none`) se non è più disponibile.
 %>
                                     <a href="/products/<%= prodotto.id %>" class="<%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') ? 'pe-none' : '' %>">
                                         <img src="<%= prodotto.percorso_immagine %>" alt="<%= prodotto.nome %>" class="img-fluid 
+
 rounded" style="max-height: 100px; max-width: 100px; object-fit: cover;">
                                     </a>
                                 </div>
 
                           
+
        <div class="col-12 col-md-4">
                                     <h5 class="mb-1">
-                                        <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark <%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') ? 
+                                        <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark <%= (prodotto.stato === 'eliminato' || prodotto.stato === 'venduto') 
+? 
 'pe-none' : '' %>"><%= prodotto.nome %></a>
                                     </h5>
                                     <%# Mostra un messaggio specifico in base allo stato del prodotto.
@@ -136,42 +156,53 @@ rounded" style="max-height: 100px; max-width: 100px; object-fit: cover;">
                                     <% if (prodotto.stato === 'eliminato') { %>
                                         <p class="mb-1 text-danger fw-bold small">Non più disponibile</p>
             
+
                          <% } else if (prodotto.stato === 'venduto') { %>
                                         <p class="mb-1 text-info fw-bold small">Venduto</p>
-                        
+                       
+ 
              <% } else { %>
                                         <p class="mb-1 text-muted small">
-                                         
+                                       
+  
    Venduto da <a href="/member/<%= prodotto.user_id %>" class="text-primary"><%= prodotto.nome_venditore %></a>
                                         </p>
                                         <span class="badge bg-secondary"><%= prodotto.parola_chiave %></span>
-     
+   
+  
                                 <% } %>
                                 </div>
 
-                                <div class="col-6 col-md-2 
+                                
+<div class="col-6 col-md-2 
 text-md-center">
                                      <%# Mostra il prezzo solo se il prodotto è ancora in vendita.
 %>
                                      <% if (prodotto.stato !== 'eliminato' && prodotto.stato !== 'venduto') { %>
                                         <%# Se c'è un prezzo scontato, mostra entrambi i prezzi.
 %>
-                                        <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
+                                        <% if (prodotto.prezzo_scontato && parseFloat(prodotto.prezzo_scontato) > 0) { %>
                                             <div>
-        
-                                         <span class="text-muted text-decoration-line-through me-2">€<%= prodotto.prezzo.toFixed(2) %></span>
-                                                <span class="fw-bold fs-5 text-danger">€<%= prodotto.prezzo_scontato.toFixed(2) %></span>
-  
+                                                <%# --- MODIFICA --- Aggiunto parseFloat() %>
+                                                <span class="text-muted text-decoration-line-through me-2">€<%= parseFloat(prodotto.prezzo).toFixed(2) %></span>
+                                                <%# --- MODIFICA --- Aggiunto parseFloat() %>
+                                                <span class="fw-bold fs-5 text-danger">€<%= parseFloat(prodotto.prezzo_scontato).toFixed(2) %></span>
+
+ 
+ 
                                            </div>
                                         <%# Altrimenti, mostra il prezzo normale.
 %>
                                         <% } else { %>
-                                            <span class="fw-bold fs-5">€<%= prodotto.prezzo.toFixed(2) %></span>
+                                            <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+                                            <span class="fw-bold fs-5">€<%= parseFloat(prodotto.prezzo || 0).toFixed(2) %></span>
     
-                                     <% } %>
+    
+                                 <% } %>
                                     <% } %>
                         
-         </div>
+   
+      </div>
 
                                 <div class="col-6 col-md-4 text-end">
                                     <%# Mostra il pulsante "Aggiungi al carrello" solo se il prodotto è effettivamente disponibile.
@@ -179,37 +210,47 @@ text-md-center">
                                     <% if (prodotto.stato === 'disponibile') { %>
                                         <form action="/carrello/add/<%= prodotto.id %>" method="POST" class="d-inline-block me-2">
             
+
                                  <input type="hidden" name="redirectUrl" value="/observed">
                                             <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
-              
+             
+ 
                                    <i class="bi bi-cart-plus-fill"></i> Aggiungi
                                             </button>
-                   
+                 
+  
                      </form>
                                     <% } %>
 
-                                    <%# Il pulsante per rimuovere il prodotto dalla lista degli osservati è sempre presente. %>
+                                    <%# Il pulsante 
+per rimuovere il prodotto dalla lista degli osservati è sempre presente.
+%>
                                     <form action="/observed/remove/<%= prodotto.id %>" method="POST" class="d-inline-block">
                                         <input type="hidden" name="redirectUrl" value="/observed">
        
-                                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Rimuovi dagli osservati">
+         
+                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Rimuovi dagli osservati">
                                             <i class="bi bi-trash-fill"></i>
               
-                           </button>
+        
+                   </button>
                                     </form>
                                 </div>
       
-                       </div>
+       
+                </div>
                         </div>
                     <% }) %>
                 </div>
-            <%# Se la lista degli osservati è vuota, mostra un messaggio di placeholder. %>
+            <%# Se la lista degli osservati è vuota, mostra un 
+messaggio di placeholder. %>
             <% } else { %>
                 <div class="text-center py-5">
                     <i class="bi bi-star" style="font-size: 3rem; color: #ccc;"></i>
                     <h4 class="mt-3">La tua lista è vuota</h4>
       
-               <p class="text-muted">Non stai osservando nessun prodotto al momento.</p>
+      
+         <p class="text-muted">Non stai osservando nessun prodotto al momento.</p>
                     <a href="/" class="btn btn-primary mt-2">Esplora i prodotti</a>
                 </div>
             <% } %>

@@ -1,6 +1,9 @@
 <%# views/pages/ordine-riepilogo.ejs %>
-<%# Pagina di conferma e riepilogo mostrata all'utente subito dopo un acquisto. %>
-<%# Questa pagina è "usa e getta": i dati dell'ordine vengono letti dalla sessione e poi cancellati. %>
+<%# Pagina di conferma e riepilogo mostrata all'utente subito dopo un acquisto.
+%>
+<%# Questa pagina è "usa e getta": i dati dell'ordine vengono letti dalla sessione e poi cancellati.
+%>
+<%# %>
 
 <!doctype html>
 <html lang="it">
@@ -14,77 +17,104 @@
             <div class="card shadow-sm">
                 <div class="card-body p-lg-5">
                     <div class="text-center mb-4">
-                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                    
+    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
                         <h2 class="card-title mt-3">Grazie per il Tuo Ordine!</h2>
                         <p class="text-muted">Il tuo ordine è stato confermato con successo.</p>
                     </div>
-                    
-                    <%# Messaggio di conferma invio email, che mostra l'email dell'acquirente. %>
+         
+           
+                    <%# Messaggio di conferma invio email, che mostra l'email dell'acquirente.
+%>
                     <div class="alert alert-light text-center" role="alert">
                         Invio mail di conferma a <strong><%= order.buyer.email %></strong>.
-                    </div>
+</div>
                     
                     <hr class="my-4">
 
                     <h5 class="mb-3">Riepilogo Prodotti</h5>
                     <ul class="list-group list-group-flush mb-4">
-                        <%# Cicla sull'array `order.items` per mostrare ogni prodotto acquistato. %>
+              
+          <%# Cicla sull'array `order.items` per mostrare ogni prodotto acquistato.
+%>
                         <% order.items.forEach(item => { %>
                              <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div class="d-flex align-items-center">
-                                    <img src="<%= item.percorso_immagine %>" alt="<%= item.nome %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3">
+    
+                                <img src="<%= item.percorso_immagine %>" alt="<%= item.nome %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3">
                                     <span><%= item.nome %></span>
-                                </div>
+               
+                 </div>
                                 <%# Mostra il prezzo pagato per l'articolo (potrebbe essere quello scontato). %>
-                                <span class="fw-bold">€<%= (item.prezzo_scontato || item.prezzo).toFixed(2) %></span>
-                             </li>
+                                <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+                                <span class="fw-bold">€<%= (parseFloat(item.prezzo_scontato) || parseFloat(item.prezzo || 0)).toFixed(2) %></span>
+   
+                          </li>
                         <% }) %>
-                        <%# Mostra il totale dell'ordine. %>
+                        <%# Mostra il totale dell'ordine.
+%>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 fw-bold fs-5 border-top pt-3">
                             <span>Totale</span>
+                            <%# 'order.total' è già un numero, calcolato nella rotta, quindi qui non serve parseFloat %>
                             <span>€<%= order.total.toFixed(2) %></span>
-                        </li>
+         
+               </li>
                     </ul>
 
                     <div class="row g-4">
-                        <%# Sezione Indirizzo di Spedizione. %>
+                        <%# Sezione Indirizzo di Spedizione.
+%>
                         <div class="col-md-6">
                             <h5 class="mb-3">Indirizzo di Spedizione</h5>
                             <div class="card bg-light border">
-                                <div class="card-body">
+             
+                   <div class="card-body">
                                     <p class="mb-1"><strong><%= order.address.nome %> <%= order.address.cognome %></strong></p>
-                                    <p class="mb-1"><%= order.address.indirizzo %></p>
+                                    <p class="mb-1"><%= 
+order.address.indirizzo %></p>
                                     <p class="mb-0"><%= order.address.cap %>, <%= order.address.citta %></p>
                                 </div>
-                            </div>
+                         
+   </div>
                         </div>
 
-                        <%# Sezione Metodo di Pagamento. %>
+                        <%# Sezione Metodo di Pagamento.
+%>
                         <div class="col-md-6">
                             <h5 class="mb-3">Metodo di Pagamento</h5>
                             <div class="card bg-light border">
-                                <div class="card-body">
+             
+                   <div class="card-body">
                                     <p class="mb-1">
                                         <i class="bi bi-credit-card-fill"></i>
-                                        Carta che termina con **** <%= order.payment.last4 %>
+ 
+                                       Carta che termina con **** <%= order.payment.last4 %>
                                     </p>
-                                    <p class="mb-0">Titolare: <%= order.payment.nome_titolare %></p>
+                  
+                  <p class="mb-0">Titolare: <%= order.payment.nome_titolare %></p>
                                 </div>
                             </div>
-                        </div>
+                  
+      </div>
                     </div>
                 
                     <div class="text-center mt-5">
-                        <%# Logica condizionale per il pulsante "Lascia una recensione". %>
-                        <%# Viene mostrato solo se l'acquisto è stato fatto da un utente loggato (`!order.isGuest`). %>
-                        <%# Un utente ospite non può lasciare recensioni. %>
+                        <%# Logica condizionale per il pulsante "Lascia una recensione".
+%>
+                        <%# Viene mostrato solo se l'acquisto è stato fatto da un utente loggato (`!order.isGuest`).
+%>
+                        <%# Un utente ospite non può lasciare recensioni.
+%>
                         <% if (!order.isGuest) { %>
-                            <p class="mb-2">La tua opinione è importante! Aiuta la community lasciando una recensione.</p>
-                            <%# Il link `order.reviewLink` punta direttamente alla pagina per recensire il prodotto acquistato. %>
+                            <p class="mb-2">La tua opinione è importante!
+Aiuta la community lasciando una recensione.</p>
+                            <%# Il link `order.reviewLink` punta direttamente alla pagina per recensire il prodotto acquistato.
+%>
                             <a href="<%= order.reviewLink %>" class="btn btn-info mb-3">Lascia una recensione ora</a>
                             <br>
                         <% } %>
-                        <a href="/" class="btn btn-primary">Continua lo Shopping</a>
+         
+               <a href="/" class="btn btn-primary">Continua lo Shopping</a>
                     </div>
                 </div>
             </div>

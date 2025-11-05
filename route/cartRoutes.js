@@ -14,8 +14,10 @@ const observedDao = require('../models/dao/observed-dao');
 
 // Import del servizio per l'invio di email
 const { sendOrderConfirmationEmail } = require('../services/emailService');
-// Importiamo il pool 'db' di pg per gestire le transazioni manualmente
-const { db } = require('../managedb');
+
+// --- MODIFICA ---
+// Importiamo il 'pool' (che ha .connect()) invece di 'db' per gestire le transazioni manualmente
+const { pool } = require('../managedb');
 
 /**
  * Middleware: Inizializzazione del Carrello
@@ -160,8 +162,9 @@ router.post('/checkout', async (req, res) => {
 
     const { addressSelection, paymentMethod, ...formData } = req.body;
 
-    // Acquisiamo un client dal pool per la transazione
-    const client = await db.connect();
+    // --- MODIFICA ---
+    // Acquisiamo un client dal 'pool' (che ha il metodo .connect())
+    const client = await pool.connect();
     
     try {
         // Filtra il carrello per processare solo gli articoli ancora disponibili
