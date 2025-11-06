@@ -23,11 +23,11 @@ const categorie = [
 
 /**
  * Middleware `isAdmin`
- * * Questo middleware è un "guardiano" per le rotte di amministrazione.
+ * Questo middleware è un "guardiano" per le rotte di amministrazione.
  * Controlla due condizioni prima di permettere a una richiesta di procedere:
  * 1. `req.isAuthenticated()`: L'utente deve essere autenticato (loggato).
  * 2. `req.user.tipo_account === 'admin'`: L'utente loggato deve avere il ruolo di 'admin'.
- * * Se entrambe le condizioni sono vere, `next()` passa il controllo alla rotta successiva.
+ * Se entrambe le condizioni sono vere, `next()` passa il controllo alla rotta successiva.
  * Altrimenti, viene inviato un messaggio di errore e l'utente viene reindirizzato alla homepage.
  */
 const isAdmin = (req, res, next) => {
@@ -44,7 +44,7 @@ router.use(isAdmin);
 
 /**
  * Configurazione di Multer per il Caricamento Immagini
- * * Configurazione storage per definire destinazione e nome file.
+ * Configurazione storage per definire destinazione e nome file.
  */
 const storage = multer.diskStorage({
     destination: './public/uploads/',
@@ -108,23 +108,24 @@ const uploadWrapper = (req, res, next) => {
 
 /**
  * ROTTA: GET /admin/dashboard
- * * Mostra la pagina principale del pannello di amministrazione.
- * * Logica:
- * 1. Esegue tre operazioni asincrone in parallelo usando `Promise.all`:
+ * Mostra la pagina principale del pannello di amministrazione.
+ * Logica:
+ * 1. Esegue quattro operazioni asincrone in parallelo usando `Promise.all`:
  * - `utentiDao.getAllUsers()`: Recupera l'elenco di tutti gli utenti.
- * - `prodottiDao.getAllProductsAdmin()`: Recupera l'elenco completo di tutti i prodotti
- * (incluso l'array `percorsi_immagine` per il modale di modifica).
+ * - `prodottiDao.getAllProductsAdmin()`: Recupera l'elenco completo di tutti i prodotti.
  * - `ordiniDao.getTotalSales()`: Calcola il fatturato totale.
+ * - `ordiniDao.getAllOrdersAdmin()`: Recupera lo storico di tutti gli ordini della piattaforma.
  * 2. Calcola il numero di prodotti disponibili.
  * 3. Renderizza `admin-dashboard.ejs`, passando tutti i dati recuperati.
  */
 router.get('/dashboard', async (req, res) => {
     try {
         // Recupera tutti i dati in parallelo per ottimizzare i tempi
-        const [allUsers, allProducts, totalRevenue] = await Promise.all([
+        const [allUsers, allProducts, totalRevenue, allOrders] = await Promise.all([
             utentiDao.getAllUsers(),
             prodottiDao.getAllProductsAdmin(),
-            ordiniDao.getTotalSales()
+            ordiniDao.getTotalSales(),
+            ordiniDao.getAllOrdersAdmin() // Carica lo storico completo degli ordini
         ]);
 
         // Calcola le statistiche
@@ -135,6 +136,7 @@ router.get('/dashboard', async (req, res) => {
             title: 'Dashboard Amministrazione',
             users: allUsers,
             products: allProducts, // Contiene l'array completo 'percorsi_immagine'
+            orders: allOrders, // Passa lo storico ordini al template
             stats: {
                 userCount: allUsers.length,
                 productCount: totalProductsInStock,
@@ -151,8 +153,8 @@ router.get('/dashboard', async (req, res) => {
 
 /**
  * ROTTA: POST /admin/users/delete/:id
- * * Gestisce la richiesta di eliminazione di un utente.
- * * Logica:
+ * Gestisce la richiesta di eliminazione di un utente.
+ * Logica:
  * 1. Recupera l'ID dell'utente da eliminare.
  * 2. Controlla che l'admin non stia cercando di eliminare se stesso.
  * 3. Chiama `utentiDao.deleteUser()` per rimuovere l'utente.
@@ -179,8 +181,8 @@ router.post('/users/delete/:id', async (req, res) => {
 
 /**
  * ROTTA: POST /admin/products/delete/:id
- * * Gestisce l'eliminazione fisica (hard delete) di un prodotto da parte di un amministratore.
- * * Logica:
+ * Gestisce l'eliminazione fisica (hard delete) di un prodotto da parte di un amministratore.
+ * Logica:
  * 1. Chiama `prodottiDao.deleteProductAdmin()` per rimuovere fisicamente il prodotto.
  * 2. Reindirizza alla dashboard, ancorando alla tab dei prodotti.
  */
@@ -199,9 +201,9 @@ router.post('/products/delete/:id', async (req, res) => {
 
 /**
  * ROTTA: POST /admin/products/edit/:id
- * * Gestisce l'aggiornamento dei dati di un prodotto dal pannello di amministrazione,
+ * Gestisce l'aggiornamento dei dati di un prodotto dal pannello di amministrazione,
  * inclusa la gestione avanzata delle immagini multiple.
- * * Logica:
+ * Logica:
  * 1. Usa il middleware `uploadWrapper` per gestire il caricamento di nuove immagini (max 5).
  * 2. Recupera le immagini esistenti riordinate (`existing_images`) dal form.
  * 3. Recupera le nuove immagini caricate (`req.files`).

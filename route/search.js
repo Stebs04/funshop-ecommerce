@@ -5,44 +5,72 @@ const express = require('express');
 const router = express.Router();
 const searchDao = require('../models/dao/search-dao');
 
+// Definiamo le categorie e le condizioni anche qui, per passarle al template
+// in modo che i filtri possano essere popolati correttamente.
+const categorie = [
+    "Anime & Manga",
+    "Carte da gioco collezionabili",
+    "Action Figure & Statue",
+    "Videogiochi",
+    "Modellismo & Replica",
+    "LEGO / Brick compatibili"
+];
+
+const condizioni = ["Come nuovo", "Ottimo stato", "Tanto usato"];
+
 /**
  * ROTTA: GET /search
- * * Gestisce le richieste di ricerca provenienti dalla barra di ricerca nella navbar.
+ * Gestisce le richieste di ricerca provenienti dalla barra di ricerca nella navbar.
  * Cerca contemporaneamente sia prodotti che utenti.
- * * Logica:
- * 1. Estrae il termine di ricerca dal parametro di query `q` (es. `/search?q=termine`).
- * 2. Se la query è vuota, reindirizza semplicemente alla homepage.
- * 3. Utilizza `Promise.all` per eseguire in parallelo le due ricerche nel database:
- * - `searchDao.searchProducts(query)`: Cerca prodotti il cui nome contiene il termine.
- * - `searchDao.searchUsers(query)`: Cerca utenti il cui username contiene il termine.
- * 4. Renderizza la pagina dei risultati `search-results.ejs`, passando:
- * - La query originale (`query`) per mostrarla nel titolo.
+ * Ora include anche la logica per filtrare ulteriormente i risultati dei prodotti.
+ * Logica:
+ * 1. Estrae tutti i parametri di query:
+ * - `q`: Il termine di ricerca testuale.
+ * - `category`, `condition`, `sortBy`: I filtri aggiuntivi.
+ * 2. Se non c'è un termine di ricerca 'q', reindirizza alla homepage.
+ * 3. Crea un oggetto `filters` che raggruppa tutti i parametri.
+ * 4. Utilizza `Promise.all` per eseguire in parallelo le due ricerche:
+ * - `searchDao.searchProducts(filters)`: Cerca prodotti passando l'intero oggetto
+ * dei filtri (il DAO ora gestirà 'q' insieme agli altri filtri).
+ * - `searchDao.searchUsers(filters.q)`: Cerca utenti (usa solo il termine 'q').
+ * 5. Renderizza la pagina dei risultati `search-results.ejs`, passando:
+ * - La query originale (`filters.q`).
  * - Le liste di `prodotti` e `utenti` trovati.
- * - Le informazioni standard sull'utente e l'autenticazione.
- * 5. In caso di errore durante la ricerca nel database, mostra un messaggio di errore
- * e reindirizza alla homepage.
+ * - Gli array `categorie` e `condizioni` per popolare i menu dei filtri.
+ * - `currentFilters`: L'oggetto `filters` per mantenere lo stato dei filtri nel form.
  */
 router.get('/', async (req, res) => {
-    const query = req.query.q; // Prendiamo il termine di ricerca dal parametro 'q'
+    // Estrae tutti i parametri di query
+    const { q, category, condition, sortBy } = req.query;
 
-    // Se non c'è una query, non ha senso mostrare una pagina di risultati vuota.
-    if (!query) {
+    // Se non c'è un termine di ricerca testuale (q), reindirizza alla home.
+    if (!q) {
         return res.redirect('/');
     }
 
     try {
-        // Eseguiamo entrambe le ricerche in parallelo per ottimizzare i tempi
+        // Raggruppa tutti i filtri in un unico oggetto
+        const filters = { q, category, condition, sortBy };
+
+        // Eseguiamo entrambe le ricerche in parallelo
         const [prodotti, utenti] = await Promise.all([
-            searchDao.searchProducts(query),
-            searchDao.searchUsers(query)
+            // Passiamo l'intero oggetto filtri al DAO dei prodotti
+            searchDao.searchProducts(filters), 
+            // La ricerca utenti continua a usare solo il termine 'q'
+            searchDao.searchUsers(q) 
         ]);
 
-        // Renderizza la pagina dei risultati passando i dati trovati
+        // Renderizza la pagina dei risultati passando i dati trovati e i filtri
         res.render('pages/search-results', {
-            title: `Risultati per "${query}"`,
-            query: query,
+            title: `Risultati per "${q}"`,
+            query: q, // Manteniamo 'query' per il titolo
             prodotti: prodotti,
             utenti: utenti,
+            // Passiamo gli array per popolare i menu a tendina dei filtri
+            categorie: categorie,
+            condizioni: condizioni,
+            // Passiamo i filtri attuali per mantenere lo stato del form
+            currentFilters: filters, 
             user: req.user || null,
             isAuthenticated: req.isAuthenticated()
         });

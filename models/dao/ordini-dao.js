@@ -18,6 +18,11 @@ class OrdiniDAO {
    * @returns {Promise<Array<Object>>} Una promessa che risolve in un array di oggetti ordine.
    */
   async getOrdersByUserId(userId) {
+    // La query seleziona i dati principali dell'ordine (id, data, totale, stato)
+    // Esegue una JOIN con 'prodotti' (p) per ottenere il nome del prodotto
+    // Seleziona la prima immagine dall'array 'percorsi_immagine' (indice [1] in PostgreSQL) come 'immagine_prodotto'
+    // Filtra i risultati per uno specifico 'user_id' ($1)
+    // Ordina i risultati dal più recente al meno recente
     const sql = `
       SELECT 
         so.id, 
@@ -33,7 +38,9 @@ class OrdiniDAO {
       ORDER BY so.data_ordine DESC`;
       
     try {
+      // Esegue la query passando l'ID utente come parametro
       const { rows } = await db.query(sql, [userId]);
+      // Restituisce l'array di righe (ordini) trovate
       return rows;
     } catch (err) {
       console.error("Errore in getOrdersByUserId:", err);
@@ -48,7 +55,8 @@ class OrdiniDAO {
    */
   async createOrder(orderData) {
     const { totale, user_id, prodotto_id } = orderData;
-    // Usiamo $1, $2, $3 e 'RETURNING id' per ottenere l'ID generato
+    // Inserisce i dati dell'ordine usando i placeholder $1, $2, $3
+    // 'RETURNING id' (specifico di PostgreSQL) restituisce l'ID della riga appena inserita
     const sql = `
       INSERT INTO storico_ordini (totale, user_id, prodotto_id) 
       VALUES ($1, $2, $3)
@@ -56,8 +64,10 @@ class OrdiniDAO {
     const params = [totale, user_id, prodotto_id];
 
     try {
+      // Esegue la query di inserimento
       const { rows } = await db.query(sql, params);
-      return rows[0].id; // Restituisce l'ID del nuovo ordine
+      // Restituisce l'ID del nuovo ordine
+      return rows[0].id;
     } catch (err) {
       console.error("Errore in createOrder:", err);
       throw err;
@@ -70,9 +80,12 @@ class OrdiniDAO {
    * @returns {Promise<Object>} L'oggetto ordine.
    */
   async getOrderById(id) {
+    // Seleziona tutti i campi dalla tabella 'storico_ordini' dove l'ID corrisponde
     const sql = `SELECT * FROM storico_ordini WHERE id = $1`;
     try {
+      // Esegue la query
       const { rows } = await db.query(sql, [id]);
+      // Restituisce la prima riga trovata (o undefined)
       return rows[0];
     } catch (err) {
       console.error("Errore in getOrderById:", err);
@@ -86,13 +99,15 @@ class OrdiniDAO {
    * @returns {Promise<number>} Il totale dei guadagni.
    */
   async getTotalSales() {
-    // SUM(totale) calcola la somma di tutti i valori nella colonna 'totale'.
+    // Utilizza la funzione di aggregazione SUM() di SQL per sommare tutti i valori
+    // nella colonna 'totale' e la rinomina (alias) 'total'
     const sql = `SELECT SUM(totale) as total FROM storico_ordini`;
     try {
         const { rows } = await db.query(sql);
         const row = rows[0];
-        // Se non ci sono ordini, row.total sarà NULL. In quel caso, restituiamo 0.
-        // Usiamo parseFloat per assicurare che il risultato sia un numero.
+        // 'row.total' potrebbe essere NULL se non ci sono ordini.
+        // Usiamo parseFloat() per convertire il risultato (che è una stringa numerica o null) in un numero.
+        // Se il risultato è NULL, `|| 0` assicura che venga restituito 0.
         return parseFloat(row.total) || 0;
     } catch (err) {
         console.error("Errore in getTotalSales:", err);
@@ -106,7 +121,11 @@ class OrdiniDAO {
    * @returns {Promise<Object>} Un oggetto con 'totalRevenue' (guadagno totale) e 'productsSoldCount' (prodotti venduti).
    */
   async getSalesStatsBySellerId(sellerId) {
-    // Sostituiamo ? con $1
+    // Questa query:
+    // 1. Somma (SUM) i totali degli ordini ('so.totale') per ottenere 'totalRevenue'
+    // 2. Conta (COUNT) gli ID degli ordini ('so.id') per ottenere 'productsSoldCount'
+    // 3. Unisce 'storico_ordini' (so) con 'prodotti' (p)
+    // 4. Filtra i risultati per trovare solo i prodotti dove l'ID del venditore ('p.user_id') corrisponde a quello fornito ($1)
     const sql = `
         SELECT
             SUM(so.totale) as totalRevenue,
@@ -120,9 +139,10 @@ class OrdiniDAO {
         const row = rows[0];
         
         // La funzione 'async' restituisce automaticamente una promessa
+        // PostgreSQL restituisce i nomi delle colonne in minuscolo ('totalrevenue', 'productssoldcount')
         return {
-            totalRevenue: parseFloat(row.totalrevenue) || 0, // 'totalrevenue' è minuscolo in pg
-            productsSoldCount: parseInt(row.productssoldcount, 10) || 0 // 'productssoldcount' è minuscolo
+            totalRevenue: parseFloat(row.totalrevenue) || 0,
+            productsSoldCount: parseInt(row.productssoldcount, 10) || 0
         };
     } catch (err) {
         console.error("Errore in getSalesStatsBySellerId:", err);
@@ -136,6 +156,11 @@ class OrdiniDAO {
    * @returns {Promise<Array<Object>>} Una lista di tutti gli ordini.
    */
   async getAllOrdersAdmin() {
+    // Seleziona i dati dell'ordine
+    // Esegue una LEFT JOIN con 'prodotti' (p) per ottenere 'nome_prodotto'
+    // Esegue una LEFT JOIN con 'users' (u) per ottenere 'nome_acquirente' (l'utente che ha comprato)
+    // LEFT JOIN è usato nel caso un prodotto o un utente siano stati eliminati (restituisce NULL)
+    // Ordina per data
     const sql = `
         SELECT 
             so.id, 
@@ -150,7 +175,9 @@ class OrdiniDAO {
         ORDER BY so.data_ordine DESC
     `;
     try {
+        // Esegue la query (senza parametri)
         const { rows } = await db.query(sql);
+        // Restituisce l'array completo degli ordini
         return rows;
     } catch (err) {
         console.error("Errore in getAllOrdersAdmin:", err);

@@ -1,6 +1,6 @@
 <%# views/pages/admin-dashboard.ejs %>
 <%# Pagina del pannello di amministrazione. %>
-<%# Mostra statistiche aggregate e tabelle per la gestione di utenti e prodotti. %>
+<%# Mostra statistiche aggregate e tabelle per la gestione di utenti, prodotti e ordini. %>
 
 <%- include('../partials/header') %>
 <body class="d-flex flex-column min-vh-100 bg-light">
@@ -19,62 +19,49 @@
             <%# Card Conteggio Utenti %>
             <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
-              
-
-
-      <div class="card-body">
-                        <i class="bi bi-people-fill fs-1 text-primary"></i>
-                         <h5 class="card-title mt-2">Utenti Registrati</h5>
-                         <%# 'stats.userCount' è un numero (length), non serve parseFloat %>
-   
-                     <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
-        
-            </div>
-                </div>
-            </div>
-             <%# Card Conteggio Prodotti %>
-             <div class="col-md-4">
-            
-    <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
-     
-                   <i class="bi bi-box-seam-fill fs-1 text-success"></i>
-                         <h5 class="card-title mt-2">Prodotti in Vendita</h5>
-              
-           <%# 'stats.productCount' è un numero (length), non serve parseFloat %>
-                        <p class="card-text display-4 fw-bold"><%= stats.productCount %></p>
-                   
- </div>
+                        <i class="bi bi-people-fill fs-1 text-primary"></i>
+                        <h5 class="card-title mt-2">Utenti Registrati</h5>
+                        <%# 'stats.userCount' è un numero (length), non serve parseFloat %>
+                        <p class="card-text display-4 fw-bold"><%= stats.userCount %></p>
+                    </div>
                 </div>
             </div>
-   
-         <%# Card Guadagni Totali %>
-             <div class="col-md-4">
+            <%# Card Conteggio Prodotti %>
+            <div class="col-md-4">
                 <div class="card text-center h-100 shadow-sm">
                     <div class="card-body">
-                 
-       <i class="bi bi-currency-euro fs-1 text-warning"></i>
-                     
-    <h5 class="card-title mt-2">Guadagni Totali</h5>
-                         <%# 'stats.revenue' è già un numero dal DAO, non serve parseFloat %>
+                        <i class="bi bi-box-seam-fill fs-1 text-success"></i>
+                        <h5 class="card-title mt-2">Prodotti in Vendita</h5>
+                        <%# 'stats.productCount' è un numero (length), non serve parseFloat %>
+                        <p class="card-text display-4 fw-bold"><%= stats.productCount %></p>
+                    </div>
+                </div>
+            </div>
+            <%# Card Guadagni Totali %>
+            <div class="col-md-4">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <i class="bi bi-currency-euro fs-1 text-warning"></i>
+                        <h5 class="card-title mt-2">Guadagni Totali</h5>
+                        <%# 'stats.revenue' è già un numero dal DAO, non serve parseFloat %>
                         <p class="card-text display-4 fw-bold"><%= stats.revenue.toFixed(2) %></p>
                     </div>
-        
-    
-    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <%# Navigazione a Tab (Utenti e Prodotti) %>
+    <%# Navigazione a Tab (Utenti, Prodotti e Ordini) %>
     <ul class="nav nav-tabs" id="adminTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-pane" type="button" role="tab">Gestione Utenti</button>
         </li>
         <li class="nav-item" role="presentation">
-            
-<button class="nav-link" id="products-tab" data-bs-toggle="tab" 
-data-bs-target="#products-tab-pane" type="button" role="tab">Gestione Prodotti</button>
+            <button class="nav-link" id="products-tab" data-bs-toggle="tab" data-bs-target="#products-tab-pane" type="button" role="tab">Gestione Prodotti</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-tab-pane" type="button" role="tab">Storico Ordini</button>
         </li>
     </ul>
 
@@ -84,47 +71,32 @@ data-bs-target="#products-tab-pane" type="button" role="tab">Gestione Prodotti</
         <div class="tab-pane fade show active" id="users-tab-pane" role="tabpanel">
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
-                
-    
-<thead>
-                         <tr>
+                    <thead>
+                        <tr>
                             <th>ID</th>
                             <th>Username</th>
-               
-    
-          <th>Email</th>
+                            <th>Email</th>
                             <th>Tipo Account</th>
                             <th>Azioni</th>
                         </tr>
-     
-    
-            </thead>
+                    </thead>
                     <tbody>
                         <% users.forEach(u => { %>
                             <tr>
-        
-    
-                    <td><%= u.id %></td>
-                                 <td><%= u.username %></td>
+                                <td><%= u.id %></td>
+                                <td><%= u.username %></td>
                                 <td><%= u.email %></td>
-     
-    
-                       <td><span class="badge bg-secondary"><%= u.tipo_account %></span></td>
-                                 <td>
+                                <td><span class="badge bg-secondary"><%= u.tipo_account %></span></td>
+                                <td>
                                     <%# L'admin non può eliminare se stesso %>
-<% if (u.tipo_account !== 
-'admin') { %>
-                                         <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.');">
+                                    <% if (u.tipo_account !== 'admin') { %>
+                                        <form action="/admin/users/delete/<%= u.id %>" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.');">
                                             <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
-                                         </form>
-         
-
-                           <% } %>
+                                        </form>
+                                    <% } %>
                                 </td>
-                             </tr>
-          
-
-              <% }) %>
+                            </tr>
+                        <% }) %>
                     </tbody>
                 </table>
             </div>
@@ -132,103 +104,111 @@ data-bs-target="#products-tab-pane" type="button" role="tab">Gestione Prodotti</
 
         <%# --- PANNELLO GESTIONE PRODOTTI --- %>
         <div class="tab-pane fade" id="products-tab-pane" role="tabpanel">
-             <div class="table-responsive">
-  
-
-              <table class="table table-striped table-hover">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
                     <thead>
                         <tr>
-                             <th>ID</th>
-          
-
-                  <th>Immagine</th>
+                            <th>ID</th>
+                            <th>Immagine</th>
                             <th>Nome Prodotto</th>
-                             <th>Venditore</th>
-                        
-
-    <th>Prezzo</th>
+                            <th>Venditore</th>
+                            <th>Prezzo</th>
                             <th>Stato</th>
                             <th>Azioni</th>
-                         </tr>
-               
-
-     </thead>
+                        </tr>
+                    </thead>
                     <tbody>
                         <% products.forEach(p => { %>
                             <tr>
-                   
-
-             <td><%= p.id %></td>
-                                 <%# Mostra la prima immagine (copertina) %>
-                                 <td><img src="<%= p.percorsi_immagine[0] %>" alt="<%= p.nome %>" style="width: 50px;
-height: 50px; object-fit: cover;"></td>
+                                <td><%= p.id %></td>
+                                <%# Mostra la prima immagine (copertina) %>
+                                <td><img src="<%= p.percorsi_immagine[0] %>" alt="<%= p.nome %>" style="width: 50px; height: 50px; object-fit: cover;"></td>
                                 <td><%= p.nome %></td>
-                                
-                               
-
-  <td><%= p.nome_venditore %></td>
+                                <td><%= p.nome_venditore %></td>
                                 <%# Assicura che il prezzo sia un numero float %>
                                 <td>€<%= (parseFloat(p.prezzo_scontato) || parseFloat(p.prezzo) || 0).toFixed(2) %></td>
-                
-                 <td>
-                         
-             <% if (p.stato === 'disponibile') { %>
-                                       
- <span class="badge bg-success">Disponibile</span>
-                                    <% } else 
-if (p.stato === 'venduto') { %>
-                                         <span class="badge bg-warning">Venduto</span>
-          
-                          <% } else { %>
-            
-                             <span class="badge bg-danger">Eliminato</span>
-                           
-         <% } %>
-                               
- </td>
-                                 <td>
+                                <td>
+                                    <% if (p.stato === 'disponibile') { %>
+                                        <span class="badge bg-success">Disponibile</span>
+                                    <% } else if (p.stato === 'venduto') { %>
+                                        <span class="badge bg-warning">Venduto</span>
+                                    <% } else { %>
+                                        <span class="badge bg-danger">Eliminato</span>
+                                    <% } %>
+                                </td>
+                                <td>
                                     <%# Pulsante "Modifica" che apre il modale %>
-            <button class="btn btn-sm btn-primary"
-                           
-                 data-bs-toggle="modal"
-                                         
-    data-bs-target="#editProductModal"
-                                      
-      data-context="admin" 
-                                             data-product-id="<%= p.id %>"
-    
-                                        data-product-nome="<%= p.nome 
-%>"
-                                             data-product-descrizione="<%= p.descrizione %>"
-           
-                                 data-product-prezzo="<%= p.prezzo %>"
-       
-                                      data-product-prezzo-scontato="<%= p.prezzo_scontato ||
-'' %>"
-                                            data-product-parola-chiave="<%= p.parola_chiave %>"
-                                             data-product-condizione="<%= p.condizione %>"
-                                             <%# Passa l'array di immagini come stringa JSON (con escape) %>
-                                             data-product-images="<%= JSON.stringify(p.percorsi_immagine || []) %>">
-      
-
-                                  Modifica
+                                    <button class="btn btn-sm btn-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editProductModal"
+                                        data-context="admin" 
+                                        data-product-id="<%= p.id %>"
+                                        data-product-nome="<%= p.nome %>"
+                                        data-product-descrizione="<%= p.descrizione %>"
+                                        data-product-prezzo="<%= p.prezzo %>"
+                                        data-product-prezzo-scontato="<%= p.prezzo_scontato || '' %>"
+                                        data-product-parola-chiave="<%= p.parola_chiave %>"
+                                        data-product-condizione="<%= p.condizione %>"
+                                        <%# Passa l'array di immagini come stringa JSON (con escape) %>
+                                        data-product-images="<%= JSON.stringify(p.percorsi_immagine || []) %>">
+                                        Modifica
                                     </button>
-                              
-
-       <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
+                                    <form action="/admin/products/delete/<%= p.id %>" method="POST" class="d-inline" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?');">
                                         <button type="submit" class="btn btn-sm btn-danger">Elimina</button>
-                                    
-
- </form>
+                                    </form>
                                 </td>
                             </tr>
-                         <% }) %>
-            
-
-        </tbody>
+                        <% }) %>
+                    </tbody>
                 </table>
             </div>
         </div>
+
+        <%# --- PANNELLO STORICO ORDINI --- %>
+        <div class="tab-pane fade" id="orders-tab-pane" role="tabpanel">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID Ordine</th>
+                            <th>Data</th>
+                            <th>Acquirente</th>
+                            <th>Prodotto</th>
+                            <th>Totale</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%# Itera sulla variabile 'orders' passata dalla rotta %>
+                        <% if (orders && orders.length > 0) { %>
+                            <% orders.forEach(o => { %>
+                                <tr>
+                                    <td>#<%= o.id %></td>
+                                    <td><%= new Date(o.data_ordine).toLocaleDateString('it-IT') %></td>
+                                    <%# Mostra l'username o 'Ospite' se user_id è null %>
+                                    <td><%= o.nome_acquirente || 'Ospite' %></td>
+                                    <td><%= o.nome_prodotto || 'N/D' %></td>
+                                    <%# Assicura che il totale sia un numero float %>
+                                    <td>€<%= (parseFloat(o.totale) || 0).toFixed(2) %></td>
+                                    <td>
+                                        <% if (o.stato === 'In elaborazione') { %>
+                                            <span class="badge bg-info">In elaborazione</span>
+                                        <% } else { %>
+                                            <span class="badge bg-success"><%= o.stato %></span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Nessun ordine trovato.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -237,96 +217,69 @@ if (p.stato === 'venduto') { %>
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" 
-
-id="editProductModalLabel">Modifica Prodotto</h5>
+                <h5 class="modal-title" id="editProductModalLabel">Modifica Prodotto</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                 <%# Il form ora invia 'multipart/form-data' per i file %>
-                 <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
+                <%# Il form ora invia 'multipart/form-data' per i file %>
+                <form id="editProductForm" action="" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
-            
-
-            <label for="edit_nome" class="form-label">Nome Prodotto</label>
+                        <label for="edit_nome" class="form-label">Nome Prodotto</label>
                         <input type="text" class="form-control" id="edit_nome" name="nome" required>
-                     </div>
+                    </div>
                     <div class="mb-3">
-              
-
-          <label for="edit_descrizione" class="form-label">Descrizione</label>
+                        <label for="edit_descrizione" class="form-label">Descrizione</label>
                         <textarea class="form-control" id="edit_descrizione" name="descrizione" rows="3" required></textarea>
-                     </div>
-                    <div class="row">
-                 
-
-       <div class="col-md-6 mb-3">
-                            <label for="edit_prezzo" class="form-label">Prezzo Originale (€)</label>
-                             <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
-                        
-
-</div>
-                        <div class="col-md-6 mb-3">
-                             <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
-                            <input type="number" class="form-control" id="edit_prezzo_scontato" name="prezzo_scontato" step="0.01">
-        
-
-                    <small class="form-text text-muted">Lascia vuoto se non c'è sconto.</small>
-                         </div>
                     </div>
                     <div class="row">
-       
-
-                 <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_prezzo" class="form-label">Prezzo Originale (€)</label>
+                            <input type="number" class="form-control" id="edit_prezzo" name="prezzo" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_prezzo_scontato" class="form-label">Prezzo Scontato (€)</label>
+                            <input type="number" class="form-control" id="edit_prezzo_scontato" name="prezzo_scontato" step="0.01">
+                            <small class="form-text text-muted">Lascia vuoto se non c'è sconto.</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
                             <label for="edit_parola_chiave" class="form-label">Categoria</label>
-                             <select class="form-select" id="edit_parola_chiave" name="parola_chiave" required>
-                  
-
-              <option value="" disabled>Seleziona una categoria</option>
+                            <select class="form-select" id="edit_parola_chiave" name="parola_chiave" required>
+                                <option value="" disabled>Seleziona una categoria</option>
                                 <% if (locals.categorie) { %>
                                     <% categorie.forEach(cat => { %>
-      
-
-                                  <option value="<%= cat %>"><%= cat %></option>
+                                        <option value="<%= cat %>"><%= cat %></option>
                                     <% }) %>
-                       
-
-         <% } %>
-                             </select>
+                                <% } %>
+                            </select>
                         </div>
                         <div class="col-md-6 mb-3">
-          
-
-                    <label for="edit_condizione" class="form-label">Condizione</label>
-                             <input type="text" class="form-control" id="edit_condizione" name="condizione">
+                            <label for="edit_condizione" class="form-label">Condizione</label>
+                            <input type="text" class="form-control" id="edit_condizione" name="condizione">
                         </div>
                     </div>
- 
 
                     <%# Sezione per la gestione delle immagini (aggiornata) %>
-                     <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Immagini Esistenti (La prima è la copertina)</label>
                         <%# Contenitore per le anteprime delle immagini esistenti, popolate da JS %>
                         <div id="edit-image-previews" class="d-flex flex-wrap gap-2 border p-2 rounded" style="min-height: 120px;">
                             <%# Le anteprime verranno inserite qui dallo script %>
                         </div>
                         <small class="form-text text-muted">Puoi riordinare le immagini, eliminarle e aggiungerne di nuove.</small>
-                     </div>
-                     
-                     <div class="mb-3">
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="edit_percorso_immagine" class="form-label">Aggiungi Nuove Immagini</label>
                         <%# Input per caricare *nuove* immagini, accetta file multipli %>
                         <input class="form-control" type="file" id="edit_percorso_immagine" name="percorso_immagine" multiple accept="image/*">
-                        
-
-<small id="image-upload-feedback" class="form-text text-muted">Puoi caricare un massimo di 5 immagini in totale.</small>
-                     </div>
+                        <small id="image-upload-feedback" class="form-text text-muted">Puoi caricare un massimo di 5 immagini in totale.</small>
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                      
-
-  <button type="submit" id="save-product-changes-btn" class="btn btn-primary">Salva Modifiche</button>
-                     </div>
+                        <button type="submit" id="save-product-changes-btn" class="btn btn-primary">Salva Modifiche</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -340,27 +293,26 @@ id="editProductModalLabel">Modifica Prodotto</h5>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         
-        //Logica per attivare il tab corretto se viene passato un hash nell'URL (es. ...#prodotti) %>
+        // Logica per attivare il tab corretto se viene passato un hash nell'URL (es. ...#prodotti)
         if(window.location.hash) {
-            const tabTrigger = 
-
-document.querySelector('button[data-bs-target="' + window.location.hash + '-tab-pane"]');
+            // Costruisce il selettore per il trigger della tab (es. 'button[data-bs-target="#prodotti-tab-pane"]')
+            const tabTrigger = document.querySelector('button[data-bs-target="' + window.location.hash + '-tab-pane"]');
             if (tabTrigger) {
-                 const tab = new bootstrap.Tab(tabTrigger);
-tab.show();
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
             }
         }
 
         // LOGICA MODALE MODIFICA PRODOTTO (come in utente.ejs)
         const editProductModal = document.getElementById('editProductModal');
-if (editProductModal) {
+        if (editProductModal) {
             
             const imagePreviewContainer = editProductModal.querySelector('#edit-image-previews');
             const fileInput = editProductModal.querySelector('#edit_percorso_immagine');
             const saveButton = editProductModal.querySelector('#save-product-changes-btn');
             const feedbackText = editProductModal.querySelector('#image-upload-feedback');
             const MAX_IMAGES = 5;
-
+            
             // Funzione per aggiornare lo stato (conteggio e validità)
             const updateImageState = () => {
                 const existingImagesCount = imagePreviewContainer.querySelectorAll('.image-preview-item').length;
@@ -389,7 +341,7 @@ if (editProductModal) {
                     const coverBadge = preview.querySelector('.cover-badge');
                     if (index === 0) {
                         if (!coverBadge) {
-                             preview.insertAdjacentHTML('beforeend', '<span class="cover-badge position-absolute top-0 start-0 badge bg-primary m-1">Copertina</span>');
+                            preview.insertAdjacentHTML('beforeend', '<span class="cover-badge position-absolute top-0 start-0 badge bg-primary m-1">Copertina</span>');
                         }
                     } else {
                         if (coverBadge) {
@@ -404,7 +356,6 @@ if (editProductModal) {
                 const previewWrapper = document.createElement('div');
                 previewWrapper.className = 'image-preview-item position-relative border rounded p-1';
                 previewWrapper.style.width = '100px';
-                
                 previewWrapper.innerHTML = `
                     <img src="${imagePath}" style="width: 100%; height: 80px; object-fit: cover; border-radius: .25rem;">
                     <input type="hidden" name="existing_images" value="${imagePath}">
@@ -420,7 +371,7 @@ if (editProductModal) {
                     previewWrapper.remove();
                     updateImageState();
                 });
-
+                
                 // Listener per "Sposta a Sinistra"
                 previewWrapper.querySelector('.move-left').addEventListener('click', (e) => {
                     const parent = e.target.closest('.image-preview-item');
@@ -440,13 +391,12 @@ if (editProductModal) {
                         updateImageState();
                     }
                 });
-
                 return previewWrapper;
             };
 
             // Listener per l'input di nuovi file
             fileInput.addEventListener('change', updateImageState);
-
+            
             // Listener principale che si attiva all'apertura del modale
             editProductModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget; 
@@ -454,16 +404,12 @@ if (editProductModal) {
                 // Popola i campi standard (nome, prezzo, ecc.)
                 const productId = button.getAttribute('data-product-id');
                 const nome = button.getAttribute('data-product-nome');
-         
-
-       const descrizione = button.getAttribute('data-product-descrizione');
+                const descrizione = button.getAttribute('data-product-descrizione');
                 const prezzo = button.getAttribute('data-product-prezzo');
                 const prezzoScontato = button.getAttribute('data-product-prezzo-scontato');
                 const parolaChiave = button.getAttribute('data-product-parola-chiave');
                 const condizione = button.getAttribute('data-product-condizione');
-              
-
-  const context = button.getAttribute('data-context');
+                const context = button.getAttribute('data-context');
                 
                 // Recupera l'array di immagini dalla stringa JSON
                 const imagesJson = button.getAttribute('data-product-images');
@@ -471,18 +417,18 @@ if (editProductModal) {
 
                 const form = editProductModal.querySelector('#editProductForm');
                 const modalTitle = editProductModal.querySelector('#editProductModalLabel');
-
+                
                 // Imposta l'azione del form in base al contesto (admin o utente)
                 if (context === 'admin') {
                     form.action = `/admin/products/edit/${productId}`;
-modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
+                    modalTitle.textContent = `Modifica Prodotto (Admin): ${nome}`;
                 } else {
                     form.action = `/utente/prodotti/${productId}/edit`;
-modalTitle.textContent = `Modifica Prodotto: ${nome}`;
+                    modalTitle.textContent = `Modifica Prodotto: ${nome}`;
                 }
 
                 // Popola i campi del form
-form.querySelector('#edit_nome').value = nome;
+                form.querySelector('#edit_nome').value = nome;
                 form.querySelector('#edit_descrizione').value = descrizione;
                 form.querySelector('#edit_prezzo').value = prezzo;
                 form.querySelector('#edit_prezzo_scontato').value = prezzoScontato;
@@ -501,7 +447,7 @@ form.querySelector('#edit_nome').value = nome;
                 // Aggiorna lo stato iniziale
                 updateImageState();
             });
-}
+        }
     });
 </script>
 </body>
