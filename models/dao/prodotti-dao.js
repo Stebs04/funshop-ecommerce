@@ -8,6 +8,7 @@ class ProdottiDAO {
 
   /**
    * Recupera una lista di prodotti dal database in base a una serie di filtri.
+   * Seleziona solo la prima immagine dall'array come 'percorso_immagine_cover'.
    * @param {object} filters - Un oggetto che può contenere: { view, category, condition, sortBy }.
    * @returns {Promise<Array<Object>>} Una lista di prodotti che corrispondono ai filtri.
    */
@@ -15,7 +16,8 @@ class ProdottiDAO {
     const { view, category, condition, sortBy } = filters;
     
     let sql = `
-      SELECT p.*, u.username as nome_venditore 
+      SELECT p.*, u.username as nome_venditore,
+      p.percorsi_immagine[1] as percorso_immagine_cover
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       WHERE p.stato = 'disponibile'
@@ -66,7 +68,8 @@ class ProdottiDAO {
   }
   
   /**
-   * Recupera un singolo prodotto tramite il suo ID, includendo informazioni sul venditore.
+   * Recupera un singolo prodotto tramite il suo ID, includendo informazioni sul venditore
+   * e l'array completo di percorsi immagine.
    * @param {number} id - L'ID del prodotto.
    * @returns {Promise<Object>} L'oggetto prodotto.
    */
@@ -88,6 +91,7 @@ class ProdottiDAO {
 
   /**
    * Recupera più prodotti in una sola query dato un array di ID.
+   * Seleziona solo la prima immagine come 'percorso_immagine_cover'.
    * @param {Array<number>} ids - Un array di ID di prodotti.
    * @returns {Promise<Array<Object>>} Una lista di oggetti prodotto.
    */
@@ -100,7 +104,8 @@ class ProdottiDAO {
     const placeholders = ids.map((_, index) => `$${index + 1}`).join(',');
     
     const sql = `
-        SELECT p.*, u.username as nome_venditore 
+        SELECT p.*, u.username as nome_venditore,
+        p.percorsi_immagine[1] as percorso_immagine_cover
         FROM prodotti p 
         JOIN users u ON p.user_id = u.id 
         WHERE p.id IN (${placeholders})
@@ -118,11 +123,17 @@ class ProdottiDAO {
 
   /**
    * Recupera tutti i prodotti 'disponibili' di un utente specifico.
+   * Seleziona solo la prima immagine come 'percorso_immagine_cover'.
    * @param {number} userId - L'ID dell'utente (venditore).
    * @returns {Promise<Array<Object>>} Una lista dei suoi prodotti.
    */
   async getProductsByUserId(userId) {
-    const sql = "SELECT * FROM prodotti WHERE user_id = $1 AND stato = 'disponibile' ORDER BY data_inserimento DESC";
+    const sql = `
+      SELECT *, percorsi_immagine[1] as percorso_immagine_cover 
+      FROM prodotti 
+      WHERE user_id = $1 AND stato = 'disponibile' 
+      ORDER BY data_inserimento DESC
+    `;
     try {
       const { rows } = await db.query(sql, [userId]);
       return rows;
@@ -134,17 +145,18 @@ class ProdottiDAO {
   
   /**
    * Crea un nuovo prodotto nel database.
-   * @param {Object} product - I dati del prodotto da inserire.
+   * @param {Object} product - I dati del prodotto da inserire (include 'percorsi_immagine' come array).
    * @returns {Promise<number>} L'ID del nuovo prodotto.
    */
   async createProduct(product) {
-    const { nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, user_id } = product;
+    const { nome, descrizione, condizione, parola_chiave, percorsi_immagine, prezzo, user_id } = product;
     const sql = `
-      INSERT INTO prodotti (nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo, prezzo_scontato, user_id) 
+      INSERT INTO prodotti (nome, descrizione, condizione, parola_chiave, percorsi_immagine, prezzo, prezzo_scontato, user_id) 
       VALUES ($1, $2, $3, $4, $5, $6, NULL, $7)
       RETURNING id
     `;
-    const params = [nome, descrizione, condizione, parola_chiave, percorso_immagine, prezzo || null, user_id];
+    // 'percorsi_immagine' viene passato come array, il driver 'pg' lo gestisce.
+    const params = [nome, descrizione, condizione, parola_chiave, percorsi_immagine, prezzo || null, user_id];
     try {
       const { rows } = await db.query(sql, params);
       return rows[0].id;
@@ -174,12 +186,13 @@ class ProdottiDAO {
   /**
    * Aggiorna i dati di un prodotto.
    * @param {number} id - L'ID del prodotto da aggiornare.
-   * @param {Object} productData - I dati da modificare.
+   * @param {Object} productData - I dati da modificare (include 'percorsi_immagine' come array).
    * @param {number} userId - L'ID del proprietario del prodotto.
    * @returns {Promise<number>} Il numero di righe modificate.
    */
   async updateProduct(id, productData, userId) {
-    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
+    // Aggiorniamo 'allowedFields' per includere 'percorsi_immagine' (plurale).
+    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorsi_immagine', 'prezzo_scontato', 'condizione'];
     const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
     
     if (fieldsToUpdate.length === 0) {
@@ -192,6 +205,7 @@ class ProdottiDAO {
         if (field === 'prezzo_scontato' && (productData[field] === '' || parseFloat(productData[field]) === 0)) {
             return null;
         }
+        // Il driver 'pg' gestirà il campo 'percorsi_immagine' se è un array.
         return productData[field];
     });
 
@@ -229,11 +243,13 @@ class ProdottiDAO {
 
   /**
    * Recupera TUTTI i prodotti, indipendentemente dal loro stato.
+   * Seleziona anche la prima immagine come 'percorso_immagine_cover' per la tabella admin.
    * @returns {Promise<Array<Object>>} Una lista di tutti i prodotti.
    */
   async getAllProductsAdmin() {
     const sql = `
-      SELECT p.*, u.username as nome_venditore 
+      SELECT p.*, u.username as nome_venditore,
+      p.percorsi_immagine[1] as percorso_immagine_cover
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       ORDER BY p.data_inserimento DESC
@@ -270,7 +286,8 @@ class ProdottiDAO {
    * @returns {Promise<number>} Il numero di righe modificate.
    */
   async updateProductAdmin(id, productData) {
-    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorso_immagine', 'prezzo_scontato', 'condizione'];
+    // Aggiorniamo 'allowedFields'
+    const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorsi_immagine', 'prezzo_scontato', 'condizione'];
     const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
     if (fieldsToUpdate.length === 0) return 0;
     

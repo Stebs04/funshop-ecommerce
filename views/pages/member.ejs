@@ -15,42 +15,42 @@
     <%- include('../partials/messages') %>
     
     <%# Sezione Header del profilo con immagine, username e valutazione media.
-%>
+    %>
     <div class="member-profile-header mb-4">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex align-items-center">
                 <%# Mostra l'immagine del profilo o un'immagine di default se non impostata.
-%>
+                %>
                 <img src="<%= accountInfo.immagine_profilo || '/immagini/avatardefault_92824.png' %>" alt="Immagine Profilo" class="rounded-circle me-4" style="width: 100px; height: 100px; object-fit: cover;">
                 <div>
                     <h3 class="mb-0"><%= member.username %></h3>
                     <div class="text-muted d-flex align-items-center">
        
                  <%# Logica per visualizzare la valutazione media con le stelline.
-%>
-                        <%# Calcola il numero di stelle piene, mezze e vuote in base a `averageRating`.
-%>
+                 %>
+                        <%# Calcola il numero di stelle piene, mezze e vuote.
+                        %>
                         <% const fullStars = Math.floor(averageRating);
-%>
+                        %>
                         <% const halfStar = averageRating % 1 !== 0;
-%>
+                        %>
                         <% const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-%>
+                        %>
 
                         <%# Cicla per stampare le stelle piene.
-%>
+                        %>
                         <% for(let i = 0; i < fullStars; i++) { %>
                             <i class="bi bi-star-fill text-warning"></i>
                         <% } %>
          
                <%# Se c'è una mezza stella, la stampa.
-%>
+               %>
                         <% if (halfStar) { %>
                             <i class="bi bi-star-half text-warning"></i>
                         <% } %>
                
          <%# Cicla per stampare le stelle vuote rimanenti.
-%>
+         %>
                         <% for(let i = 0; i < emptyStars; i++) { %>
                             <i class="bi bi-star text-warning"></i>
                         <% } %>
@@ -62,9 +62,9 @@
             
             <%# Condizione: mostra il pulsante "Modifica Profilo" solo se 
 l'utente che sta visitando la pagina è il proprietario del profilo.
-%>
+            %>
             <%# La variabile `isOwner` è un booleano passato dalla rotta.
-%>
+            %>
             <% if (locals.isOwner && isOwner) { %>
                 <a href="/utente?section=dati" class="btn btn-secondary">
                     <i class="bi bi-pencil-square me-2"></i>Modifica Profilo
@@ -74,14 +74,14 @@ l'utente che sta visitando la pagina è il proprietario del profilo.
  
        <div class="mt-3">
             <%# Mostra la descrizione dell'utente o un messaggio di default.
-%>
+            %>
             <p><%= accountInfo.descrizione || 'Nessuna descrizione fornita.'
-%></p>
+ %></p>
         </div>
     </div>
 
     <%# Navigazione a tab per separare gli articoli in vendita dalle recensioni.
-%>
+    %>
     <ul class="nav nav-tabs" id="memberTab" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="articoli-tab" data-bs-toggle="tab" data-bs-target="#articoli-tab-pane" type="button" role="tab" aria-controls="articoli-tab-pane" aria-selected="true">Articoli attualmente attivi (<%= prodotti.length %>)</button>
@@ -97,7 +97,7 @@ l'utente che sta visitando la pagina è il proprietario del profilo.
         <div class="tab-pane fade show active" id="articoli-tab-pane" role="tabpanel" aria-labelledby="articoli-tab" tabindex="0">
             <div class="pt-4">
                 <%# Se l'utente ha prodotti in vendita, li mostra in una griglia.
-%>
+                %>
                 <% if (prodotti.length > 0) { %>
                     <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-4">
                         <% prodotti.forEach(prodotto => { %>
@@ -106,32 +106,34 @@ l'utente che sta visitando la pagina è il proprietario del profilo.
                                 <div class="card h-100 product-card">
                                     <a href="/products/<%= prodotto.id %>">
                       
-                  <img src="<%= prodotto.percorso_immagine || 'https://via.placeholder.com/150' %>" class="card-img-top" alt="<%= prodotto.nome %>" style="height: 200px; object-fit: cover;">
+                  <%# Utilizza l'immagine di copertina (la prima dell'array)
+                  %>
+                  <img src="<%= prodotto.percorso_immagine_cover || 'https://via.placeholder.com/150' %>" class="card-img-top" alt="<%= prodotto.nome %>" style="height: 200px; object-fit: cover;">
                                     </a>
                                  
    <div class="card-body p-3 d-flex flex-column">
                                         <h6 class="card-title fw-bold"><%= prodotto.nome %></h6>
-                                        <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
-                                        <p class="card-text small mt-auto">€ <%= (parseFloat(prodotto.prezzo) || 0).toFixed(2) %></p>
+                                        <p class="card-text small mt-auto">€ <%= (parseFloat(prodotto.prezzo) ||
+0).toFixed(2) %></p>
  
                                    </div>
                                     <div class="card-footer bg-transparent border-top-0">
-                          
+                        
               <small class="text-muted"><%= prodotto.condizione %></small>
                                     </div>
                                 </div>
-               
+             
              </div>
                         <% }) %>
                     </div>
                 <%# Se non ci sono prodotti, mostra un messaggio.
-%>
+                %>
                 <% } else { %>
                     <div class="text-center py-5">
                         <p>Questo utente non ha nessun articolo in vendita al momento.</p>
                     </div>
      
-           <% } %>
+            <% } %>
             </div>
         </div>
       
@@ -160,7 +162,7 @@ le mostra. %>
                          
            <div>
                                         <%# Mostra le stelle della valutazione per questa specifica recensione.
-%>
+                                        %>
                                         <% for(let i = 0; i < recensione.valutazione; i++) { %>
                                             <i class="bi bi-star-fill text-warning"></i>
    
@@ -180,7 +182,7 @@ le mostra. %>
                     <% }) %>
         
         <%# Se non ci sono recensioni, mostra un messaggio.
-%>
+        %>
                 <% } else { %>
                     <div class="text-center py-5">
                         <p>Questo utente non ha ancora ricevuto nessuna recensione.</p>

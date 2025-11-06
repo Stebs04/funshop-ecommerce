@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS prodotti (
     descrizione TEXT,                          -- Descrizione dettagliata.
     condizione TEXT,                           -- Stato del prodotto (es. "Come nuovo", "Usato").
     parola_chiave TEXT NOT NULL,               -- Categoria o parola chiave principale per la ricerca.
-    percorso_immagine TEXT,                    -- Path dell'immagine del prodotto sul server.
+    -- Campo per memorizzare i percorsi delle immagini come un array di stringhe.
+    percorsi_immagine TEXT[],                  -- Array di percorsi delle immagini sul server.
     prezzo NUMERIC(10, 2),                     -- Prezzo per la vendita immediata.
     prezzo_scontato NUMERIC(10, 2),            -- Prezzo scontato, se in offerta.
     stato TEXT DEFAULT 'disponibile',          -- Stato attuale del prodotto ('disponibile', 'venduto', 'eliminato').

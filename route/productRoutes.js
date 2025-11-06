@@ -28,6 +28,7 @@ const categorie = [
 const storage = multer.diskStorage({
     destination: './public/uploads/',
     filename: function(req, file, cb){
+        // Creiamo un nome file unico
         cb(null, 'percorso_immagine-' + Date.now() + path.extname(file.originalname));
     }
 });
@@ -45,20 +46,27 @@ function checkFileType(file, cb){
     }
 }
 
+// Inizializziamo multer per accettare un array di file (massimo 5)
+// invece di un file singolo. Il nome del campo è 'percorsi_immagine'.
 const upload = multer({
     storage: storage,
     limits:{fileSize: 1000000}, // Limite di 1MB per file
     fileFilter: function(req, file, cb){
         checkFileType(file, cb);
     }
-}).single('percorso_immagine');
+}).array('percorsi_immagine', 5); // Nome del campo e limite massimo di file
 
 // Middleware wrapper per gestire gli errori di Multer in modo pulito
 const uploadWrapper = (req, res, next) => {
     upload(req, res, (err) => {
         if (err) {
             if (err instanceof multer.MulterError) {
-                 req.flash('error', `Errore Multer: ${err.message}`);
+                 // Gestisce errori specifici di multer (es. troppi file)
+                 if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+                    req.flash('error', 'Puoi caricare un massimo di 5 immagini.');
+                 } else {
+                    req.flash('error', `Errore Multer: ${err.message}`);
+                 }
             } else if (err) {
                  req.flash('error', err.message);
             }
@@ -107,12 +115,16 @@ router.post('/', isLoggedIn, uploadWrapper, [
         return res.redirect('/products/new');
     }
 
-    if (!req.file) {
-        req.flash('error', 'Devi caricare un\'immagine per il prodotto.');
+    // Controlliamo che almeno un file sia stato caricato
+    if (!req.files || req.files.length === 0) {
+        req.flash('error', 'Devi caricare almeno un\'immagine per il prodotto.');
         return res.redirect('/products/new');
     }
 
     const { nome, descrizione, parola_chiave, condizione, prezzo } = req.body;
+
+    // Creiamo l'array di percorsi immagine mappando i file caricati
+    const percorsiImmagineArray = req.files.map(file => '/uploads/' + file.filename);
 
     const newProduct = {
         nome,
@@ -120,7 +132,7 @@ router.post('/', isLoggedIn, uploadWrapper, [
         condizione,
         parola_chiave,
         prezzo: parseFloat(prezzo),
-        percorso_immagine: '/uploads/' + req.file.filename,
+        percorsi_immagine: percorsiImmagineArray, // Passiamo l'array al DAO
         user_id: req.user.id
     };
 
@@ -139,6 +151,7 @@ router.post('/', isLoggedIn, uploadWrapper, [
 /**
  * ROTTA: GET /products/:id
  * Mostra la pagina di dettaglio di un singolo prodotto.
+ * Questa rotta ora passa l'array completo di immagini al template.
  */
 router.get('/:id', async (req, res) => {
     try {
@@ -151,7 +164,7 @@ router.get('/:id', async (req, res) => {
             
             res.render('pages/prodotto', {
                 title: prodotto.nome,
-                prodotto: prodotto,
+                prodotto: prodotto, // prodotto contiene prodotto.percorsi_immagine come array
                 user: req.user,
                 isAuthenticated: req.isAuthenticated(),
                 isObserved: isObserved

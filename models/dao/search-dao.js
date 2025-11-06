@@ -8,6 +8,7 @@ class SearchDAO {
 
     /**
      * Cerca nel database i prodotti il cui nome contiene il termine di ricerca.
+     * Seleziona solo la prima immagine come 'percorso_immagine_cover'.
      * @param {string} query - Il termine da cercare (es. "goku").
      * @returns {Promise<Array<Object>>} Una promessa che risolve in un array di prodotti corrispondenti.
      */
@@ -15,7 +16,8 @@ class SearchDAO {
         // Usiamo ILIKE per una ricerca case-insensitive (specifico di PostgreSQL)
         // e $1 come placeholder.
         const sql = `
-            SELECT p.*, u.username as nome_venditore
+            SELECT p.*, u.username as nome_venditore,
+            p.percorsi_immagine[1] as percorso_immagine_cover
             FROM prodotti p
             JOIN users u ON p.user_id = u.id
             WHERE p.nome ILIKE $1 AND p.stato = 'disponibile'

@@ -14,25 +14,75 @@
     <%- include('../partials/messages') %>
 
     <%# Controlla se l'oggetto `prodotto` è stato passato correttamente dalla rotta.
-%>
+    %>
     <% if (prodotto) { %>
     <div class="row g-5">
-      <%# Colonna sinistra con l'immagine principale del prodotto.
-%>
+      <%# Colonna sinistra con il carosello di immagini del prodotto.
+      %>
       <div class="col-md-7">
-        <%# Se il prodotto non è più disponibile, l'immagine viene mostrata con opacità ridotta.
-%>
-        <img src="<%= prodotto.percorso_immagine %>" class="img-fluid rounded shadow-sm mb-3 <%= prodotto.stato !== 'disponibile' ? 'opacity-50' : '' %>" alt="Immagine principale del prodotto">
+        <%# Controlliamo se 'percorsi_immagine' esiste ed è un array con elementi
+        %>
+        <% if (prodotto.percorsi_immagine && prodotto.percorsi_immagine.length > 0) { %>
+          
+          <%# Inizio del Carosello Bootstrap
+          %>
+          <div id="productCarousel" class="carousel slide shadow-sm rounded" data-bs-ride="carousel">
+            
+            <%# Indicatori (i "pallini" in basso)
+            %>
+            <div class="carousel-indicators">
+              <% prodotto.percorsi_immagine.forEach((immagine, index) => { %>
+                <button 
+                  type="button" 
+                  data-bs-target="#productCarousel" 
+                  data-bs-slide-to="<%= index %>" 
+                  class="<%= index === 0 ? 'active' : '' %>" 
+                  aria-current="<%= index === 0 ? 'true' : 'false' %>" 
+                  aria-label="Slide <%= index + 1 %>">
+                </button>
+              <% }) %>
+            </div>
+
+            <%# Wrapper per le slide (le immagini)
+            %>
+            <div class="carousel-inner rounded">
+              <% prodotto.percorsi_immagine.forEach((immagine, index) => { %>
+                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                  <img 
+                    src="<%= immagine %>" 
+                    class="d-block w-100 <%= prodotto.stato !== 'disponibile' ? 'opacity-50' : '' %>" 
+                    alt="Immagine prodotto <%= index + 1 %>"
+                    style="aspect-ratio: 4/3; object-fit: cover;">
+                </div>
+              <% }) %>
+            </div>
+
+            <%# Controlli "Precedente" e "Successivo" (le frecce)
+            %>
+            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+
+        <% } else { %>
+          <%# Fallback nel caso (improbabile) che non ci siano immagini
+          %>
+          <img src="/immagini/placeholder.png" class="img-fluid rounded shadow-sm mb-3" alt="Immagine non disponibile">
+        <% } %>
       </div>
 
       <%# Colonna destra con i dettagli e i pulsanti di azione.
-%>
+      %>
       <div class="col-md-5">
         <div class="card p-4 shadow-sm">
       
           <%# Mostra il prezzo (scontato o base).
-%>
-          <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+          %>
           <h1 class="display-5 fw-bold">€ <%= (parseFloat(prodotto.prezzo_scontato) || parseFloat(prodotto.prezzo || 0)).toFixed(2) %></h1>
           <h2><%= prodotto.nome %></h2>
           <hr>
@@ -40,16 +90,14 @@
           <ul class="list-unstyled mb-4">
             <li class="d-flex justify-content-between"><span>CONDIZIONI:</span><strong><%= prodotto.condizione %></strong></li>
             <li class="d-flex justify-content-between"><span>CATEGORIA:</span><strong><%= prodotto.parola_chiave %></strong></li>
-     
-  
-   </ul>
+          </ul>
 
           <h5 class="fw-bold">Descrizione</h5>
           <p class="text-muted"><%= prodotto.descrizione %></p>
           <hr>
           
           <%# Sezione che mostra le informazioni del venditore (avatar e username).
-%>
+          %>
           <div class="d-flex align-items-center mb-4">
             <img src="<%= prodotto.immagine_profilo ? prodotto.immagine_profilo : '/immagini/avatardefault_92824.png' %>" alt="Avatar venditore" width="48" height="48" class="rounded-circle me-3">
             <div>
@@ -58,81 +106,73 @@
           </div>
 
      
-
-     <%# --- BLOCCO LOGICA STATO PRODOTTO --- %>
+          <%# --- BLOCCO LOGICA STATO PRODOTTO --- %>
           <%# Questo blocco gestisce quali pulsanti mostrare in base allo stato del prodotto.
-%>
+          %>
 
           <%# Se il prodotto NON è disponibile, mostra un avviso.
-%>
+          %>
           <% if (prodotto.stato !== 'disponibile') { %>
             <div class="alert alert-warning text-center" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 Questo prodotto non è più disponibile.
-</div>
+            </div>
           <% } %>
 
           <%# Se il prodotto È disponibile, mostra i pulsanti di azione principali.
-%>
+          %>
           <% if (prodotto.stato === 'disponibile') { %>
             
             <form action="/carrello/add/<%= prodotto.id %>" method="POST">
               <input type="hidden" name="redirectUrl" value="<%= originalUrl %>">
               <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
-                 
-
- <i class="bi bi-cart-plus-fill me-2"></i>Aggiungi al Carrello
+                <i class="bi bi-cart-plus-fill me-2"></i>Aggiungi al Carrello
               </button>
             </form>
             
             <%# Logica per il pulsante "Osserva".
-%>
+            %>
             <% if (isAuthenticated) { %>
-              <%# Se l'utente è loggato e sta già osservando il prodotto (`isObserved` è true), mostra il pulsante per rimuoverlo.
-%>
+              <%# Se l'utente è loggato e sta già osservando il prodotto (`isObserved` è true)
+              %>
               <% if (isObserved) { %>
                 <form action="/observed/remove/<%= prodotto.id %>" method="POST">
                     <button type="submit" class="btn btn-outline-danger w-100 mb-2">
                            <i class="bi bi-star-fill me-2"></i>Rimuovi dagli Osservati
-     
-
-                 </button>
+                    </button>
                   </form>
               <%# Altrimenti, mostra il pulsante per aggiungerlo.
-%>
+              %>
               <% } else { %>
                 <form action="/observed/add/<%= prodotto.id %>" method="POST">
                       <button type="submit" class="btn btn-outline-secondary w-100 mb-2">
                           <i class="bi bi-star me-2"></i>Osserva Prodotto
-     
-
-                 </button>
+                      </button>
                  </form>
               <% } %>
-            <%# Se l'utente non è loggato, il pulsante "Osserva" lo reindirizza alla pagina di registrazione.
-%>
+            <%# Se l'utente non è loggato, il pulsante "Osserva" lo reindirizza alla pagina di login.
+            %>
             <% } else { %>
-              <a href="/auth/registrazione" class="btn btn-outline-secondary w-100 mb-2">
+              <a href="/auth/login" class="btn btn-outline-secondary w-100 mb-2">
                   <i class="bi bi-star me-2"></i>Osserva Prodotto
               </a>
             <% } %>
   
             <%# 
-
 Pulsante che apre il modale per chiedere informazioni al venditore.
-%>
+            %>
             <button type="button" class="btn btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#infoModal" data-product-name="<%= prodotto.nome %>" data-seller-email="<%= prodotto.email_venditore %>">
                 <i class="bi bi-envelope me-2"></i>Chiedi informazioni
             </button>
 
           <%# Se il prodotto NON è disponibile, mostra i pulsanti disabilitati.
-%>
+          %>
           <% } else { %>
             <button type="button" class="btn btn-primary btn-lg w-100 mb-2" disabled>
                 <i class="bi bi-cart-x-fill me-2"></i>Non disponibile
             </button>
             <%# Cliccando su questi pulsanti, uno script JS mostrerà un modale di avviso.
-%>
+            %>
             <button type="button" class="btn btn-outline-secondary w-100 mb-2" onclick="showUnavailableModal()">
                 <i class="bi bi-star me-2"></i>Osserva Prodotto
             </button>
@@ -140,8 +180,7 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
                 <i class="bi bi-envelope me-2"></i>Chiedi informazioni
             </button>
  
-
-         <% } %>
+          <% } %>
           <%# --- FINE BLOCCO LOGICA STATO PRODOTTO --- %>
 
         </div>
@@ -156,8 +195,7 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
   <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       
-
-   <div class="modal-content">
+       <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="infoModalLabel">Chiedi informazioni</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -165,20 +203,17 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
             <div class="modal-body">
                 <form id="infoForm">
   
- 
                  <div class="mb-3">
                         <label for="infoMessage" class="form-label">Il tuo messaggio:</label>
                         <textarea class="form-control" id="infoMessage" rows="5" required placeholder="Ciao, vorrei avere maggiori informazioni su questo prodotto..."></textarea>
                  
- 
    </div>
                     <button type="submit" id="sendInfoButton" class="btn btn-primary w-100">
                         <i class="bi bi-send-fill me-2"></i>Invia tramite Email
                     </button>
                 </form>
       
-  
-     </div>
+      </div>
         </div>
     </div>
   </div>
@@ -190,9 +225,7 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
         <div class="modal-header">
           <h5 class="modal-title" id="unavailableModalLabel">
             <i class="bi bi-exclamation-circle-fill text-warning me-2"></i>Prodotto Non Disponibile
-         
- </h5>
-  
+          </h5>
          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -202,8 +235,7 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
           <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Ho capito</button>
         </div>
  
-    
- </div>
+     </div>
     </div>
   </div>
 
@@ -212,21 +244,20 @@ Pulsante che apre il modale per chiedere informazioni al venditore.
   
   <script>
     // Funzione JavaScript per mostrare il modale "Non Disponibile".
-function showUnavailableModal() {
+    function showUnavailableModal() {
         const unavailableModal = new bootstrap.Modal(document.getElementById('unavailableModal'));
         unavailableModal.show();
-}
+    }
 
     // Script per il modale "Chiedi Informazioni".
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
         const infoModal = document.getElementById('infoModal');
         if (infoModal) {
             let sellerEmail = '';
             let productName = '';
-            // Quando il modale si apre, recupera l'email del venditore e il nome del prodotto dai data-attributes del pulsante.
+            // Quando il modale si apre, recupera l'email del venditore e il nome del prodotto
             infoModal.addEventListener('show.bs.modal', function (event) {
  
-
               const button = event.relatedTarget;
                 sellerEmail = button.getAttribute('data-seller-email');
                 productName = button.getAttribute('data-product-name');
@@ -234,15 +265,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // Quando il form viene inviato...
             const infoForm = document.getElementById('infoForm');
    
-
          infoForm.addEventListener('submit', function(event) {
                event.preventDefault(); // ...previene il ricaricamento della pagina.
                 const message = document.getElementById('infoMessage').value;
                 const subject = `Richiesta informazioni per il prodotto: ${productName}`;
-const body = `${message}\n\n---\nMessaggio inviato tramite FunShop per il prodotto: ${window.location.href}`;
-// ...costruisce un link `mailto:` e lo apre, aprendo il client di posta predefinito dell'utente.
+                const body = `${message}\n\n---\nMessaggio inviato tramite FunShop per il prodotto: ${window.location.href}`;
+                // ...costruisce un link `mailto:` e lo apre
                 const mailtoLink = `mailto:${sellerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-window.location.href = mailtoLink;
+                window.location.href = mailtoLink;
                 const modalInstance = bootstrap.Modal.getInstance(infoModal);
                 modalInstance.hide(); // Chiude il modale.
             });

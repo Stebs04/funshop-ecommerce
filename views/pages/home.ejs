@@ -14,29 +14,29 @@
 
   <main class="container my-5">
     <%# Inclusione dei messaggi di feedback.
-%>
+    %>
     <%- include('../partials/messages') %>
 
     <%# Blocco per mostrare i messaggi dopo l'eliminazione dell'account %>
     <% if (query && query.deleted === 'true') { %>
       <div class="alert alert-success alert-dismissible fade show" role="alert">
         Il tuo account è stato eliminato con successo.
-<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     <% } %>
     <% if (query && query.delete_error === 'true') { %>
       <div class="alert alert-danger alert-dismissible fade show" role="alert">
         Si è verificato un errore durante l'eliminazione del tuo account.
-<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     <% } %>
     
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2">
-      <%# Il titolo della pagina (`pageTitle`) è dinamico e viene impostato dalla rotta in base ai filtri.
-%>
+      <%# Il titolo della pagina (`pageTitle`) è dinamico e viene impostato dalla rotta.
+      %>
       <h2 class="mb-0"><%= pageTitle %></h2>
-      <%# Pulsante che apre un "offcanvas" (un pannello laterale a scomparsa) per i filtri.
-%>
+      <%# Pulsante che apre l'offcanvas per i filtri.
+      %>
       <button class="btn btn-outline-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFilters" aria-controls="offcanvasFilters">
         <i class="bi bi-funnel-fill me-2"></i>Filtri
       </button>
@@ -44,69 +44,59 @@
 
     <div id="product-container" class="row g-4">
       <%# Controlla se l'array `prodotti` non è vuoto.
-%>
+      %>
       <% if (prodotti && prodotti.length > 0) { %>
-        <%# Cicla su ogni `prodotto` nell'array e renderizza una "card" per ciascuno.
-%>
+        <%# Cicla su ogni `prodotto` nell'array e renderizza una "card".
+        %>
         <% prodotti.forEach(prodotto => { %>
           <div class="col-12 col-md-4 col-lg-3 mb-4">
             <div class="card h-100 shadow-sm product-card">
               <a href="/products/<%= prodotto.id %>" class="text-decoration-none">
                 <%# Se il prodotto ha un prezzo scontato, mostra un badge "OFFERTA". %>
             
-
-
     <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
                   <div class="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded" style="z-index: 1;">OFFERTA</div>
                 <% } %>
-                <img src="<%= prodotto.percorso_immagine %>" class="card-img-top" alt="<%= prodotto.nome %>" style="height: 200px; object-fit: cover;">
+                
+                <%# Utilizza l'immagine di copertina (la prima dell'array)
+                %>
+                <img src="<%= prodotto.percorso_immagine_cover %>" class="card-img-top" alt="<%= prodotto.nome %>" style="height: 200px; object-fit: cover;">
               
-
-
 </a>
               <div class="card-body d-flex flex-column">
                 <h5 class="card-title">
                   <a href="/products/<%= prodotto.id %>" class="text-decoration-none text-dark"><%= prodotto.nome %></a>
                 </h5>
                 <p class="card-text text-muted small"><%= prodotto.parola_chiave %></p> <%# Mostra la 
-
-
 categoria %>
                 <p class="card-text text-primary small">Venduto da <strong><a href="/member/<%= prodotto.user_id %>" class="text-decoration-none text-dark"><%= prodotto.nome_venditore %></a></strong></p>
                 
                 <div class="mt-auto d-flex justify-content-between align-items-center">
                   <%# Logica per la visualizzazione del prezzo.
-%>
+                  %>
                   <% if (prodotto.prezzo_scontato && prodotto.prezzo_scontato > 0) { %>
-                    <%# Se c'è uno sconto, mostra il prezzo originale barrato e quello scontato in evidenza.
-%>
+                    <%# Se c'è uno sconto, mostra entrambi i prezzi.
+                    %>
                     <div>
-                      <%# --- MODIFICA --- Aggiunto parseFloat() %>
                       <span class="text-muted text-decoration-line-through me-2">€<%= parseFloat(prodotto.prezzo).toFixed(2) %></span>
-                      <%# --- MODIFICA --- Aggiunto parseFloat() %>
                       <span class="fw-bold fs-5 text-danger">€<%= parseFloat(prodotto.prezzo_scontato).toFixed(2) %></span>
                     </div>
       
-
-
             <% } else { %>
                     <%# Altrimenti, mostra il prezzo di vendita diretta.
-%>
-                    <%# --- MODIFICA --- Aggiunto parseFloat() e un controllo per 'null' %>
+                    %>
                     <span class="fw-bold fs-5">€<%= parseFloat(prodotto.prezzo || 0).toFixed(2) %></span>
                   <% } %>
                   
                   <%# Form per aggiungere il prodotto al carrello.
-%>
+                  %>
                   <form action="/carrello/add/<%= prodotto.id %>" method="POST" style="display: inline;">
-                      <%# Campo nascosto per passare l'URL corrente, in modo che l'utente venga reindirizzato qui dopo l'aggiunta.
-%>
+                      <%# Campo nascosto per il reindirizzamento.
+                      %>
                       <input type="hidden" name="redirectUrl" value="<%= originalUrl %>">
                       <button type="submit" class="btn btn-sm btn-primary" title="Aggiungi al carrello">
                           <i class="bi bi-cart-plus-fill fs-5"></i>
                
-
-
         </button>
                   </form>
                 </div>
@@ -114,21 +104,18 @@ categoria %>
               <div class="card-footer bg-transparent border-top-0 text-center">
                 <small class="text-success fw-bold"><%= prodotto.condizione %></small>
       
-
-
          </div>
             </div>
           </div>
         <% }) %>
-      <%# Se l'array `prodotti` è vuoto, mostra un messaggio specifico in base al filtro applicato.
-%>
+      <%# Se l'array `prodotti` è vuoto, mostra un messaggio specifico.
+      %>
       <% } else { %>
         <div class="col-12 text-center text-muted">
             <% if (currentFilters.view === 'offerte') { %>
                 <p>Attualmente nessun prodotto è in offerta.</p>
             <% } else if (currentFilters.view === 'novita') { %>
                 <p>Nessun prodotto caricato negli 
-
 ultimi 2 giorni.</p>
             <% } else { %>
                 <p>Nessun prodotto trovato.
@@ -140,8 +127,8 @@ Prova a modificare i filtri.</p>
   </main>
   
   <%# OFFCANVAS PER I FILTRI %>
-  <%# Questo è il pannello laterale che si apre per filtrare i prodotti.
-%>
+  <%# Pannello laterale a scomparsa per filtrare i prodotti.
+  %>
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasFilters" aria-labelledby="offcanvasFiltersLabel">
     <div class="offcanvas-header">
       <h5 id="offcanvasFiltersLabel">Filtra Prodotti</h5>
@@ -150,13 +137,13 @@ Prova a modificare i filtri.</p>
     <div class="offcanvas-body">
       <form action="/" method="GET">
         <%# Filtro per l'ordinamento.
-%>
+        %>
         <div class="mb-3">
           <label for="sortBy" class="form-label">Ordina per</label>
           <select class="form-select" name="sortBy" id="sortBy">
             <option value="">Più recenti (default)</option>
-            <%# Logica per mantenere selezionata l'opzione di ordinamento corrente dopo il ricaricamento della pagina.
-%>
+            <%# Mantiene selezionata l'opzione di ordinamento corrente.
+            %>
             <option value="price_asc" <%= (locals.currentFilters && currentFilters.sortBy === 'price_asc') ?
 'selected' : '' %>>Prezzo: crescente</option>
             <option value="price_desc" <%= (locals.currentFilters && currentFilters.sortBy === 'price_desc') ?
@@ -164,25 +151,23 @@ Prova a modificare i filtri.</p>
           </select>
         </div>
         <%# Filtro per la categoria.
-%>
+        %>
         <div class="mb-3">
           <label for="category" class="form-label">Categoria</label>
           <select class="form-select" name="category" id="category">
             <option value="">Tutte le categorie</option>
-            <%# Popola dinamicamente le opzioni del menu a tendina usando l'array `categorie`.
-%>
+            <%# Popola dinamicamente le opzioni usando l'array `categorie`.
+            %>
             <% if (locals.categorie) { %>
               <% categorie.forEach(cat => { %>
                 <option value="<%= cat %>" <%= (locals.currentFilters && currentFilters.category === cat) ? 'selected' : '' %>><%= cat %></option>
               <% }) %>
             <% } %>
     
-
-
       </select>
         </div>
         <%# Filtro per la condizione.
-%>
+        %>
         <div class="mb-3">
           <label for="condition" class="form-label">Condizione</label>
           <select class="form-select" name="condition" id="condition">
@@ -190,8 +175,6 @@ Prova a modificare i filtri.</p>
             <% if (locals.condizioni) { %>
               <% condizioni.forEach(cond => { %>
                 <option 
-
-
 value="<%= cond %>" <%= (locals.currentFilters && currentFilters.condition === cond) ? 'selected' : '' %>><%= cond %></option>
               <% }) %>
             <% } %>
@@ -200,8 +183,6 @@ value="<%= cond %>" <%= (locals.currentFilters && currentFilters.condition === c
         <div class="d-grid gap-2">
             <button type="submit" class="btn btn-primary">Applica Filtri</button>
            
-
-
  <a href="/" class="btn btn-outline-secondary">Rimuovi Filtri</a>
         </div>
       </form>
