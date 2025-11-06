@@ -44,12 +44,7 @@ router.use(isAdmin);
 
 /**
  * Configurazione di Multer per il Caricamento Immagini
- * * Multer è un middleware per Express che gestisce il caricamento di file (`multipart/form-data`).
- * Qui configuriamo dove salvare le immagini dei prodotti e come nominarle.
- * * - `destination`: Specifica la cartella in cui verranno salvati i file caricati (`./public/uploads/`).
- * - `filename`: Crea un nome di file unico per ogni immagine, combinando un prefisso,
- * il timestamp corrente (`Date.now()`) e l'estensione originale del file. Questo previene
- * conflitti tra file con lo stesso nome.
+ * * Configurazione storage per definire destinazione e nome file.
  */
 const storage = multer.diskStorage({
     destination: './public/uploads/',
@@ -57,22 +52,68 @@ const storage = multer.diskStorage({
       cb(null, 'percorso_immagine-' + Date.now() + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage }).single('percorso_immagine');
+
+/**
+ * Funzione helper per filtrare i tipi di file accettati (solo immagini).
+ * @param {object} file - L'oggetto file caricato da multer.
+ * @param {function} cb - La callback da chiamare.
+ */
+function checkFileType(file, cb){
+    const filetypes = /jpeg|jpg|png|gif/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if(mimetype && extname){
+        return cb(null,true); // Accetta il file
+    } else {
+        cb(new Error('Errore: Puoi caricare solo immagini!')); // Rifiuta il file
+    }
+}
+
+// Inizializziamo multer per accettare un array di file (massimo 5)
+const upload = multer({
+    storage: storage,
+    limits:{fileSize: 1000000}, // Limite di 1MB per file
+    fileFilter: function(req, file, cb){
+        checkFileType(file, cb);
+    }
+}).array('percorso_immagine', 5); // Nome del campo e limite massimo di *nuovi* file
+
+/**
+ * Middleware wrapper per gestire gli errori specifici di Multer
+ * in modo che possano essere mostrati come messaggi 'flash'.
+ */
+const uploadWrapper = (req, res, next) => {
+    upload(req, res, (err) => {
+        if (err) {
+            if (err instanceof multer.MulterError) {
+                 if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+                    req.flash('error', 'Puoi caricare un massimo di 5 immagini.');
+                 } else {
+                    req.flash('error', `Errore Multer: ${err.message}`);
+                 }
+            } else if (err) {
+                 req.flash('error', err.message);
+            }
+            // Reindirizza alla dashboard in caso di errore
+            return res.redirect('/admin/dashboard#prodotti');
+        }
+        next();
+    });
+};
 
 
 /**
  * ROTTA: GET /admin/dashboard
  * * Mostra la pagina principale del pannello di amministrazione.
  * * Logica:
- * 1. Esegue tre operazioni asincrone in parallelo usando `Promise.all` per massimizzare l'efficienza:
- * - `utentiDao.getAllUsers()`: Recupera l'elenco di tutti gli utenti registrati.
- * - `prodottiDao.getAllProductsAdmin()`: Recupera l'elenco completo di tutti i prodotti.
- * - `ordiniDao.getTotalSales()`: Calcola il fatturato totale di tutti gli ordini.
- * 2. Calcola il numero di prodotti attualmente disponibili (`in stock`).
- * 3. Renderizza la pagina `admin-dashboard.ejs`, passando tutti i dati recuperati:
- * - L'elenco degli utenti.
- * - L'elenco dei prodotti.
- * - Le statistiche aggregate (conteggio utenti, prodotti disponibili, fatturato).
+ * 1. Esegue tre operazioni asincrone in parallelo usando `Promise.all`:
+ * - `utentiDao.getAllUsers()`: Recupera l'elenco di tutti gli utenti.
+ * - `prodottiDao.getAllProductsAdmin()`: Recupera l'elenco completo di tutti i prodotti
+ * (incluso l'array `percorsi_immagine` per il modale di modifica).
+ * - `ordiniDao.getTotalSales()`: Calcola il fatturato totale.
+ * 2. Calcola il numero di prodotti disponibili.
+ * 3. Renderizza `admin-dashboard.ejs`, passando tutti i dati recuperati.
  */
 router.get('/dashboard', async (req, res) => {
     try {
@@ -83,12 +124,14 @@ router.get('/dashboard', async (req, res) => {
             ordiniDao.getTotalSales()
         ]);
 
+        // Calcola le statistiche
         const totalProductsInStock = allProducts.filter(p => p.stato === 'disponibile').length;
 
+        // Renderizza la pagina
         res.render('pages/admin-dashboard', {
             title: 'Dashboard Amministrazione',
             users: allUsers,
-            products: allProducts,
+            products: allProducts, // Contiene l'array completo 'percorsi_immagine'
             stats: {
                 userCount: allUsers.length,
                 productCount: totalProductsInStock,
@@ -107,11 +150,10 @@ router.get('/dashboard', async (req, res) => {
  * ROTTA: POST /admin/users/delete/:id
  * * Gestisce la richiesta di eliminazione di un utente.
  * * Logica:
- * 1. Recupera l'ID dell'utente da eliminare dai parametri dell'URL (`req.params.id`).
- * 2. Effettua un controllo di sicurezza per impedire a un amministratore di eliminare il proprio account.
- * 3. Chiama `utentiDao.deleteUser()` per rimuovere l'utente dal database.
- * 4. Invia un messaggio di successo o di errore.
- * 5. Reindirizza l'amministratore alla dashboard.
+ * 1. Recupera l'ID dell'utente da eliminare.
+ * 2. Controlla che l'admin non stia cercando di eliminare se stesso.
+ * 3. Chiama `utentiDao.deleteUser()` per rimuovere l'utente.
+ * 4. Reindirizza alla dashboard.
  */
 router.post('/users/delete/:id', async (req, res) => {
     try {
@@ -126,29 +168,27 @@ router.post('/users/delete/:id', async (req, res) => {
         req.flash('success', 'Utente eliminato con successo.');
     } catch (error) {
         console.error("Errore durante l'eliminazione dell'utente:", error);
-        req.flash('error', 'Si è verificato un errore durante l\'eliminazione dell\'utente.');
+        req.flash('error', 'Si è verificato un errore during l\'eliminazione dell\'utente.');
     }
-    res.redirect('/admin/dashboard');
+    // Reindirizza alla tab utenti
+    res.redirect('/admin/dashboard#users');
 });
 
 /**
  * ROTTA: POST /admin/products/delete/:id
- * * Gestisce la richiesta di eliminazione di un prodotto da parte di un amministratore.
- * A differenza dell'utente venditore, l'admin può eliminare qualsiasi prodotto.
+ * * Gestisce l'eliminazione fisica (hard delete) di un prodotto da parte di un amministratore.
  * * Logica:
- * 1. Chiama `prodottiDao.deleteProductAdmin()` per rimuovere fisicamente il prodotto dal database.
- * 2. Invia un messaggio di feedback (successo o errore).
- * 3. Reindirizza alla dashboard, specificando l'hash `#prodotti` per far atterrare l'utente
- * direttamente sulla tab di gestione dei prodotti.
+ * 1. Chiama `prodottiDao.deleteProductAdmin()` per rimuovere fisicamente il prodotto.
+ * 2. Reindirizza alla dashboard, ancorando alla tab dei prodotti.
  */
 router.post('/products/delete/:id', async (req, res) => {
     try {
-        // L'admin può eliminare qualsiasi prodotto, quindi non serve il controllo sull'user_id
+        // L'admin può eliminare qualsiasi prodotto, non serve il controllo sull'user_id
         await prodottiDao.deleteProductAdmin(req.params.id);
         req.flash('success', 'Prodotto eliminato con successo.');
     } catch (error) {
-        console.error("Errore durante l'eliminazione del prodotto:", error);
-        req.flash('error', 'Si è verificato un errore durante l\'eliminazione del prodotto.');
+        console.error("Errore during l'eliminazione del prodotto:", error);
+        req.flash('error', 'Si è verificato un errore during l\'eliminazione del prodotto.');
     }
     // Reindirizza alla tab dei prodotti
     res.redirect('/admin/dashboard#prodotti');
@@ -156,30 +196,59 @@ router.post('/products/delete/:id', async (req, res) => {
 
 /**
  * ROTTA: POST /admin/products/edit/:id
- * * Gestisce l'aggiornamento dei dati di un prodotto dal pannello di amministrazione.
+ * * Gestisce l'aggiornamento dei dati di un prodotto dal pannello di amministrazione,
+ * inclusa la gestione avanzata delle immagini multiple.
  * * Logica:
- * 1. Usa il middleware `upload` di Multer per gestire l'eventuale caricamento di una nuova immagine.
- * 2. Crea un oggetto `updatedData` con tutti i dati provenienti dal form (`req.body`).
- * 3. Se è stata caricata una nuova immagine (`req.file`), aggiorna il percorso dell'immagine
- * nell'oggetto `updatedData`.
- * 4. Chiama `prodottiDao.updateProductAdmin()` per salvare le modifiche nel database.
- * 5. Invia un messaggio di feedback.
- * 6. Reindirizza alla dashboard sulla tab dei prodotti.
+ * 1. Usa il middleware `uploadWrapper` per gestire il caricamento di nuove immagini (max 5).
+ * 2. Recupera le immagini esistenti riordinate (`existing_images`) dal form.
+ * 3. Recupera le nuove immagini caricate (`req.files`).
+ * 4. Combina i due array per creare `finalImages`.
+ * 5. Valida che il numero totale di immagini sia compreso tra 1 e 5.
+ * 6. Crea un oggetto `updatedData` con tutti i dati (incluso `percorsi_immagine = finalImages`).
+ * 7. Chiama `prodottiDao.updateProductAdmin()` per salvare le modifiche.
+ * 8. Reindirizza alla dashboard sulla tab dei prodotti.
  */
-router.post('/products/edit/:id', upload, async (req, res) => {
+router.post('/products/edit/:id', uploadWrapper, async (req, res) => {
     try {
         const productId = req.params.id;
-        const updatedData = { ...req.body };
-        if (req.file) {
-            updatedData.percorso_immagine = '/uploads/' + req.file.filename;
-        }
         
+        // --- Logica di gestione delle immagini (come in userRoutes.js) ---
+
+        // 1. Immagini esistenti (riordinate/rimaste) dal form
+        let existingImages = req.body.existing_images || [];
+        if (typeof existingImages === 'string') {
+            existingImages = [existingImages];
+        }
+
+        // 2. Nuove immagini caricate
+        const newImages = (req.files || []).map(file => '/uploads/' + file.filename);
+
+        // 3. Combinazione
+        const finalImages = existingImages.concat(newImages);
+
+        // 4. Validazione
+        if (finalImages.length === 0) {
+            req.flash('error', 'Il prodotto deve avere almeno 1 immagine.');
+            return res.redirect('/admin/dashboard#prodotti');
+        }
+        if (finalImages.length > 5) {
+            req.flash('error', 'Puoi caricare un massimo di 5 immagini in totale.');
+            return res.redirect('/admin/dashboard#prodotti');
+        }
+
+        // 5. Prepara i dati da aggiornare
+        const updatedData = { ...req.body };
+        updatedData.percorsi_immagine = finalImages; // Imposta l'array di immagini aggiornato
+        delete updatedData.existing_images; // Rimuove il campo non necessario
+
+        // 6. Chiama il DAO per l'aggiornamento
         await prodottiDao.updateProductAdmin(productId, updatedData);
         req.flash('success', 'Prodotto aggiornato con successo.');
     } catch (err) {
-        console.error("Errore durante l'aggiornamento del prodotto (admin):", err);
-        req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
+        console.error("Errore during l'aggiornamento del prodotto (admin):", err);
+        req.flash('error', 'Errore during l\'aggiornamento del prodotto.');
     }
+    // Reindirizza alla tab dei prodotti
     res.redirect('/admin/dashboard#prodotti');
 });
 

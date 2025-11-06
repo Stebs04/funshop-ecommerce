@@ -8,7 +8,7 @@ class ProdottiDAO {
 
   /**
    * Recupera una lista di prodotti dal database in base a una serie di filtri.
-   * Seleziona solo la prima immagine dall'array come 'percorso_immagine_cover'.
+   * Seleziona solo la prima immagine dall'array (indice [1] in-db) come 'percorso_immagine_cover'.
    * @param {object} filters - Un oggetto che può contenere: { view, category, condition, sortBy }.
    * @returns {Promise<Array<Object>>} Una lista di prodotti che corrispondono ai filtri.
    */
@@ -91,7 +91,7 @@ class ProdottiDAO {
 
   /**
    * Recupera più prodotti in una sola query dato un array di ID.
-   * Seleziona solo la prima immagine come 'percorso_immagine_cover'.
+   * Seleziona i dati completi del prodotto, incluso l'array 'percorsi_immagine'.
    * @param {Array<number>} ids - Un array di ID di prodotti.
    * @returns {Promise<Array<Object>>} Una lista di oggetti prodotto.
    */
@@ -104,8 +104,7 @@ class ProdottiDAO {
     const placeholders = ids.map((_, index) => `$${index + 1}`).join(',');
     
     const sql = `
-        SELECT p.*, u.username as nome_venditore,
-        p.percorsi_immagine[1] as percorso_immagine_cover
+        SELECT p.*, u.username as nome_venditore
         FROM prodotti p 
         JOIN users u ON p.user_id = u.id 
         WHERE p.id IN (${placeholders})
@@ -124,6 +123,7 @@ class ProdottiDAO {
   /**
    * Recupera tutti i prodotti 'disponibili' di un utente specifico.
    * Seleziona solo la prima immagine come 'percorso_immagine_cover'.
+   * Usato per la pagina profilo pubblica del venditore.
    * @param {number} userId - L'ID dell'utente (venditore).
    * @returns {Promise<Array<Object>>} Una lista dei suoi prodotti.
    */
@@ -191,7 +191,7 @@ class ProdottiDAO {
    * @returns {Promise<number>} Il numero di righe modificate.
    */
   async updateProduct(id, productData, userId) {
-    // Aggiorniamo 'allowedFields' per includere 'percorsi_immagine' (plurale).
+    // Lista dei campi che l'utente è autorizzato a modificare.
     const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorsi_immagine', 'prezzo_scontato', 'condizione'];
     const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
     
@@ -202,6 +202,7 @@ class ProdottiDAO {
     // Creazione dinamica dei placeholder
     const fieldPlaceholders = fieldsToUpdate.map((field, index) => `${field} = $${index + 1}`).join(', ');
     const values = fieldsToUpdate.map(field => {
+        // Gestisce il caso in cui un prezzo scontato venga rimosso (impostato a NULL).
         if (field === 'prezzo_scontato' && (productData[field] === '' || parseFloat(productData[field]) === 0)) {
             return null;
         }
@@ -209,7 +210,7 @@ class ProdottiDAO {
         return productData[field];
     });
 
-    // Aggiungiamo id e userId alla fine dell'array dei valori
+    // Aggiungiamo id e userId alla fine dell'array dei valori per i controlli WHERE
     const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = $${fieldsToUpdate.length + 1} AND user_id = $${fieldsToUpdate.length + 2}`;
     values.push(id, userId);
 
@@ -243,13 +244,12 @@ class ProdottiDAO {
 
   /**
    * Recupera TUTTI i prodotti, indipendentemente dal loro stato.
-   * Seleziona anche la prima immagine come 'percorso_immagine_cover' per la tabella admin.
+   * Seleziona i dati completi, incluso l'array 'percorsi_immagine', per la tabella admin.
    * @returns {Promise<Array<Object>>} Una lista di tutti i prodotti.
    */
   async getAllProductsAdmin() {
     const sql = `
-      SELECT p.*, u.username as nome_venditore,
-      p.percorsi_immagine[1] as percorso_immagine_cover
+      SELECT p.*, u.username as nome_venditore
       FROM prodotti p 
       JOIN users u ON p.user_id = u.id
       ORDER BY p.data_inserimento DESC
@@ -282,11 +282,11 @@ class ProdottiDAO {
   /**
    * Aggiorna un prodotto senza controllare l'ID dell'utente (potere da admin).
    * @param {number} id - L'ID del prodotto.
-   * @param {Object} productData - I dati da aggiornare.
+   * @param {Object} productData - I dati da aggiornare (include 'percorsi_immagine').
    * @returns {Promise<number>} Il numero di righe modificate.
    */
   async updateProductAdmin(id, productData) {
-    // Aggiorniamo 'allowedFields'
+    // Assicuriamo che 'percorsi_immagine' sia tra i campi permessi.
     const allowedFields = ['nome', 'descrizione', 'prezzo', 'parola_chiave', 'percorsi_immagine', 'prezzo_scontato', 'condizione'];
     const fieldsToUpdate = Object.keys(productData).filter(key => allowedFields.includes(key));
     if (fieldsToUpdate.length === 0) return 0;
@@ -299,7 +299,7 @@ class ProdottiDAO {
       return productData[field];
     });
     
-    // L'ID è l'ultimo parametro
+    // L'ID è l'ultimo parametro per il WHERE
     const sql = `UPDATE prodotti SET ${fieldPlaceholders} WHERE id = $${fieldsToUpdate.length + 1}`;
     values.push(id);
 

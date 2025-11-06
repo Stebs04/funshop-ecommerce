@@ -17,12 +17,14 @@
             <div class="card shadow-sm">
                 <div class="card-body p-lg-5">
                     <div class="text-center mb-4">
-                    
+                   
+ 
     <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
                         <h2 class="card-title mt-3">Grazie per il Tuo Ordine!</h2>
                         <p class="text-muted">Il tuo ordine è stato confermato con successo.</p>
                     </div>
-         
+        
+ 
            
                     <%# Messaggio di conferma invio email, che mostra l'email dell'acquirente.
 %>
@@ -35,46 +37,57 @@
                     <h5 class="mb-3">Riepilogo Prodotti</h5>
                     <ul class="list-group list-group-flush mb-4">
               
+
           <%# Cicla sull'array `order.items` per mostrare ogni prodotto acquistato.
 %>
                         <% order.items.forEach(item => { %>
                              <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                 <div class="d-flex align-items-center">
     
-                                <img src="<%= item.percorso_immagine %>" alt="<%= item.nome %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3">
+
+                                <%# Mostra la prima immagine (copertina) dall'array 'percorsi_immagine' %>
+                                <img src="<%= item.percorsi_immagine[0] %>" alt="<%= item.nome %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" class="me-3">
                                     <span><%= item.nome %></span>
                
+
                  </div>
                                 <%# Mostra il prezzo pagato per l'articolo (potrebbe essere quello scontato). %>
-                                <%# --- MODIFICA --- Aggiunto parseFloat() e controllo per null %>
+                                <%# Assicura che il prezzo sia un numero float %>
+
                                 <span class="fw-bold">€<%= (parseFloat(item.prezzo_scontato) || parseFloat(item.prezzo || 0)).toFixed(2) %></span>
    
                           </li>
                         <% }) %>
-                        <%# Mostra il totale dell'ordine.
+    
+                    <%# Mostra il totale dell'ordine.
 %>
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 fw-bold fs-5 border-top pt-3">
                             <span>Totale</span>
-                            <%# 'order.total' è già un numero, calcolato nella rotta, quindi qui non serve parseFloat %>
+                            <%# 'order.total' è già un numero, calcolato nella rotta %>
+
                             <span>€<%= order.total.toFixed(2) %></span>
          
                </li>
                     </ul>
 
                     <div class="row g-4">
-                        <%# Sezione Indirizzo di Spedizione.
+ 
+                       <%# Sezione Indirizzo di Spedizione.
 %>
                         <div class="col-md-6">
                             <h5 class="mb-3">Indirizzo di Spedizione</h5>
                             <div class="card bg-light border">
              
+
                    <div class="card-body">
                                     <p class="mb-1"><strong><%= order.address.nome %> <%= order.address.cognome %></strong></p>
                                     <p class="mb-1"><%= 
+
 order.address.indirizzo %></p>
                                     <p class="mb-0"><%= order.address.cap %>, <%= order.address.citta %></p>
                                 </div>
                          
+
    </div>
                         </div>
 
@@ -84,17 +97,21 @@ order.address.indirizzo %></p>
                             <h5 class="mb-3">Metodo di Pagamento</h5>
                             <div class="card bg-light border">
              
+
                    <div class="card-body">
                                     <p class="mb-1">
                                         <i class="bi bi-credit-card-fill"></i>
  
+
                                        Carta che termina con **** <%= order.payment.last4 %>
                                     </p>
                   
+
                   <p class="mb-0">Titolare: <%= order.payment.nome_titolare %></p>
                                 </div>
                             </div>
                   
+
       </div>
                     </div>
                 
@@ -114,6 +131,7 @@ Aiuta la community lasciando una recensione.</p>
                             <br>
                         <% } %>
          
+
                <a href="/" class="btn btn-primary">Continua lo Shopping</a>
                     </div>
                 </div>

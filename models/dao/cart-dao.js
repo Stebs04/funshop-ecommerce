@@ -12,7 +12,7 @@ class CartDAO {
     /**
      * Recupera il carrello di un utente dal database.
      * Trasforma i dati in un formato simile a quello del carrello di sessione,
-     * includendo i dettagli completi dei prodotti.
+     * includendo i dettagli completi dei prodotti (incluso l'array percorsi_immagine).
      * @param {number} userId - L'ID dell'utente.
      * @returns {Promise<object>} Un oggetto che rappresenta il carrello.
      */
@@ -31,6 +31,7 @@ class CartDAO {
             const productIds = cartItems.map(item => item.product_id);
 
             // Recupera tutti i dettagli dei prodotti in una singola query.
+            // prodottiDao.getProductsByIds restituisce l'oggetto completo (con l'array percorsi_immagine)
             const products = await prodottiDao.getProductsByIds(productIds);
             const productsMap = products.reduce((map, product) => {
                 map[product.id] = product;
@@ -44,7 +45,7 @@ class CartDAO {
                     // Convertiamo il prezzo da stringa (di NUMERIC) a numero
                     const itemPrice = parseFloat(product.prezzo_scontato) || parseFloat(product.prezzo);
                     cart.items[product.id] = {
-                        item: product,
+                        item: product, // 'product' contiene l'array 'percorsi_immagine'
                         qty: item.quantity,
                         price: itemPrice * item.quantity
                     };

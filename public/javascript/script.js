@@ -1,3 +1,4 @@
+// File: public/javascript/script.js
 // Esegue lo script solo dopo che l'intero contenuto della pagina è stato caricato.
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Funzione per interrogare un'API e verificare se l'utente è loggato
         const getAuthData = async () => {
             try {
+                // Chiama la rotta API che restituisce lo stato di autenticazione
                 const response = await fetch('/api/auth/status');
                 if (!response.ok) return null;
                 return await response.json();
@@ -102,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cartPreview = document.createElement('div');
             cartPreview.id = 'cart-preview';
             document.body.appendChild(cartPreview);
+            // Mantiene il popup aperto se il mouse entra nel popup stesso
             cartPreview.addEventListener('mouseenter', () => clearTimeout(hideCartTimeout));
             cartPreview.addEventListener('mouseleave', startCartHideTimer);
         };
@@ -134,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (product.item.stato === 'disponibile') {
                             return `
                                 <div class="d-flex mb-3">
-                                    <img src="${product.item.percorso_immagine}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                    <img src="${product.item.percorsi_immagine[0]}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                                     <div class="ms-2 flex-grow-1">
                                         <h6 class="mb-0 small">${product.item.nome}</h6>
                                         <small class="text-muted">${product.qty} x €${(product.item.prezzo_scontato || product.item.prezzo).toFixed(2)}</small>
@@ -145,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         } else {
                              return `
                                 <div class="d-flex mb-3 p-2 bg-light rounded border">
-                                     <img src="${product.item.percorso_immagine}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; opacity: 0.5;">
+                                     <img src="${product.item.percorsi_immagine[0]}" alt="${product.item.nome}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; opacity: 0.5;">
                                     <div class="ms-2 flex-grow-1">
                                         <h6 class="mb-0 small text-decoration-line-through">${product.item.nome}</h6>
                                         <small class="text-warning fw-bold">Non disponibile</small>
@@ -184,10 +187,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const showCartPreview = () => {
             if (!cartPreview) createCartPopup();
             clearTimeout(hideCartTimeout);
-            updatePopupContent();
+            updatePopupContent(); // Aggiorna il contenuto ogni volta che viene mostrato
             const buttonRect = cartButton.getBoundingClientRect();
             cartPreview.style.top = `${buttonRect.bottom + window.scrollY + 10}px`;
             const previewRect = cartPreview.getBoundingClientRect();
+            // Posiziona il popup allineato a destra con il pulsante
             cartPreview.style.left = `${buttonRect.right + window.scrollX - previewRect.width}px`;
             cartPreview.style.opacity = '1';
             cartPreview.style.visibility = 'visible';
@@ -207,16 +211,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Aggiunge gli event listener e aggiorna il contenuto all'avvio
         cartButton.addEventListener('mouseenter', showCartPreview);
         cartButton.addEventListener('mouseleave', startCartHideTimer);
-        updatePopupContent();
+        updatePopupContent(); // Esegue un primo aggiornamento al caricamento della pagina
     };
 
     /**
      * Gestisce l'apertura del modale per il caricamento dell'immagine del profilo.
+     * Si attiva cliccando sull'immagine del profilo nella dashboard utente.
      */
     const handleProfileImageUpload = () => {
         const imageContainer = document.querySelector('.profile-image-container');
         const uploadModalElement = document.getElementById('uploadModal');
         if (!uploadModalElement) return;
+        
         const uploadModal = new bootstrap.Modal(uploadModalElement);
         if (imageContainer) {
             imageContainer.addEventListener('click', () => {
@@ -266,5 +272,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await updateUserProfileLogic();
     updateCartPopupLogic();
     handleProfileImageUpload();
-    handleInfoModalLogic();
+    // handleInfoModalLogic(); // Questa logica è già inclusa in prodotto.ejs, rimuoviamo la duplicazione
 });
