@@ -1,3 +1,4 @@
+// File: models/dao/ordini-dao.js
 'use strict';
 
 // Importiamo la connessione al database (pool 'pg')
@@ -17,7 +18,6 @@ class OrdiniDAO {
    * @returns {Promise<Array<Object>>} Una promessa che risolve in un array di oggetti ordine.
    */
   async getOrdersByUserId(userId) {
-    // Sostituiamo ? con $1 (sintassi di pg)
     const sql = `
       SELECT 
         so.id, 
@@ -25,14 +25,14 @@ class OrdiniDAO {
         so.totale, 
         so.stato,
         p.nome as nome_prodotto,
-        p.percorso_immagine as immagine_prodotto
+        -- Seleziona la prima immagine dall'array 'percorsi_immagine'
+        p.percorsi_immagine[1] as immagine_prodotto
       FROM storico_ordini so
       LEFT JOIN prodotti p ON so.prodotto_id = p.id
       WHERE so.user_id = $1
       ORDER BY so.data_ordine DESC`;
       
     try {
-      // Usiamo 'db.query' e 'await', il risultato è in 'rows'
       const { rows } = await db.query(sql, [userId]);
       return rows;
     } catch (err) {
@@ -74,10 +74,10 @@ class OrdiniDAO {
     try {
       const { rows } = await db.query(sql, [id]);
       return rows[0];
-    } catch (err) { // <-- MODIFICA: Aggiunte le parentesi graffe { } mancanti
+    } catch (err) {
       console.error("Errore in getOrderById:", err);
       throw err;
-    } // <-- MODIFICA: Aggiunte le parentesi graffe { } mancanti
+    }
   }
 
   /**
@@ -119,15 +119,41 @@ class OrdiniDAO {
         const { rows } = await db.query(sql, [sellerId]);
         const row = rows[0];
         
-        // --- MODIFICA ---
-        // Sostituiamo 'resolve' con 'return'.
-        // Una funzione 'async' restituisce automaticamente una promessa risolta con il valore di 'return'.
+        // La funzione 'async' restituisce automaticamente una promessa
         return {
             totalRevenue: parseFloat(row.totalrevenue) || 0, // 'totalrevenue' è minuscolo in pg
             productsSoldCount: parseInt(row.productssoldcount, 10) || 0 // 'productssoldcount' è minuscolo
         };
     } catch (err) {
         console.error("Errore in getSalesStatsBySellerId:", err);
+        throw err;
+    }
+  }
+
+  /**
+   * Recupera tutti gli ordini dal database (per la dashboard admin).
+   * Include il nome del prodotto e l'username dell'acquirente.
+   * @returns {Promise<Array<Object>>} Una lista di tutti gli ordini.
+   */
+  async getAllOrdersAdmin() {
+    const sql = `
+        SELECT 
+            so.id, 
+            so.data_ordine, 
+            so.totale, 
+            so.stato,
+            p.nome as nome_prodotto,
+            u.username as nome_acquirente
+        FROM storico_ordini so
+        LEFT JOIN prodotti p ON so.prodotto_id = p.id
+        LEFT JOIN users u ON so.user_id = u.id
+        ORDER BY so.data_ordine DESC
+    `;
+    try {
+        const { rows } = await db.query(sql);
+        return rows;
+    } catch (err) {
+        console.error("Errore in getAllOrdersAdmin:", err);
         throw err;
     }
   }

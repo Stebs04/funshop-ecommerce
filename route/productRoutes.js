@@ -55,10 +55,10 @@ function checkFileType(file, cb){
 }
 
 // Inizializziamo multer per accettare un array di file (massimo 5)
-// Il nome del campo nel form deve essere 'percorsi_immagine'.
 const upload = multer({
     storage: storage,
-    limits:{fileSize: 1000000}, // Limite di 1MB per singolo file
+    // Aumentiamo il limite per file a 5MB (5 * 1024 * 1024)
+    limits:{fileSize: 5242880}, 
     fileFilter: function(req, file, cb){
         // Applica il filtro sul tipo di file
         checkFileType(file, cb);
@@ -72,10 +72,12 @@ const upload = multer({
 const uploadWrapper = (req, res, next) => {
     upload(req, res, (err) => {
         if (err) {
-            // Se l'errore è un errore di Multer (es. troppi file)
+            // Se l'errore è un errore di Multer (es. troppi file o file troppo grande)
             if (err instanceof multer.MulterError) {
                  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
                     req.flash('error', 'Puoi caricare un massimo di 5 immagini.');
+                 } else if (err.code === 'LIMIT_FILE_SIZE') {
+                     req.flash('error', 'Errore: Ogni immagine non deve superare i 5MB.');
                  } else {
                     req.flash('error', `Errore Multer: ${err.message}`);
                  }

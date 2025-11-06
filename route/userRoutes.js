@@ -201,7 +201,8 @@ const storage = multer.diskStorage({
 });
 const uploadProfilePic = multer({
     storage,
-    limits:{fileSize: 1000000}, // Limite 1MB
+    // Aumentiamo il limite per file a 5MB (5 * 1024 * 1024)
+    limits:{fileSize: 5242880}, 
     fileFilter: (req, file, cb) => checkFileType(file, cb)
 }).single('immagineProfilo'); // Accetta un solo file con nome 'immagineProfilo'
 
@@ -214,7 +215,8 @@ const productStorage = multer.diskStorage({
 });
 const uploadProductImage = multer({
     storage: productStorage,
-    limits:{fileSize: 1000000}, // Limite 1MB per file
+    // Aumentiamo il limite per file a 5MB (5 * 1024 * 1024)
+    limits:{fileSize: 5242880}, 
     fileFilter: (req, file, cb) => checkFileType(file, cb)
 }).array('percorso_immagine', 5); // Accetta fino a 5 file con nome 'percorso_immagine'
 
@@ -227,7 +229,12 @@ router.post('/dati/upload-immagine', (req, res) => {
     // Usiamo il wrapper per 'uploadProfilePic' (singolo file)
     uploadProfilePic(req, res, async (err) => {
         if (err) {
-            req.flash('error', err.message || err);
+            // Gestisce l'errore se il file è troppo grande
+            if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+                req.flash('error', 'Errore: L\'immagine del profilo non deve superare i 5MB.');
+            } else {
+                req.flash('error', err.message || err);
+            }
             return res.redirect('/utente?section=dati');
         }
         if (!req.file) {
@@ -469,8 +476,8 @@ router.post('/prodotti/:id/edit', uploadProductImage, async (req, res) => {
     } catch (err) {
         console.error("Errore durante l'aggiornamento del prodotto:", err);
         // Gestisce errori specifici di multer, come il superamento del limite
-        if (err instanceof multer.MulterError && err.code === 'LIMIT_UNEXPECTED_FILE') {
-             req.flash('error', 'Puoi caricare un massimo di 5 immagini.');
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+             req.flash('error', 'Errore: Ogni immagine non deve superare i 5MB.');
         } else {
              req.flash('error', 'Errore durante l\'aggiornamento del prodotto.');
         }

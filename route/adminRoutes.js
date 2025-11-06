@@ -73,7 +73,8 @@ function checkFileType(file, cb){
 // Inizializziamo multer per accettare un array di file (massimo 5)
 const upload = multer({
     storage: storage,
-    limits:{fileSize: 1000000}, // Limite di 1MB per file
+    // Aumentiamo il limite per file a 5MB (5 * 1024 * 1024)
+    limits:{fileSize: 5242880}, 
     fileFilter: function(req, file, cb){
         checkFileType(file, cb);
     }
@@ -89,6 +90,8 @@ const uploadWrapper = (req, res, next) => {
             if (err instanceof multer.MulterError) {
                  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
                     req.flash('error', 'Puoi caricare un massimo di 5 immagini.');
+                 } else if (err.code === 'LIMIT_FILE_SIZE') {
+                     req.flash('error', 'Errore: Ogni immagine non deve superare i 5MB.');
                  } else {
                     req.flash('error', `Errore Multer: ${err.message}`);
                  }
@@ -246,7 +249,12 @@ router.post('/products/edit/:id', uploadWrapper, async (req, res) => {
         req.flash('success', 'Prodotto aggiornato con successo.');
     } catch (err) {
         console.error("Errore during l'aggiornamento del prodotto (admin):", err);
-        req.flash('error', 'Errore during l\'aggiornamento del prodotto.');
+        // Gestisce anche l'errore di file troppo grande
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+             req.flash('error', 'Errore: Ogni immagine non deve superare i 5MB.');
+        } else {
+             req.flash('error', 'Errore during l\'aggiornamento del prodotto.');
+        }
     }
     // Reindirizza alla tab dei prodotti
     res.redirect('/admin/dashboard#prodotti');
