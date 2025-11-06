@@ -72,21 +72,28 @@ Segui questi passaggi per avviare il progetto in locale.
     Crea un file `.env` nella cartella principale del progetto e popola le variabili come mostrato nel file `/.env` del progetto. Assicurati di inserire una chiave segreta per le sessioni e le tue credenziali per il servizio email.
 
     ```env
-    # Configurazione ambiente
+    # Configurazione ambiente di sviluppo/produzione
     NODE_ENV=development
 
-    # Nome del database SQLite
-    DB_NAME=datastorage.db
-
     # Porta del server
-    PORT=5500
-
-    # Chiave segreta per le sessioni (usa una stringa lunga e casuale)
+    PORT=your_port
+    
+    # Chiave segreta per le sessioni
     SECRET_SESSION=your-secret-session-key-here
+    
+    # --- VARIABILI POSTGRESQL ---
+    # Assicurati di sostituire questi valori con quelli del tuo server PostgreSQL
+    DB_USER=postgres
+    DB_HOST=localhost
+    DB_NAME=your_db
+    DB_PASSWORD=tua_password_segreta
+    DB_PORT=your_port
+    # ------------------------------------
+    
+    # Variabili per il servizio mail
+    EMAIL_USER=email
+    EMAIL_PASS=pwd_email
 
-    # Credenziali per il servizio di invio email (es. Gmail)
-    EMAIL_USER=tua-email@gmail.com
-    EMAIL_PASS=la-tua-password-per-le-app
     ```
 
 4.  **Avvia il server:**
