@@ -7,14 +7,15 @@ const connectDB = require('./config/database');
 //Importazione del router dedicato ai prodotti
 const prodottiRoutes = require('./routes/prodotti');
 
+//Creazione della istanza dell'applicazione Express per gestire rotte e server
+const app = express();
+
 //Importazione del modulo cors per la gestione di richieste da porte diverse
 const cors = require('cors');
 
 //Middleware per l'utilizzo di file statici (es. immagini)
 app.use(express.static('public'));
 
-//Creazione della istanza dell'applicazione Express per gestire rotte e server
-const app = express();
 
 //Creazione del middleware che intercetta ogni richiesta di arrivo e le traduce in JSON
 app.use(express.json());
