@@ -24,12 +24,21 @@ function App(){
  return (
     <div>
       <h1>I miei prodotti</h1>
+
       <ul>
-
-
+         {
+          //Itero sull'array dei prodotti per generare dinamicamente tutti gli elementi
+          prodotti.map((prodotto) => (
+            <>
+              <li key={prodotto.id}> {prodotto.nome} {prodotto.descrizione} - €{prodotto.prezzo}</li>
+              <img src={"http://localhost:8000" + prodotto.percorsi_immagine} alt={prodotto.nome} style={{widht: '100px'}}/>
+            </>
+          ))}
       </ul>
 
     </div>
-    
  );
 }
+
+//Esportazione del componente per renderlo globalmente visibile
+export default App();
