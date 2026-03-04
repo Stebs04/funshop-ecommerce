@@ -14,6 +14,8 @@ function App(){
       const response = await fetch('http://localhost:8000/api/prodotti');
       //Estra il corpo della risposta e lo converte da JSON in un array
       const data = await response.json();
+      //Funzione di debug, Stampo nel terminale i dati ricevuti
+      console.log("Dati dal DB: ", data);
       //Inserimento dei dati nella variabile di stato, aggiornando lo schermo
       setProdotti(data);
     };
@@ -25,13 +27,13 @@ function App(){
     <div>
       <h1>I miei prodotti</h1>
 
-      <ul>
+      <ul className="prodotti-grid">
          {
           //Itero sull'array dei prodotti per generare dinamicamente tutti gli elementi
           prodotti.map((prodotto) => (
             <>
-              <li key={prodotto.id}> {prodotto.nome} {prodotto.descrizione} - €{prodotto.prezzo}</li>
-              <img src={"http://localhost:8000" + prodotto.percorsi_immagine} alt={prodotto.nome} style={{widht: '100px'}}/>
+              <li className="prodotto-card" key={prodotto.id}> {prodotto.nome} {prodotto.descrizione} {prodotto.condizione} - €{prodotto.prezzo}</li>
+              <img src={"http://localhost:8000" + prodotto.percorso_immagine} alt={prodotto.nome} style={{widht: '100px'}}/>
             </>
           ))}
       </ul>
@@ -41,4 +43,4 @@ function App(){
 }
 
 //Esportazione del componente per renderlo globalmente visibile
-export default App();
+export default App;
