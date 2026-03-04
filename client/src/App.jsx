@@ -1,6 +1,8 @@
 // Importazione hook reattivi di react per gestire la memoria dei componenti
 import {useState, useEffect} from 'react';
 
+import './App.css';
+
 //Definizione del componente app
 function App(){
  //Dichiarazione della variabile di stato per i prodotti 
@@ -25,15 +27,17 @@ function App(){
  //Return per far comparire gli oggetti a schermo
  return (
     <div>
-      <h1>I miei prodotti</h1>
+      <h1 style={{textAlign:'center'}}>I miei prodotti</h1>
 
       <ul className="prodotti-grid">
          {
           //Itero sull'array dei prodotti per generare dinamicamente tutti gli elementi
           prodotti.map((prodotto) => (
             <>
-              <li className="prodotto-card" key={prodotto.id}> {prodotto.nome} {prodotto.descrizione} {prodotto.condizione} - €{prodotto.prezzo}</li>
-              <img src={"http://localhost:8000" + prodotto.percorso_immagine} alt={prodotto.nome} style={{widht: '100px'}}/>
+              <li className="prodotto-card" key={prodotto.id}> {prodotto.nome} {prodotto.condizione} - €{prodotto.prezzo}
+              <img className="prodotto-immagine" src={"http://localhost:8000" + prodotto.percorso_immagine} alt={prodotto.nome}/>
+              </li>
+              
             </>
           ))}
       </ul>
