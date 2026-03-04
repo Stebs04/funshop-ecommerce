@@ -10,6 +10,9 @@ const prodottiRoutes = require('./routes/prodotti');
 //Importazione del modulo cors per la gestione di richieste da porte diverse
 const cors = require('cors');
 
+//Middleware per l'utilizzo di file statici (es. immagini)
+app.use(express.static('public'));
+
 //Creazione della istanza dell'applicazione Express per gestire rotte e server
 const app = express();
 
