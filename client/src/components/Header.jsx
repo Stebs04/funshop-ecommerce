@@ -1,5 +1,4 @@
-import '../../src/App.css';
-
+import './Header.css'
 function Header(){
     return (
         <header className="header-pagina">

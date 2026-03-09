@@ -34,27 +34,19 @@ function App(){
  //Return per far comparire gli oggetti a schermo
  return (
     <div>
-      {
-        //Istanza del componente 'Header'
-        <Header />
-      }
-      {
-        //Istanza del componente 'Navbar
-        <Navbar />
-      }
+      {/*Istanza del componente 'Header'*/}
+      <Header />
+      {/*Istanza del componente 'Navbar*/}
+      <Navbar />
       <ul className="prodotti-grid">
          {
           //Itero sull'array dei prodotti per generare dinamicamente tutti gli elementi
           prodotti.map((prodotto) => (
-            <>
               <li className="prodotto-card" key={prodotto.id}> {prodotto.nome} {prodotto.condizione} - €{prodotto.prezzo}
               <img className="prodotto-immagine" src={"http://localhost:8000" + prodotto.percorso_immagine} alt={prodotto.nome}/>
               </li>
-              
-            </>
           ))}
       </ul>
-
     </div>
  );
 }
