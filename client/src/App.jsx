@@ -1,6 +1,13 @@
 // Importazione hook reattivi di react per gestire la memoria dei componenti
 import {useState, useEffect} from 'react';
 
+//Importazione del component Header
+import Header from './components/Header';
+
+//Importazione della navbar
+import Navbar from './components/Navbar';
+
+// Importazione dello stile
 import './App.css';
 
 //Definizione del componente app
@@ -27,8 +34,14 @@ function App(){
  //Return per far comparire gli oggetti a schermo
  return (
     <div>
-      <h1 style={{textAlign:'center'}}>I miei prodotti</h1>
-
+      {
+        //Istanza del componente 'Header'
+        <Header />
+      }
+      {
+        //Istanza del componente 'Navbar
+        <Navbar />
+      }
       <ul className="prodotti-grid">
          {
           //Itero sull'array dei prodotti per generare dinamicamente tutti gli elementi
