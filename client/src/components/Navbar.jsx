@@ -10,65 +10,70 @@ function Navbar(){
     const [cartItems, setCartItems] = useState([ {id: 1, nome: 'Scarpe', prezzo: '50€'}, { id: 2, nome: 'Maglia', prezzo: '20€' }]);
 
     return(
-        <nav className='navbar'>
-            {/*Sezione di sinistra: Inserimento del logo*/}
-            <a href='#' className='navbar-logo'><img src={logo} alt='logo' /></a>
-            
-            {/*Sezione centrale: Creo una lista di raggruppamento*/}
-            <ul className='nav-links'>
-                {/*Singolo elemento contente un link cliccabile*/}   
-                <li>            
-                    <a href='#'>Home</a>
+       <nav className='navbar'>
+        <div className='navbar-left'>
+            <a href='/' className='navbar-logo'><img src={logo} alt='logo-sito'/></a> {/*Logo del sito*/}
+            <ul className='nav-links'> {/*Link di reindirizzamento della navbar*/}
+                <li>
+                     <a href='#'>Novità</a>
                 </li>
                 <li>
-                    <a href='#'>Novità</a>
+                     <a href='#'>Offerte</a>
                 </li>
                 <li>
-                    <a href='#'>Offerte</a>
-                </li>
-                <li>
-                    <a href='#'>Diventa un venditore</a>
+                     <a href='#'>Diventa un venditore</a>
                 </li>
             </ul>
-            {/*Sezione di destra: Ricerca, Profilo e Carrello*/}
-            <div className='navbar-actions'>
-                <input type='text' placeholder='Cerca il prodotto o il profilo' className='search-input'/>
-                <button className='search-btn'>🔍</button>
-            <button 
-            className='profile-btn'
-            onClick={() =>{
-                if(isLoggedIn){
-                    alert("Vai alla pagina del profilo");
-                }else{
-                    alert("Devi prima fare il login");
-                }
-            }}
-            >
-                👤
-            </button>
-            <div className='cart-container'>
-                 <button className='cart-button'>
-                    🛒({cartItems.length})
+
+        </div>
+        <div className='navbar-center'>
+            <form> {/*Campo di testo dove l'utente andrà a cercare prodotti o utenti*/}
+                <input type='text' placeholder='Cerca prodotti o Utenti' className='search-input'/>
+                <button className='search-btn'>
+                    <i className='search-icon'>🔍</i>
                 </button>
-                <div className='cart-popup'>
-                    <ul>
-                        {cartItems.map(prodotto => (
+            </form>
+        </div>
+        <div className='navbar-right'>
+            <div className='cart-container'>
+                <button className='cart-btn'>
+                    <i className='cart-icon'>🛒({cartItems.length})</i>
+                </button>
+            <div className='cart-popup'> {/*Riquadro pop-up con tutti gli articoli del carrello*/}
+                <ul>
+                    {
+                        //Itero su tutti i prodotti del carrello
+                        cartItems.map(prodotto => (
                             <div className='cart-item-wrapper' key={prodotto.id}>
                                 <li className='prodotto-cart'>
                                     {prodotto.nome} - {prodotto.prezzo}
                                 </li>
-                                <img 
-                                    className="prodotto-immagine-carrello" 
+                                <img
+                                    className='prodotto-immagine-carrello'
                                     src={"http://localhost:8000" + prodotto.percorso_immagine} 
                                     alt={prodotto.nome}
                                 />
                             </div>
-                        ))}
-                    </ul>
-                </div>
+                    
+                        ))
+                    }
+                </ul>
             </div>
+            </div>
+             <button className='profile-btn' onClick={() =>{
+                if(isLoggedIn){
+                   window.location.href = '/profile';
+                }
+                else
+                {
+                    alert("Devi prima fare il login");
+                    window.location.href = '/login';
+                }
+            }}> {/*Gestione del reindirizzamento*/}
+                <i className='profile-icon'>👤</i>
+            </button>
         </div>
-    </nav>
+       </nav>
     );
 }
 
