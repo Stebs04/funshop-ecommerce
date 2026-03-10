@@ -38,6 +38,7 @@ function App(){
       <Header />
       {/*Istanza del componente 'Navbar*/}
       <Navbar />
+      <h1 className='titolo'>I miei prodotti</h1>
       <ul className="prodotti-grid">
          {
           //Itero sull'array dei prodotti per generare dinamicamente tutti gli elementi

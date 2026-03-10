@@ -13,9 +13,10 @@ function Navbar(){
         <nav className='navbar'>
             {/*Sezione di sinistra: Inserimento del logo*/}
             <a href='#' className='navbar-logo'><img src={logo} alt='logo' /></a>
+            
             {/*Sezione centrale: Creo una lista di raggruppamento*/}
             <ul className='nav-links'>
-                {/*Singolo elemento contente un link cliccabile*/}            
+                {/*Singolo elemento contente un link cliccabile*/}   
                 <li>            
                     <a href='#'>Home</a>
                 </li>
@@ -32,9 +33,9 @@ function Navbar(){
             {/*Sezione di destra: Ricerca, Profilo e Carrello*/}
             <div className='navbar-actions'>
                 <input type='text' placeholder='Cerca il prodotto o il profilo' className='search-input'/>
-                <button className='search-btn'></button>
+                <button className='search-btn'>🔍</button>
             <button 
-            className='profile-button'
+            className='profile-btn'
             onClick={() =>{
                 if(isLoggedIn){
                     alert("Vai alla pagina del profilo");
@@ -42,7 +43,8 @@ function Navbar(){
                     alert("Devi prima fare il login");
                 }
             }}
-            > 
+            >
+                👤
             </button>
             <div className='cart-container'>
                  <button className='cart-button'>
@@ -53,7 +55,7 @@ function Navbar(){
                         {cartItems.map(prodotto => (
                             <div className='cart-item-wrapper' key={prodotto.id}>
                                 <li className='prodotto-cart'>
-                                    {prodotto.nome} - {prodotto.prezzo}€
+                                    {prodotto.nome} - {prodotto.prezzo}
                                 </li>
                                 <img 
                                     className="prodotto-immagine-carrello" 
