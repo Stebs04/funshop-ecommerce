@@ -1,6 +1,9 @@
 // Importazione hook reattivi di react per gestire la memoria dei componenti
 import {useState, useEffect} from 'react';
 
+//Importazione del componente che fornisce le funzionalità di navigazione senza cambiare la pagina
+import {BrowserRouter} from 'react-router-dom';
+
 //Importazione del component Header
 import Header from './components/Header';
 
@@ -33,6 +36,7 @@ function App(){
  }, []);
  //Return per far comparire gli oggetti a schermo
  return (
+  <BrowserRouter>
     <div>
       {/*Istanza del componente 'Header'*/}
       <Header />
@@ -49,6 +53,7 @@ function App(){
           ))}
       </ul>
     </div>
+  </BrowserRouter>
  );
 }
 

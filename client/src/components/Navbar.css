@@ -112,7 +112,7 @@ form {
     display: block;
 }
 
-.cart-item-wrapper{
+.prodotto-cart{
     display: flex;
     align-items: center;
     justify-content: space-between;
