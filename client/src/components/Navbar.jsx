@@ -48,7 +48,7 @@ function Navbar(){
                     {
                         //Itero su tutti i prodotti del carrello
                         cartItems.map(prodotto => (
-                                <li className='prodotto-cart'> {/**Singolo prodotto del carrello */}
+                                <li className='prodotto-cart' key={prodotto.id}> {/**Singolo prodotto del carrello */}
                                     {prodotto.nome} - {prodotto.prezzo}
                                     <img
                                     className='prodotto-immagine-carrello'
