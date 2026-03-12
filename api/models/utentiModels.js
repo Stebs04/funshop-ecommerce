@@ -53,7 +53,7 @@ const updateUser = async(id, newData) =>{
         const db = await connectDB();
         const {username, nome, cognome, email, password, dataNascita} = newData;
         //Eseguo l'update dei dati dell'utente
-        await db.run("UPDATE users SET username = ?, nome = ?, cognome = ?, email = ?, password = ?, data_nascita = ? WHERE id = ?", [username, nome,cognome,email,password, dataNascita,id]);
+        await db.run("UPDATE users SET username = ?, nome = ?, cognome = ?, email = ?, password_hashata = ?, data_nascita = ? WHERE id = ?", [username, nome,cognome,email,password, dataNascita,id]);
         return true;
     }catch(error){
         console.error("Impossibile aggiornare le informazioni!!!", error)
@@ -63,7 +63,7 @@ const updateUser = async(id, newData) =>{
 
 //Funzione che elimina un Utente dal sistema
 //Gli passo l'id dell'utente da cancellare
-const deleteUser = async(id) =>{
+const deleteUserById = async(id) =>{
     try{
         const db = await connectDB();
         //Eseguo la cancellazione dell'utente
@@ -75,4 +75,16 @@ const deleteUser = async(id) =>{
     }
 };
 
-module.exports = {findUserByEmail, createUser, findUserById, updateUser, deleteUser};
+//Funzione che ritorna tutti gli utenti salvati nel db
+const findAllUsers = async()=>{
+    try{
+        const db = await connectDB();
+        return db.all("SELECT * FROM users", []);
+    }catch(error){
+         console.error("Impossibile recuperare tutti gli utenti!!", error);
+        throw error;
+    }
+}
+
+
+module.exports = {findUserByEmail, createUser, findUserById, updateUser, deleteUserById, findAllUsers};
