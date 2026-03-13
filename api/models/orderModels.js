@@ -27,4 +27,16 @@ const getOrdiniByUserId = async(userId) =>{
     }
 }
 
-module.exports ={createOrder, getOrdiniByUserId}
+//Funzione che seleziona un singolo ordine tramite l'id
+const getOrderById = async(orderId) =>{
+    try{
+        const db = await connectDB();
+        //Carico l'ordine tramite id
+        return await db.get("SELECT * FROM storico_ordini WHERE id = ?",[orderId]);
+    }catch(error){
+        console.error("Impossibile caricare l'ordine!!", error);
+        throw error;
+    }
+}
+
+module.exports ={createOrder, getOrdiniByUserId, getOrderById}

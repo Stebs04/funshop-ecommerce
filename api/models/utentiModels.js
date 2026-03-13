@@ -99,5 +99,4 @@ const findAllUsers = async()=>{
 }
 
 
-
 module.exports = {findUserByEmail, createUser, findUserById, updateUser, deleteUserById, findAllUsers, updateUserType};

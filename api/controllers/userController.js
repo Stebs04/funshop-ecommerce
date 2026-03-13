@@ -137,7 +137,7 @@ const insertUser = async(req, res)=>{
             cognome,
             email,
             password: passwordCriptata, //Assegno qui la password criptata
-            data_nascita,
+            dataNascita: data_nascita, // Mapping corretto: il model si aspetta 'dataNascita'
             tipo_account : tipo_account || 'cliente' //Prende il tipo venditore di default se non specificato
         }
         
@@ -184,6 +184,60 @@ const updateUserRole = async(req, res) => {
     }
 };
 
+//Funzione che si occupa del login
+const login = async(req, res) =>{
+    try{
+        const {email, password} = req.body;
+        // Controllo che email e password siano stati forniti
+        if(!email || !password){
+            return res.status(400).json({error: "I campi email e password sono obbligatori!!"});
+        }
+
+        // Cerco l'utente nel database tramite email
+        const user = await utentiModel.findUserByEmail(email);
+
+        // Se l'utente non esiste, restituisco errore 404
+        if(!user){
+            return res.status(404).json({error: "Nessun utente trovato con questa mail!!"});
+        }
+
+        // Confronto la password fornita con quella salvata (hashata) nel database
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if(isMatch){
+            // Rigenera la sessione per sicurezza (previene session fixation)
+            req.session.regenerate((err) => {
+                if(err) {
+                     console.error("Errore durante la rigenerazione della sessione:", err);
+                     return res.status(500).json({error: "Errore durante il login"});
+                }
+
+                // Salva i dati utente nella nuova sessione
+                req.session.user = {
+                    id: user.id,
+                    nome: user.nome,
+                    cognome: user.cognome,
+                    email: user.email,
+                    ruolo: user.tipo_account
+                };
+
+                // Login riuscito
+                res.status(200).json({
+                    message: "Login andato a buon fine",
+                    user: req.session.user
+                });
+            });
+        } else {
+            // Password errata
+            res.status(401).json({error: "La password non corrisponde!!!"});
+        }
+        
+    }catch(error){
+        console.error("Errore durante il login:", error);
+        res.status(500).json({error: "Errore durante la fase di login!!"});
+    }
+};
+
 module.exports = {
     getAllUsers,
     getUserByEmail,
@@ -191,5 +245,6 @@ module.exports = {
     updateUser,
     deleteUser,
     insertUser,
-    updateUserRole
+    updateUserRole,
+    login
 }

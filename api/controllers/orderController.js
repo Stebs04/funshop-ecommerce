@@ -10,8 +10,8 @@ const createOrder = async (req, res) => {
         const { dataOrdine, totale, stato, userId, prodotti} = req.body;
 
         // Validazione dei campi obbligatori: verifico che totale e userId siano presenti
-        if (!totale || !userId) {
-            return res.status(400).json({ error: "I campi 'totale' e 'userId' sono obbligatori!" });
+        if (!totale || !userId || !prodotti || prodotti.length === 0) {
+            return res.status(400).json({ error: "I campi 'totale', 'userId' e l'array dei prodotti sono obbligatori!" });
         }
 
         // Preparazione dell'oggetto ordine con valori di default se necessario
@@ -89,7 +89,32 @@ const getOrdersByUserId = async (req, res) => {
     }
 };
 
+// Funzione per ottenere un singolo ordine tramite l'ID
+const getOrderById = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+
+        // Controllo che l'ID sia presente
+        if (!orderId) {
+            return res.status(400).json({ error: "L'OrderId è obbligatorio!" });
+        }
+
+        // Recupero l'ordine dal model
+        const order = await orderModel.getOrderById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ message: "Ordine non trovato." });
+        }
+        res.status(200).json(order);
+
+    } catch (error) {
+        console.error("Errore nel controller degli ordini (getOrderById):", error);
+        res.status(500).json({ error: "Errore durante il recupero dell'ordine." });
+    }
+};
+
 module.exports = {
     createOrder,
-    getOrdersByUserId
+    getOrdersByUserId,
+    getOrderById
 };
