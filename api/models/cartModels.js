@@ -49,8 +49,9 @@ const remove = async(userId, productId) =>{
 const findByUserId = async(userId) =>{
     try{
         const db = await connectDB();
-        //Carico tutti i prodotti di un singolo utente
-        return await db.all("SELECT * FROM cart_items WHERE user_id = ?", [userId]);
+        //Carico tutti i prodotti di un singolo utente, includendo lo username del venditore
+        return await db.all("SELECT c.*, p.nome, p.prezzo_scontato AS prezzo_attuale, u.username as venditore_username FROM cart_items c JOIN prodotti p ON c.product_id = p.id JOIN users u ON p.user_id = u.id WHERE c.user_id = ?",
+            [userId]);
     }
     catch(error){
         console.error("Impossibile caricare i prodotti!!!", error);
@@ -58,18 +59,41 @@ const findByUserId = async(userId) =>{
     }
 }
 
-//Funzione che ritorna un singolo oggetto nel carrello
+//Funzione che ritorna un singolo oggetto nel carrello con tutte le informazioni complete (prodotto e venditore)
 const findProduct = async(userId, productId) =>{
      try{
         const db = await connectDB();
-        //Carico il prodotto
-        return await db.get("SELECT * FROM cart_items WHERE user_id = ? AND product_id = ?", [userId, productId]);
+        //Carico il prodotto eseguendo i join con la tabella prodotti e users (per il venditore)
+        return await db.get(`
+            SELECT c.quantity, p.*, 
+                   u.username as venditore_username
+            FROM cart_items c
+            JOIN prodotti p ON c.product_id = p.id
+            JOIN users u ON p.user_id = u.id
+            WHERE c.user_id = ? AND c.product_id = ?`, 
+            [userId, productId]
+        );
     }
     catch(error){
-        console.error("Impossibile caricare il prodotto!!!", error);
+        console.error("Impossibile caricare il prodotto con le informazioni del venditore!!!", error);
+        throw error;
+    }
+}
+
+//Funzione che resetta notifica letta quando un utente la visiona
+const markCartNotificationAsRead = async(userId) =>{
+    try{
+        const db = await connectDB();
+        await db.run(
+            "UPDATE cart_items SET notifica_letta = 1, prezzo_carrello = (SELECT COALESCE(prezzo_scontato, prezzo) FROM prodotti WHERE prodotti.id = cart_items.product_id) WHERE user_id = ? AND notifica_letta = 0",
+            [userId]
+        );
+        return true;
+    }catch(error){
+        console.error("Errore durante l'aggiornamento", error);
         throw error;
     }
 }
 
 //Esportazione del Model
-module.exports = {insert, updateQuantity, remove, findByUserId, findProduct};
+module.exports = {insert, updateQuantity, remove, findByUserId, findProduct, markCartNotificationAsRead};
