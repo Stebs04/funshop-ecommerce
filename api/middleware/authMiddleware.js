@@ -1,6 +1,6 @@
 //Middleware di controllo, serve per capire se un utente è loggato o meno
 
-module.exports = (req, res, next) =>{
+module.exports = (req, next) =>{
     // Controlla se l'ID utente è presente nel corpo della richiesta (ad esempio, inviato dal frontend)
     let tempId = req.body.userId;
 
