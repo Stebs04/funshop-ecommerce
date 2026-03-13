@@ -1,5 +1,6 @@
 //Importazione del DAO dei prodotti
 const prodottoModel = require('../models/prodottiModels');
+const observedModel = require('../models/observedProductsModels');
 
 //Controller per la rotta GET
 const getAllProducts = async (req, res) =>{
@@ -82,6 +83,19 @@ const updateProduct = async(req, res)=>{
         if(!newProductInfos || Object.keys(newProductInfos).length === 0){
             return res.status(400).json({errore: "Dati del prodotto mancanti!!"});
         }
+
+        const product = await prodottoModel.findProductById(productId);
+         if(!product){
+            return res.status(404).json({error: "Nessun prodotto trovato con questo id!!!"});
+        }
+
+        //Se il nuovo prezzo è diverso da quello attuale (considerando eventuali sconti), aggiorno il prezzo scontato
+        const currentPrice = product.prezzo_scontato || product.prezzo;
+        if(newProductInfos.prezzo && newProductInfos.prezzo != currentPrice){
+            await prodottoModel.updateDiscountedPriceById(productId, newProductInfos.prezzo);
+            await observedModel.flagPriceChange(productId);
+        }
+
         //Aggiorno i campi del prodotto all'interno del DB
         const results = await prodottoModel.updateById(productId, newProductInfos);
          //Controllo che tutto sia andato a buon fine
@@ -119,6 +133,17 @@ const updateProductByUser = async(req, res)=>{
             return res.status(400).json({error: "User ID mancante!!"});
         }
 
+        const product = await prodottoModel.findProductById(productId);
+         if(!product){
+            return res.status(404).json({error: "Nessun prodotto trovato con questo id!!!"});
+        }
+        //Se il nuovo prezzo è diverso da quello attuale (considerando eventuali sconti), aggiorno il prezzo scontato
+        const currentPrice = product.prezzo_scontato || product.prezzo;
+        if(newProductInfos.prezzo && newProductInfos.prezzo != currentPrice){
+            await prodottoModel.updateDiscountedPriceById(productId, newProductInfos.prezzo);
+            await observedModel.flagPriceChange(productId);
+        }
+       
         const results = await prodottoModel.updateByUserId(productId, userId, newProductInfos);
         
         if(results){
@@ -224,6 +249,47 @@ const getByUserId = async(req, res) =>{
     }
 }
 
+
+
+//Funzione che mostra un prodotto con il prezzo scontato
+const getProductsByIdWithDiscount = async(req,res) => {
+    try{
+        //Salvo l'id del prodotto prendendolo dai parametri passati nella barra degli indirizzi
+        const productId = req.params.id;
+        //Controllo che l'ID sia valido
+        if (!productId) {
+            return res.status(400).json({ error: "ID prodotto mancante" });
+        }
+        //Creo una costante prodotto dove salverò l'oggetto ritornatomi dalla funzione del DAO
+        const prodotto = await prodottoModel.findProductByIdWithDiscount(productId);
+        //Controllo che il prodotto effettivamente esista
+        if(!prodotto){
+            return res.status(404).json({error: "Prodotto non trovato"});
+        }
+        res.json(prodotto);
+    } catch(error)
+    {
+        console.error(error);
+        res.status(500).json({error: "Errore nel recupero del prodotto"})
+    }
+};
+
+//Funzione che recupera tutti i prodotti in vendita mostrando il prezzo scontato se presente
+const getAllProductsWithDiscount = async (req, res) =>{
+    try{
+        //Chiama la funzione findAll del DAO e attende che restituisca i dati
+        const prodotti = await prodottoModel.findAllWithDiscount(); 
+        //Invia i dati estratti al client
+        res.json(prodotti);
+    }
+    catch(error)
+    {
+        console.error(error);
+        // Risponde al client con uno status 500 e un messaggio di errore
+        res.status(500).json({ errore: "Errore nel recupero dei prodotti" });
+    }
+};
+
 //Esportazione della funzione del controller
 module.exports = {
     getAllProducts,
@@ -234,6 +300,8 @@ module.exports = {
     getByName, 
     deleteProduct,
     deleteProductById,
-    getByUserId
+    getByUserId,
+    getProductsByIdWithDiscount,
+    getAllProductsWithDiscount
 };
 

@@ -65,9 +65,9 @@ const createProduct = async(productData) =>{
 const updateById = async(id, newProductData) =>{
     try{
         const db = await connectDB();
-         const {nome, descrizione, condizione, parolaChiave, percorsoImmagine, prezzo} = newProductData;
+         const {nome, descrizione, condizione, parolaChiave, percorsoImmagine} = newProductData;
         //aggiornamento dei campi del prodotto
-        await db.run("UPDATE prodotti SET nome = ?, descrizione = ?, condizione = ?, parola_chiave = ?, percorso_immagine = ?, prezzo = ? WHERE id = ?", [nome, descrizione, condizione, parolaChiave, percorsoImmagine, prezzo, id]);
+        await db.run("UPDATE prodotti SET nome = ?, descrizione = ?, condizione = ?, parola_chiave = ?, percorso_immagine = ? WHERE id = ?", [nome, descrizione, condizione, parolaChiave, percorsoImmagine, id]);
         return true;
     }catch(error){
         console.error("Impossibile aggiornare il prodotto", error);
@@ -79,9 +79,9 @@ const updateById = async(id, newProductData) =>{
 const updateByUserId = async(id,userId, newProductData) =>{
     try{
         const db = await connectDB();
-         const {nome, descrizione, condizione, parolaChiave, percorsoImmagine, prezzo} = newProductData;
+         const {nome, descrizione, condizione, parolaChiave, percorsoImmagine} = newProductData;
         //aggiornamento dei campi del prodotto
-        await db.run("UPDATE prodotti SET nome = ?, descrizione = ?, condizione = ?, parola_chiave = ?, percorso_immagine = ?, prezzo = ? WHERE id = ? AND user_id = ?", [nome, descrizione, condizione, parolaChiave, percorsoImmagine, prezzo,id,userId]);
+        await db.run("UPDATE prodotti SET nome = ?, descrizione = ?, condizione = ?, parola_chiave = ?, percorso_immagine = ? WHERE id = ? AND user_id = ?", [nome, descrizione, condizione, parolaChiave, percorsoImmagine,id,userId]);
         return true;
     }catch(error){
         console.error("Impossibile aggiornare il prodotto", error);
@@ -115,5 +115,44 @@ const deleteByUserId = async(id, userId) =>{
     }
 }
 
+
+
+//Funzione per aggiornare solamente il prezzo scontato di un prodotto tramite il suo id
+const updateDiscountedPriceById = async(id, prezzoScontato) =>{
+    try{
+        const db = await connectDB();
+        //aggiornamento del campo prezzo_scontato
+        await db.run("UPDATE prodotti SET prezzo_scontato = ? WHERE id = ?", [prezzoScontato, id]);
+        return true;
+    }catch(error){
+        console.error("Impossibile aggiornare il prezzo scontato del prodotto", error);
+        throw error;
+    }
+}
+
+
+
+//Funzione che mostra il prezzo scontato invece del prezzo normale
+const findProductByIdWithDiscount = async(id) =>{
+    try{
+        const db = await connectDB();
+        return await db.get("SELECT id, nome, descrizione, condizione, parola_chiave, percorso_immagine, COALESCE(prezzo_scontato, prezzo) as prezzo, user_id FROM prodotti WHERE id = ?", [id]);
+    }catch(error){
+        console.error("Impossibile recuperare il prodotto con prezzo scontato", error);
+        throw error;
+    }
+}
+
+//Funzione che restituisce tutti i prodotti mostrando il prezzo scontato al posto del prezzo normale del singolo prodotto
+const findAllWithDiscount = async() =>{
+    try{
+        const db = await connectDB();
+        return await db.all("SELECT id, nome, descrizione, condizione, parola_chiave, percorso_immagine, COALESCE(prezzo_scontato, prezzo) as prezzo, user_id FROM prodotti");
+    }catch(error){
+        console.error("Impossibile recuperare i prodotti con prezzo scontato", error);
+        throw error;
+    }
+}
+
 //Esportazione del Model
-module.exports = {findAll, findProductById, searchByName, createProduct, updateById, updateByUserId, deleteProduct, deleteByUserId, findByUserId};
+module.exports = {findAll, findProductById, searchByName, createProduct, updateById, updateByUserId, deleteProduct, deleteByUserId, findByUserId, updateDiscountedPriceById, findProductByIdWithDiscount, findAllWithDiscount};

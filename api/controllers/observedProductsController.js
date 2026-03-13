@@ -9,6 +9,7 @@ const getObservedProducts = async (req, res) => {
         }
         
         const products = await observedProductsModel.getObservedByUserId(userId);
+        await observedProductsModel.markNotificationAsRead(userId);
         res.status(200).json(products);
     } catch (error) {
         console.error("Errore nel recupero dei prodotti osservati:", error);

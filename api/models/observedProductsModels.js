@@ -20,7 +20,7 @@ const addObservedProduct = async (osservatoData) => {
 const getObservedByUserId = async (userId) => {
     try {
         const db = await connectDB();
-        const result = await db.all('SELECT * FROM observed_products WHERE user_id = ?', [userId]);
+        const result = await db.all("SELECT p.*, u.username as nome_venditore, o.prezzo_osservato, o.notifica_letta FROM prodotti p JOIN observed_products o ON p.id = o.product_id JOIN users u ON p.user_id = u.id WHERE o.user_id = ?", [userId]);
         return result;
     } catch (error) {
         console.error("Errore durante il recupero della lista dei preferiti:", error);
@@ -43,8 +43,40 @@ const removeObservedProduct = async (userId, productId) => {
     }
 };
 
+//Funzione che notifica un cambio di prezzo
+const flagPriceChange = async(productId) =>{
+    try{
+        const db = await connectDB();
+        await db.run(
+            'UPDATE observed_products SET notifica_letta = 0 WHERE product_id = ?',
+            [productId]
+        );
+        return true;
+    }catch(error){
+        console.error("Errore durante l'aggiornamento del campo notifica:", error);
+        throw error;
+    }
+}
+
+//Funzione che resetta notifica letta quando un utente la visiona
+const markNotificationAsRead = async(userId) =>{
+    try{
+        const db = await connectDB();
+        await db.run(
+            "UPDATE observed_products SET notifica_letta = 1, prezzo_osservato = (SELECT COALESCE(prezzo_scontato, prezzo) FROM prodotti WHERE prodotti.id = observed_products.product_id) WHERE user_id = ? AND notifica_letta = 0",
+            [userId]
+        );
+        return true;
+    }catch(error){
+        console.error("Errore durante l'aggiornamento", error);
+        throw error;
+    }
+}
+
 module.exports = {
     addObservedProduct,
     getObservedByUserId,
-    removeObservedProduct
+    removeObservedProduct,
+    flagPriceChange,
+    markNotificationAsRead
 };

@@ -89,4 +89,6 @@ const removeFromCart = async (req, res) => {
     }
 };
 
+//Funzione che notifica all'utente
+
 module.exports = { getCart, addToCart, updateCartItem, removeFromCart };
