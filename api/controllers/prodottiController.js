@@ -22,6 +22,10 @@ const getProductsById = async(req,res) => {
     try{
         //Salvo l'id del prodotto prendendolo dai parametri passati nella barra degli indirizzi
         const productId = req.params.id;
+        //Controllo che l'ID sia valido
+        if (!productId) {
+            return res.status(400).json({ error: "ID prodotto mancante" });
+        }
         //Creo una costante prodotto dove salverò l'oggetto ritornatomi dalla funzione del DAO
         const prodotto = await prodottoModel.findProductById(productId);
         //Controllo che il prodotto effettivamente esista
@@ -42,8 +46,12 @@ const createProduct = async(req, res) =>{
         //Recupero le informazioni dal corpo della richiesta
         const productInfo = req.body;
           //Controllo che l'oggetto non sia vuoto
-        if(Object.keys(productInfo).length == 0){
+        if(!productInfo || Object.keys(productInfo).length === 0){
             return res.status(400).json({errore: "Dati del prodotto mancanti!!"});
+        }
+        // Validazione campi obbligatori minimi (esempio: nome e prezzo)
+        if (!productInfo.nome || !productInfo.prezzo) {
+            return res.status(400).json({ errore: "Nome e prezzo sono campi obbligatori!" });
         }
         //Inserisco l'oggetto dentro al DB
         const results = await prodottoModel.createProduct(productInfo);
@@ -64,10 +72,14 @@ const updateProduct = async(req, res)=>{
     try{
         //Recupero l'id dall'url
         const productId = req.params.id;
+        if (!productId) {
+            return res.status(400).json({ error: "ID prodotto mancante" });
+        }
+        
         //Recupero i dati da sovrascrivere
         const newProductInfos = req.body;
         //Controllo che l'oggetto non sia vuoto
-        if(Object.keys(newProductInfos).length == 0){
+        if(!newProductInfos || Object.keys(newProductInfos).length === 0){
             return res.status(400).json({errore: "Dati del prodotto mancanti!!"});
         }
         //Aggiorno i campi del prodotto all'interno del DB
@@ -92,15 +104,19 @@ const updateProductByUser = async(req, res)=>{
     try{
         const productId = req.params.id;
         const newProductInfos = req.body;
-        const userId = newProductInfos.userID;
 
+        if (!productId) {
+            return res.status(400).json({ error: "ID prodotto mancante" });
+        }
+
+        if(!newProductInfos || Object.keys(newProductInfos).length === 0){
+            return res.status(400).json({error: "Dati del prodotto mancanti!!"});
+        }
+
+        const userId = newProductInfos.userID;
         //Vari controlli di correttezza
         if(!userId){
             return res.status(400).json({error: "User ID mancante!!"});
-        }
-
-        if(Object.keys(newProductInfos).length == 0){
-            return res.status(400).json({error: "Dati del prodotto mancanti!!"});
         }
 
         const results = await prodottoModel.updateByUserId(productId, userId, newProductInfos);
@@ -121,8 +137,13 @@ const getByName = async(req, res) =>{
     try{
         const research = req.body;
 
-        if(Object.keys(research).length === 0){
+        if(!research || Object.keys(research).length === 0){
             return res.status(400).json({error: "Il campo della ricerca è vuoto!!!"});
+        }
+        
+        // Se la ricerca prevede un campo specifico 'nome', controllalo
+        if (!research.nome || typeof research.nome !== 'string' || research.nome.trim() === '') {
+             return res.status(400).json({error: "Parametro di ricerca 'nome' non valido o assente!"});
         }
 
         const results = await prodottoModel.searchByName(research);
@@ -143,6 +164,9 @@ const getByName = async(req, res) =>{
 const deleteProduct = async(req, res) =>{
     try{
         const productId = req.params.id;
+        if (!productId) {
+            return res.status(400).json({ error: "ID prodotto mancante" });
+        }
         const result = await prodottoModel.deleteProduct(productId);
         if(!result){
             return res.status(404).json({error: "Prodotto da eliminare non trovato!!"});
@@ -161,6 +185,9 @@ const deleteProductById = async(req, res) =>{
     try{
         const productId = req.params.id;
         const userID = req.body.userID;
+        if (!productId) {
+            return res.status(400).json({ error: "ID prodotto mancante" });
+        }
         if(!userID){
             return res.status(400).json({error:"UserId Mancante!!!"});
         }

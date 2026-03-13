@@ -6,7 +6,7 @@ const createOrder = async(Orderinfo) =>{
         const db = await connectDB();
         const {dataOrdine, totale, stato, userId} = Orderinfo;
         //Inserisco nello storico degli ordine un nuovo ordine
-        const result = await db.run("INSERT INTO storico_ordini (data_ordine, totale, stato, user_id) VALUES (?,?,?,?,?)", [dataOrdine, totale, stato, userId]);
+        const result = await db.run("INSERT INTO storico_ordini (data_ordine, totale, stato, user_id) VALUES (?,?,?,?)", [dataOrdine, totale, stato, userId]);
         return result.lastID; //ritorno l'id dell'ordine così da averlo per eventuali usi
     }
     catch(error){

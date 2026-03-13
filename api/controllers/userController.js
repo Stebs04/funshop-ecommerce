@@ -1,4 +1,4 @@
-//Importazione del DAO dei prodotti
+//Importazione del DAO necessario
 const utentiModel = require('../models/utentiModels');
 //Importazione di bcrypt per l'hashing delle password
 const bcrypt = require('bcrypt');
@@ -22,10 +22,10 @@ const getAllUsers = async(req, res) =>{
 //Funzione che ritorna un utente tramite la sua mail
 const getUserByEmail = async(req, res) =>{
     try{
-        const email = req.body
+        const { email } = req.body;
         //Controllo che il campo email non sia vuoto
-        if(Object.keys(email).length === 0){
-            return res.status(400).json({errore: "Il campo email non è opzionale!!"});
+        if(!email){
+            return res.status(400).json({errore: "Il campo email è obbligatorio!!"});
         }
         const results = await utentiModel.findUserByEmail(email);
         //Controllo che effettivamente mi sia stato ritornato qualcosa
@@ -72,11 +72,15 @@ const updateUser = async(req, res) =>{
         }
         //Controllo che tutti i campi siano stati compilati
         const newInfos = req.body;
-        if(Object.keys(newInfos).length === 0){
+        if(!newInfos || Object.keys(newInfos).length === 0){
              return res.status(400).json({error: "Dati dell'utente mancanti!!!"})
         }
-        const pwd = newInfos.password;
-        if(pwd){ 
+        
+        if(newInfos.password){
+            const pwd = newInfos.password;
+            if (typeof pwd !== 'string' || pwd.trim() === '') {
+                return res.status(400).json({error: "La password non è valida!"});
+            } 
             //Hashing della password
             const passwordCriptata = await bcrypt.hash(pwd, 10); //Uso un salt di 10
             newInfos.password = passwordCriptata;
@@ -118,26 +122,67 @@ const deleteUser = async(req, res)=>{
 //Funzione che salva un nuovo utente nel sistema
 const insertUser = async(req, res)=>{
     try{
-        const info = req.body;
+        const {username, nome, cognome, email, password, data_nascita, tipo_account} = req.body;
         //Controllo che tutti i campi siano stati compilati
-        if(Object.keys(info).length === 0){
+        if(!username || !nome || !cognome || !email || !password || !data_nascita){
             return res.status(400).json({error: "Dati dell'utente assenti"})
         }
-        const pwd = info.password;
+
         //Hashing della password
-        const passwordCriptata = await bcrypt.hash(pwd, 10); //Uso un salt di 10
-        info.password = passwordCriptata;
-        const results = await utentiModel.createUser(info);
+        const passwordCriptata = await bcrypt.hash(password, 10); //Uso un salt di 10
+        
+        const userData ={
+            username,
+            nome,
+            cognome,
+            email,
+            password: passwordCriptata, //Assegno qui la password criptata
+            data_nascita,
+            tipo_account : tipo_account || 'cliente' //Prende il tipo venditore di default se non specificato
+        }
+        
+        const results = await utentiModel.createUser(userData);
         if(results){
             res.status(201).json({message: "Creazione Account avvenuta con successo!!"});
-            }else{
+        }else{
             res.status(500).json({error:"Impossibile creare un nuovo account!!"});
-            }
-        }catch(error){
+        }
+    }catch(error){
         console.error(error);
         res.status(500).json({error:"Errore durante la creazione dell'utente"});
     }
 }
+
+// Funzione per aggiornare il ruolo (tipo_account) di un utente
+// Utilizzata sia dall'admin dashboard sia da processi/form di cambio status (es. "Diventa Venditore")
+const updateUserRole = async(req, res) => {
+    try {
+        // L'ID target può arrivare dai parametri URL (es. chiamata API admin) o dal body (es. form utente)
+        const id = req.params.id || req.body.userId; 
+        const { tipo_account } = req.body; 
+
+        // Validazione
+        if (!id) {
+            return res.status(400).json({ error: "L'ID utente è richiesto (nei parametri o nel body)!" });
+        }
+        if (!tipo_account) {
+            return res.status(400).json({ error: "Il campo tipo_account è obbligatorio!" });
+        }
+
+        // Chiamo il model
+        const result = await utentiModel.updateUserType(id, tipo_account);
+
+        if (result) {
+            res.status(200).json({ message: "Ruolo utente aggiornato con successo!" });
+        } else {
+            res.status(404).json({ error: "Utente non trovato o errore nell'aggiornamento." });
+        }
+
+    } catch (error) {
+        console.error("Errore nell'aggiornamento del ruolo utente:", error);
+        res.status(500).json({ error: "Errore interno durante l'aggiornamento del ruolo." });
+    }
+};
 
 module.exports = {
     getAllUsers,
@@ -145,5 +190,6 @@ module.exports = {
     getUserById,
     updateUser,
     deleteUser,
-    insertUser
+    insertUser,
+    updateUserRole
 }

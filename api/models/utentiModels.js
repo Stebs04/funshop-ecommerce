@@ -22,10 +22,10 @@ const createUser = async(userData) =>{
     try{
         const db = await connectDB();
         //Estraggo i valori dall'oggetto userData
-        const {username, nome, cognome, email, password, dataNascita} = userData;
+        const {username, nome, cognome, email, password, dataNascita, tipo_account} = userData;
         //Eseguo l'inserimento dell'utente con i dati contenuti in userData
-        await db.run("INSERT INTO users (username, nome, cognome, email, password, data_nascita) VALUES (?,?,?,?,?,?)", 
-           [username, nome, cognome, email, password, dataNascita]);
+        await db.run("INSERT INTO users (username, nome, cognome, email, password, data_nascita, tipo_account) VALUES (?,?,?,?,?,?,?)", 
+           [username, nome, cognome, email, password, dataNascita, tipo_account]);
         return true;
     }catch(error){
         console.error("Errore creazione utente:", error);
@@ -75,6 +75,18 @@ const deleteUserById = async(id) =>{
     }
 };
 
+//Funzione che aggiorna il tipo di account di un utente (es. da 'user' a 'admin')
+const updateUserType = async(id, tipoAccount) =>{
+    try{
+        const db = await connectDB();
+        await db.run("UPDATE users SET tipo_account = ? WHERE id = ?", [tipoAccount, id]);
+        return true;
+    }catch(error){
+        console.error("Errore aggiornamento tipo account:", error);
+        throw error;
+    }
+};
+
 //Funzione che ritorna tutti gli utenti salvati nel db
 const findAllUsers = async()=>{
     try{
@@ -87,4 +99,5 @@ const findAllUsers = async()=>{
 }
 
 
-module.exports = {findUserByEmail, createUser, findUserById, updateUser, deleteUserById, findAllUsers};
+
+module.exports = {findUserByEmail, createUser, findUserById, updateUser, deleteUserById, findAllUsers, updateUserType};
