@@ -1,18 +1,20 @@
 // Importazione del model degli ordini
 const orderModel = require('../models/orderModels');
+const userModel = require('../models/utentiModels');
+const mailer = require('../service/emailService');
 
 // Funzione per creare un nuovo ordine
 const createOrder = async (req, res) => {
     try {
         // Estrazione dei dati dal corpo della richiesta
-        const { dataOrdine, totale, stato, userId } = req.body;
+        const { dataOrdine, totale, stato, userId, prodotti} = req.body;
 
-        // Validazione dei campi obbligatori
+        // Validazione dei campi obbligatori: verifico che totale e userId siano presenti
         if (!totale || !userId) {
             return res.status(400).json({ error: "I campi 'totale' e 'userId' sono obbligatori!" });
         }
 
-        // Preparazione dell'oggetto ordine
+        // Preparazione dell'oggetto ordine con valori di default se necessario
         const orderInfo = {
             dataOrdine: dataOrdine || new Date().toISOString(), // Fallback a data ISO corrente se mancante
             totale,
@@ -20,19 +22,43 @@ const createOrder = async (req, res) => {
             userId
         };
 
-        // Chiamata al model per inserire l'ordine
+        // Chiamata al model per inserire il nuovo ordine nel database
         const orderId = await orderModel.createOrder(orderInfo);
 
         if (orderId) {
+            // Se l'ordine è stato creato con successo, cerco l'utente per inviare l'email di conferma
+            const user = await userModel.findUserById(userId);
+            
+            // Se l'utente esiste e ha un'email, procedo con l'invio della conferma
+            if(user && user.email){
+                // Preparo i dettagli dell'ordine per l'email
+                // Nota: l'array prodotti è attualmente vuoto, andrebbe popolato con i dettagli reali del carrello
+                const orderDetails = {
+                    orderId: orderId,
+                    totale: orderInfo.totale,
+                    prodotti: prodotti 
+                }
+               try{ 
+                // Invio l'email di riepilogo in modo asincrono
+                await mailer.sendOrderSummary(user.email, orderDetails);
+            } catch(error){
+                // Log dell'errore email, ma non blocco la risposta di successo dell'ordine
+                console.error("Errore nell'invio della mail:", error);
+            }
+            }
+            
+            // Rispondo al client con successo e l'ID del nuovo ordine
             res.status(201).json({ 
                 message: "Ordine creato con successo!", 
                 orderId: orderId 
             });
         } else {
+            // Gestione del caso in cui il model non restituisca un ID valido
             res.status(500).json({ error: "Errore durante la creazione dell'ordine." });
         }
 
     } catch (error) {
+        // Gestione globale degli errori durante l'esecuzione del controller
         console.error("Errore nel controller degli ordini (createOrder):", error);
         res.status(500).json({ error: "Errore interno del server durante la creazione dell'ordine." });
     }
