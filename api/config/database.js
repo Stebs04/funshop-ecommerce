@@ -8,8 +8,10 @@ const path = require('path');
 const connectDB = async () => {
     //Blocco try catch per l'apertura sicura del file, lancia eccezzione se non trova il file al percorso specificato
     try{
+        //Costruisco il percordo del database usando il nome definito nella variabili di ambiente
+       const dbPath = path.join(__dirname, process.env.DB_PATH);
        return await open({
-        filename: path.join(__dirname, '../datastorage.db'), // Generazione dinamica del percorso
+        filename: dbPath,
          driver: sqlite3.Database
         });
     } catch(err){
